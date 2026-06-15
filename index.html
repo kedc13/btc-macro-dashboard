@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BTC Macro Dashboard</title>
+<style>
+:root { color-scheme: light; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #f1f5f9;
+  color: #1e293b;
+  padding: 16px;
+  min-height: 100vh;
+}
+.header {
+  background: #0f172a;
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.signal-banner {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.signal-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+.header-meta { color: #94a3b8; font-size: 13px; text-align: right; }
+.header-meta strong { color: #e2e8f0; }
+.phase-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 4px;
+  background: #7c3aed22;
+  color: #a78bfa;
+  border: 1px solid #7c3aed44;
+}
+.action-bar {
+  background: #0f172a;
+  border-radius: 10px;
+  padding: 14px 20px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.action-label { color: #64748b; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; }
+.action-text { color: #f1f5f9; font-size: 14px; font-weight: 600; }
+.section-title {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; color: #64748b; margin-bottom: 8px; margin-top: 14px;
+}
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.grid-auto { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+.card { background: #fff; border-radius: 10px; padding: 12px 14px; border: 1px solid #e2e8f0; }
+.card-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: #94a3b8; margin-bottom: 5px; }
+.card-value { font-size: 15px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 6px; }
+.card-sub { font-size: 11px; color: #94a3b8; margin-top: 3px; }
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+.big3-card { background: #fff; border-radius: 10px; padding: 12px 14px; border: 1px solid #e2e8f0; display: flex; align-items: flex-start; gap: 10px; }
+.big3-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
+.big3-name { font-size: 12px; font-weight: 700; color: #1e293b; margin-bottom: 3px; }
+.big3-status { font-size: 11px; color: #64748b; line-height: 1.4; }
+.conf-bar { background: #fff; border-radius: 10px; padding: 14px; border: 1px solid #e2e8f0; margin-bottom: 10px; }
+.conf-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.conf-count { font-size: 22px; font-weight: 800; color: #1e293b; }
+.conf-track { display: flex; gap: 4px; }
+.conf-pip { width: 18px; height: 6px; border-radius: 3px; background: #e2e8f0; }
+.conf-pip.active { background: #22c55e; }
+.conf-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.conf-tag { padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+.conf-tag-green { background: #dcfce7; color: #16a34a; }
+.conf-tag-yellow { background: #fef9c3; color: #854d0e; }
+.tranche-guide {
+  background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+  padding: 10px 14px; margin-top: 14px; font-size: 11px; color: #64748b;
+  display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+}
+.tg-item { display: flex; align-items: center; gap: 4px; }
+.timestamp { font-size: 11px; color: #94a3b8; text-align: right; margin-top: 14px; }
+.slack-link { font-size: 11px; color: #94a3b8; text-align: right; margin-top: 4px; }
+.slack-link a { color: #6366f1; text-decoration: none; }
+.slack-link a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<script>
+const DATA = {
+  date: "June 15, 2026",
+  price: "$63,900",
+  week: "34",
+  phase: "EARLY BEAR",
+  signal: "🟡 STRONG ACCUMULATION — FIRST TRANCHE (EARLY BEAR ⚠️)",
+  signalColor: "#eab308",
+  action: "FIRST TRANCHE ONLY — valuation supportive (MVRV 0.35, near realized price, 200WMA test), dry powder preserved for Big 3 confirmation.",
+  big3: [
+    { name: "Hash Ribbons", color: "#eab308", status: "Jan 2026 buy signal fired; current status uncertain after extended decline to $59K" },
+    { name: "SOPR Recovery", color: "#eab308", status: "7d SMA at 0.899, below 1.0, recovering but not yet confirmed above" },
+    { name: "Monthly Stoch RSI", color: "#eab308", status: "Deep oversold (<25); K and D both low, no confirmed K/D cross yet" }
+  ],
+  bottomConf: "3/8",
+  bottomGreen: ["Weekly RSI Bullish Divergence", "SSR at 1-yr low", "STH Cost Basis Gap"],
+  bottomYellow: ["Realized losses peaked at $59K flush (may now be declining)", "Monthly Stoch RSI setup forming", "LTH supply ATH at 16.44M BTC (mid-bear pattern)"],
+  valuation: [
+    { label: "MVRV Z-Score", value: "~0.35", sub: "Extreme Accumulation" },
+    { label: "Puell Multiple", value: "0.79", sub: "Accumulation zone" },
+    { label: "Reserve Risk", value: "~0.001", sub: "Near historic low" },
+    { label: "Realized Price", value: "~$62–63K", sub: "+2–3% vs spot" },
+    { label: "Pi Cycle", value: "CLEAR", sub: "" }
+  ],
+  momentum: [
+    { label: "Monthly RSI", value: "35.1", color: "#22c55e" },
+    { label: "Weekly RSI", value: "~34", color: "#22c55e" },
+    { label: "Weekly MACD", value: "Bearish", color: "#f97316" },
+    { label: "Fear & Greed", value: "26 (Fear)", color: "#22c55e" },
+    { label: "200W MA", value: "~$60K — tagged & bounced", color: "#22c55e" }
+  ],
+  macro: [
+    { label: "ETF Flows", value: "Recovering — $86M inflow Jun 12", color: "#eab308" },
+    { label: "DXY", value: "~100 (slight headwind)", color: "#eab308" },
+    { label: "Global M2", value: "Modest expansion ~1.5%", color: "#eab308" },
+    { label: "Fed / FOMC", value: "Jun 16–17 (Warsh, uncertain)", color: "#eab308" }
+  ],
+  slackUrl: "https://keithevansworkspace.slack.com/archives/D08E39X6TEU/p1781375335000039"
+};
+
+function dot(color) {
+  return `<span class="dot" style="background:${color}"></span>`;
+}
+
+function render() {
+  const d = DATA;
+  const confTotal = parseInt(d.bottomConf.split('/')[0]);
+  const pips = Array.from({length: 8}, (_, i) =>
+    `<div class="conf-pip${i < confTotal ? ' active' : ''}"></div>`
+  ).join('');
+
+  const big3HTML = d.big3.map(t => `
+    <div class="big3-card">
+      <div class="big3-dot" style="background:${t.color}"></div>
+      <div><div class="big3-name">${t.name}</div><div class="big3-status">${t.status}</div></div>
+    </div>`).join('');
+
+  const greenTags = d.bottomGreen.map(s => `<span class="conf-tag conf-tag-green">${s}</span>`).join('');
+  const yellowTags = d.bottomYellow.map(s => `<span class="conf-tag conf-tag-yellow">${s}</span>`).join('');
+
+  const valCards = d.valuation.map(c => `
+    <div class="card">
+      <div class="card-label">${c.label}</div>
+      <div class="card-value">${c.value}</div>
+      ${c.sub ? `<div class="card-sub">${c.sub}</div>` : ''}
+    </div>`).join('');
+
+  const momCards = d.momentum.map(c => `
+    <div class="card">
+      <div class="card-label">${c.label}</div>
+      <div class="card-value">${dot(c.color)}${c.value}</div>
+    </div>`).join('');
+
+  const macroCards = d.macro.map(c => `
+    <div class="card">
+      <div class="card-label">${c.label}</div>
+      <div class="card-value" style="font-size:12px">${dot(c.color)}${c.value}</div>
+    </div>`).join('');
+
+  document.body.innerHTML = `
+    <div class="header">
+      <div class="signal-banner">
+        <div class="signal-dot" style="background:${d.signalColor}"></div>
+        ${d.signal}
+      </div>
+      <div class="header-meta">
+        <div><strong>BTC ${d.price}</strong> &nbsp;·&nbsp; Week ${d.week} from Oct 2025 ATH</div>
+        <div><span class="phase-badge">${d.phase}</span></div>
+      </div>
+    </div>
+
+    <div class="action-bar">
+      <span class="action-label">📋 Action</span>
+      <span class="action-text">${d.action}</span>
+    </div>
+
+    <div class="section-title">🎯 Big 3 Primary Triggers</div>
+    <div class="grid-3">${big3HTML}</div>
+
+    <div class="section-title">⚡ Bottom Confirmation</div>
+    <div class="conf-bar">
+      <div class="conf-header">
+        <div>
+          <div class="conf-count">${d.bottomConf}</div>
+          <div style="font-size:11px;color:#64748b;margin-top:2px">indicators confirmed</div>
+        </div>
+        <div class="conf-track">${pips}</div>
+      </div>
+      <div class="conf-tags">${greenTags}${yellowTags}</div>
+    </div>
+
+    <div class="section-title">📊 Valuation</div>
+    <div class="grid-auto">${valCards}</div>
+
+    <div class="section-title">🌡️ Momentum & Sentiment</div>
+    <div class="grid-auto">${momCards}</div>
+
+    <div class="section-title">💧 Macro</div>
+    <div class="grid-auto">${macroCards}</div>
+
+    <div class="tranche-guide">
+      <span style="font-weight:600;color:#475569">Tranche guide:</span>
+      <span class="tg-item">${dot('#eab308')} BUY = first tranche</span>
+      <span class="tg-item">🔔 ACCUMULATE = add</span>
+      <span class="tg-item">${dot('#22c55e')} BUY = heavy</span>
+      <span class="tg-item">${dot('#22c55e')}${dot('#22c55e')}${dot('#22c55e')} Big 3 all 🟢 = max allocation</span>
+    </div>
+
+    <div class="timestamp">Last updated: ${d.date}</div>
+    <div class="slack-link"><a href="${d.slackUrl}" target="_blank">View full alert in Slack →</a></div>
+  `;
+}
+
+render();
+</script>
+</body>
+</html>
