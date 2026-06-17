@@ -1,235 +1,875 @@
 <!DOCTYPE html>
+<script type="application/json" id="cowork-artifact-meta">
+{
+  "name": "Btc Macro Dashboard",
+  "schemaVersion": 1,
+  "description": "BTC macro cycle dashboard — live daily indicators + ITV-style history chart with toggleable indicator overlays on price, phase zone backgrounds, and future cycle window projections.",
+  "mcpTools": ["mcp__0e2465af-5649-4cda-a8a5-59aaf35be070__slack_read_channel"],
+  "mcpServerNames": ["Slack"]
+}
+</script>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BTC Macro Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
 <style>
 :root { color-scheme: light; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #f1f5f9;
-  color: #1e293b;
-  padding: 16px;
-  min-height: 100vh;
-}
-.header {
-  background: #0f172a;
-  border-radius: 12px;
-  padding: 18px 20px;
-  margin-bottom: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-.signal-banner {
-  font-size: 18px;
-  font-weight: 700;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f1f5f9; color: #1e293b; padding: 16px; min-height: 100vh; }
+
+/* HEADER */
+.header { background: #0f172a; border-radius: 12px; padding: 18px 20px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+.signal-banner { font-size: 18px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
 .signal-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
 .header-meta { color: #94a3b8; font-size: 13px; text-align: right; }
 .header-meta strong { color: #e2e8f0; }
-.phase-badge {
-  display: inline-block;
-  padding: 3px 10px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 600;
-  margin-top: 4px;
-  background: #7c3aed22;
-  color: #a78bfa;
-  border: 1px solid #7c3aed44;
-}
-.action-bar {
-  background: #0f172a;
-  border-radius: 10px;
-  padding: 14px 20px;
-  margin-bottom: 14px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.action-label { color: #64748b; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; }
-.action-text { color: #f1f5f9; font-size: 14px; font-weight: 600; }
-.section-title {
-  font-size: 11px; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 0.08em; color: #64748b; margin-bottom: 8px; margin-top: 14px;
-}
-.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.grid-auto { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+.phase-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-top: 4px; }
+.phase-early    { background: #7c3aed22; color: #a78bfa; border: 1px solid #7c3aed44; }
+.phase-entering { background: #d9770622; color: #fb923c; border: 1px solid #d9770644; }
+.phase-bottom   { background: #16a34a22; color: #4ade80; border: 1px solid #16a34a44; }
+.phase-extended { background: #dc262622; color: #f87171; border: 1px solid #dc262644; }
+.action-bar { background: #0f172a; border-radius: 10px; padding: 13px 20px; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+.action-label { color: #64748b; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; white-space: nowrap; }
+.action-text  { color: #f1f5f9; font-size: 14px; font-weight: 600; }
+
+/* TABS */
+.tabs { display: flex; background: #e2e8f0; border-radius: 10px; padding: 3px; margin-bottom: 12px; }
+.tab-btn { flex: 1; padding: 8px 0; border: none; background: transparent; border-radius: 8px; font-size: 13px; font-weight: 600; color: #64748b; cursor: pointer; transition: all .15s; }
+.tab-btn.active { background: #fff; color: #1e293b; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* TODAY TAB COMPONENTS */
+.section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #64748b; margin-bottom: 8px; margin-top: 14px; }
+.grid-3   { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+.grid-4   { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
+.grid-auto{ display: grid; grid-template-columns: repeat(auto-fit,minmax(155px,1fr)); gap: 10px; }
 .card { background: #fff; border-radius: 10px; padding: 12px 14px; border: 1px solid #e2e8f0; }
-.card-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: #94a3b8; margin-bottom: 5px; }
+.card-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: #94a3b8; margin-bottom: 5px; }
 .card-value { font-size: 15px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 6px; }
-.card-sub { font-size: 11px; color: #94a3b8; margin-top: 3px; }
+.card-sub   { font-size: 11px; color: #94a3b8; margin-top: 3px; }
 .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
 .big3-card { background: #fff; border-radius: 10px; padding: 12px 14px; border: 1px solid #e2e8f0; display: flex; align-items: flex-start; gap: 10px; }
-.big3-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
+.big3-dot  { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
 .big3-name { font-size: 12px; font-weight: 700; color: #1e293b; margin-bottom: 3px; }
 .big3-status { font-size: 11px; color: #64748b; line-height: 1.4; }
 .conf-bar { background: #fff; border-radius: 10px; padding: 14px; border: 1px solid #e2e8f0; margin-bottom: 10px; }
 .conf-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-.conf-count { font-size: 22px; font-weight: 800; color: #1e293b; }
+.conf-count { font-size: 22px; font-weight: 800; }
 .conf-track { display: flex; gap: 4px; }
 .conf-pip { width: 18px; height: 6px; border-radius: 3px; background: #e2e8f0; }
 .conf-pip.active { background: #22c55e; }
 .conf-tags { display: flex; flex-wrap: wrap; gap: 6px; }
 .conf-tag { padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 500; }
-.conf-tag-green { background: #dcfce7; color: #16a34a; }
+.conf-tag-green  { background: #dcfce7; color: #16a34a; }
 .conf-tag-yellow { background: #fef9c3; color: #854d0e; }
-.tranche-guide {
-  background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
-  padding: 10px 14px; margin-top: 14px; font-size: 11px; color: #64748b;
-  display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
-}
+.tranche-guide { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; margin-top: 14px; font-size: 11px; color: #64748b; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
 .tg-item { display: flex; align-items: center; gap: 4px; }
 .timestamp { font-size: 11px; color: #94a3b8; text-align: right; margin-top: 14px; }
-.slack-link { font-size: 11px; color: #94a3b8; text-align: right; margin-top: 4px; }
-.slack-link a { color: #6366f1; text-decoration: none; }
-.slack-link a:hover { text-decoration: underline; }
+
+/* HISTORY TAB CHART */
+.chart-card { background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 18px; margin-bottom: 12px; }
+.chart-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; gap: 12px; flex-wrap: wrap; }
+.chart-title-block { }
+.chart-title { font-size: 14px; font-weight: 700; color: #1e293b; }
+.chart-subtitle { font-size: 11px; color: #94a3b8; margin-top: 3px; }
+.chart-controls { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+
+/* INDICATOR TOGGLE BUTTONS */
+.ind-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.ind-label { font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: .05em; white-space: nowrap; }
+.ind-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border-radius: 20px;
+  border: 1.5px solid #e2e8f0;
+  background: #f8fafc;
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all .15s;
+  user-select: none;
+}
+.ind-btn:hover { border-color: var(--c, #94a3b8); }
+.ind-btn.active {
+  background: color-mix(in srgb, var(--c, #94a3b8) 12%, white);
+  border-color: var(--c, #94a3b8);
+  color: color-mix(in srgb, var(--c, #94a3b8) 85%, #000);
+}
+.ind-swatch { width: 8px; height: 8px; border-radius: 50%; background: var(--c, #94a3b8); flex-shrink: 0; }
+.ctrl-btn {
+  padding: 5px 11px;
+  border-radius: 20px;
+  border: 1.5px solid #e2e8f0;
+  background: #f8fafc;
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all .15s;
+}
+.ctrl-btn.active { background: #1e293b; border-color: #1e293b; color: #fff; }
+
+/* CHART WRAP */
+.chart-wrap { position: relative; }
+
+/* PHASE LEGEND */
+.phase-legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; padding-top: 12px; border-top: 1px solid #f1f5f9; }
+.pl-group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.pl-divider { width: 1px; height: 16px; background: #e2e8f0; flex-shrink: 0; }
+.pl-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #64748b; }
+.pl-bar { width: 12px; height: 10px; border-radius: 2px; flex-shrink: 0; opacity: 0.6; }
+.pl-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; border: 1.5px solid #fff; box-shadow: 0 0 0 1px currentColor; }
+.pl-date { color: #94a3b8; font-size: 10px; }
+
+/* HISTORY TABLE */
+.hist-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.hist-table th { text-align: left; padding: 6px 8px; color: #64748b; font-weight: 600; font-size: 10px; border-bottom: 1px solid #e2e8f0; text-transform: uppercase; letter-spacing: .05em; }
+.hist-table td { padding: 7px 8px; border-bottom: 1px solid #f8fafc; vertical-align: middle; }
+.hist-table tr:last-child td { border-bottom: none; }
+.sig-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; }
+
+/* MISC */
+.loading { display: flex; align-items: center; justify-content: center; height: 200px; color: #64748b; font-size: 14px; }
+.error-msg { background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 14px; color: #dc2626; font-size: 13px; }
+.chart-note { font-size: 10px; color: #94a3b8; font-style: italic; margin-top: 8px; }
 </style>
 </head>
 <body>
-<script>
-const DATA = {
-  date: "June 15, 2026",
-  price: "$63,900",
-  week: "34",
-  phase: "EARLY BEAR",
-  signal: "🟡 STRONG ACCUMULATION — FIRST TRANCHE (EARLY BEAR ⚠️)",
-  signalColor: "#eab308",
-  action: "FIRST TRANCHE ONLY — valuation supportive (MVRV 0.35, near realized price, 200WMA test), dry powder preserved for Big 3 confirmation.",
-  big3: [
-    { name: "Hash Ribbons", color: "#eab308", status: "Jan 2026 buy signal fired; current status uncertain after extended decline to $59K" },
-    { name: "SOPR Recovery", color: "#eab308", status: "7d SMA at 0.899, below 1.0, recovering but not yet confirmed above" },
-    { name: "Monthly Stoch RSI", color: "#eab308", status: "Deep oversold (<25); K and D both low, no confirmed K/D cross yet" }
-  ],
-  bottomConf: "3/8",
-  bottomGreen: ["Weekly RSI Bullish Divergence", "SSR at 1-yr low", "STH Cost Basis Gap"],
-  bottomYellow: ["Realized losses peaked at $59K flush (may now be declining)", "Monthly Stoch RSI setup forming", "LTH supply ATH at 16.44M BTC (mid-bear pattern)"],
-  valuation: [
-    { label: "MVRV Z-Score", value: "~0.35", sub: "Extreme Accumulation" },
-    { label: "Puell Multiple", value: "0.79", sub: "Accumulation zone" },
-    { label: "Reserve Risk", value: "~0.001", sub: "Near historic low" },
-    { label: "Realized Price", value: "~$62–63K", sub: "+2–3% vs spot" },
-    { label: "Pi Cycle", value: "CLEAR", sub: "" }
-  ],
-  momentum: [
-    { label: "Monthly RSI", value: "35.1", color: "#22c55e" },
-    { label: "Weekly RSI", value: "~34", color: "#22c55e" },
-    { label: "Weekly MACD", value: "Bearish", color: "#f97316" },
-    { label: "Fear & Greed", value: "26 (Fear)", color: "#22c55e" },
-    { label: "200W MA", value: "~$60K — tagged & bounced", color: "#22c55e" }
-  ],
-  macro: [
-    { label: "ETF Flows", value: "Recovering — $86M inflow Jun 12", color: "#eab308" },
-    { label: "DXY", value: "~100 (slight headwind)", color: "#eab308" },
-    { label: "Global M2", value: "Modest expansion ~1.5%", color: "#eab308" },
-    { label: "Fed / FOMC", value: "Jun 16–17 (Warsh, uncertain)", color: "#eab308" }
-  ],
-  slackUrl: "https://keithevansworkspace.slack.com/archives/D08E39X6TEU/p1781375335000039"
-};
+<div id="loading" class="loading">Loading BTC dashboard…</div>
+<div id="app" style="display:none">
 
-function dot(color) {
-  return `<span class="dot" style="background:${color}"></span>`;
-}
-
-function render() {
-  const d = DATA;
-  const confTotal = parseInt(d.bottomConf.split('/')[0]);
-  const pips = Array.from({length: 8}, (_, i) =>
-    `<div class="conf-pip${i < confTotal ? ' active' : ''}"></div>`
-  ).join('');
-
-  const big3HTML = d.big3.map(t => `
-    <div class="big3-card">
-      <div class="big3-dot" style="background:${t.color}"></div>
-      <div><div class="big3-name">${t.name}</div><div class="big3-status">${t.status}</div></div>
-    </div>`).join('');
-
-  const greenTags = d.bottomGreen.map(s => `<span class="conf-tag conf-tag-green">${s}</span>`).join('');
-  const yellowTags = d.bottomYellow.map(s => `<span class="conf-tag conf-tag-yellow">${s}</span>`).join('');
-
-  const valCards = d.valuation.map(c => `
-    <div class="card">
-      <div class="card-label">${c.label}</div>
-      <div class="card-value">${c.value}</div>
-      ${c.sub ? `<div class="card-sub">${c.sub}</div>` : ''}
-    </div>`).join('');
-
-  const momCards = d.momentum.map(c => `
-    <div class="card">
-      <div class="card-label">${c.label}</div>
-      <div class="card-value">${dot(c.color)}${c.value}</div>
-    </div>`).join('');
-
-  const macroCards = d.macro.map(c => `
-    <div class="card">
-      <div class="card-label">${c.label}</div>
-      <div class="card-value" style="font-size:12px">${dot(c.color)}${c.value}</div>
-    </div>`).join('');
-
-  document.body.innerHTML = `
-    <div class="header">
-      <div class="signal-banner">
-        <div class="signal-dot" style="background:${d.signalColor}"></div>
-        ${d.signal}
-      </div>
-      <div class="header-meta">
-        <div><strong>BTC ${d.price}</strong> &nbsp;·&nbsp; Week ${d.week} from Oct 2025 ATH</div>
-        <div><span class="phase-badge">${d.phase}</span></div>
-      </div>
+  <div class="header">
+    <div class="signal-banner">
+      <div class="signal-dot" id="sig-dot" style="background:#94a3b8"></div>
+      <span id="sig-text">—</span>
     </div>
-
-    <div class="action-bar">
-      <span class="action-label">📋 Action</span>
-      <span class="action-text">${d.action}</span>
+    <div class="header-meta">
+      <div><strong id="hdr-price">—</strong> &nbsp;·&nbsp; Week <span id="hdr-week">—</span> from Oct 2025 ATH</div>
+      <div><span class="phase-badge phase-early" id="hdr-phase">—</span></div>
     </div>
+  </div>
 
+  <div class="action-bar">
+    <span class="action-label">📋 Action</span>
+    <span class="action-text" id="action-text">—</span>
+  </div>
+
+  <div id="big3-section" style="display:none">
     <div class="section-title">🎯 Big 3 Primary Triggers</div>
-    <div class="grid-3">${big3HTML}</div>
+    <div class="grid-3" id="big3-grid"></div>
+  </div>
 
+  <div class="tabs" style="margin-top:14px">
+    <button class="tab-btn active" id="tab-btn-today"   onclick="switchTab('today')">📊 Today</button>
+    <button class="tab-btn"        id="tab-btn-history" onclick="switchTab('history')">📈 History</button>
+  </div>
+
+  <!-- ===== TODAY TAB ===== -->
+  <div class="tab-panel active" id="tab-today">
     <div class="section-title">⚡ Bottom Confirmation</div>
     <div class="conf-bar">
       <div class="conf-header">
         <div>
-          <div class="conf-count">${d.bottomConf}</div>
+          <div class="conf-count" id="conf-count">0/8</div>
           <div style="font-size:11px;color:#64748b;margin-top:2px">indicators confirmed</div>
         </div>
-        <div class="conf-track">${pips}</div>
+        <div class="conf-track" id="conf-pips"></div>
       </div>
-      <div class="conf-tags">${greenTags}${yellowTags}</div>
+      <div class="conf-tags" id="conf-tags"></div>
     </div>
-
     <div class="section-title">📊 Valuation</div>
-    <div class="grid-auto">${valCards}</div>
-
-    <div class="section-title">🌡️ Momentum & Sentiment</div>
-    <div class="grid-auto">${momCards}</div>
-
+    <div class="grid-auto" id="val-grid"></div>
+    <div class="section-title">🌡️ Momentum &amp; Sentiment</div>
+    <div class="grid-auto" id="mom-grid"></div>
     <div class="section-title">💧 Macro</div>
-    <div class="grid-auto">${macroCards}</div>
-
+    <div class="grid-4" id="macro-grid"></div>
     <div class="tranche-guide">
       <span style="font-weight:600;color:#475569">Tranche guide:</span>
-      <span class="tg-item">${dot('#eab308')} BUY = first tranche</span>
+      <span class="tg-item"><span class="dot" style="background:#eab308"></span> BUY = first tranche</span>
       <span class="tg-item">🔔 ACCUMULATE = add</span>
-      <span class="tg-item">${dot('#22c55e')} BUY = heavy</span>
-      <span class="tg-item">${dot('#22c55e')}${dot('#22c55e')}${dot('#22c55e')} Big 3 all 🟢 = max allocation</span>
+      <span class="tg-item"><span class="dot" style="background:#22c55e"></span> BUY = heavy</span>
+      <span class="tg-item"><span class="dot" style="background:#22c55e"></span><span class="dot" style="background:#22c55e"></span><span class="dot" style="background:#22c55e"></span> Big 3 all green = max allocation</span>
+    </div>
+    <div class="timestamp" id="ts"></div>
+  </div>
+
+  <!-- ===== HISTORY TAB ===== -->
+  <div class="tab-panel" id="tab-history">
+
+    <div class="chart-card">
+      <div class="chart-head">
+        <div class="chart-title-block">
+          <div class="chart-title">BTC Price + Indicator Overlays</div>
+          <div class="chart-subtitle">Full bear market · phase zones · click indicators below to overlay against price <span id="price-status" style="color:#f97316;font-size:10px"></span></div>
+        </div>
+        <div class="chart-controls">
+          <button class="ctrl-btn" id="log-btn" onclick="toggleLog()">Log Scale</button>
+        </div>
+      </div>
+
+      <div class="ind-row">
+        <span class="ind-label">Overlay:</span>
+        <button class="ind-btn" id="btn-mvrv"  style="--c:#8b5cf6" onclick="toggleInd('mvrv')"> <span class="ind-swatch"></span>MVRV Z-Score</button>
+        <button class="ind-btn" id="btn-puell" style="--c:#06b6d4" onclick="toggleInd('puell')"><span class="ind-swatch"></span>Puell Multiple</button>
+        <button class="ind-btn" id="btn-fg"    style="--c:#f59e0b" onclick="toggleInd('fg')">   <span class="ind-swatch"></span>Fear &amp; Greed</button>
+        <button class="ind-btn" id="btn-conf"  style="--c:#22c55e" onclick="toggleInd('conf')"> <span class="ind-swatch"></span>Bottom Conf</button>
+        <button class="ind-btn" id="btn-rsi"   style="--c:#f43f5e" onclick="toggleInd('rsi')">  <span class="ind-swatch"></span>Weekly RSI</button>
+      </div>
+
+      <div class="chart-wrap" style="height:440px">
+        <canvas id="chart-main"></canvas>
+      </div>
+
+      <div class="phase-legend">
+        <div class="pl-group">
+          <div class="pl-item"><div class="pl-bar" style="background:#7c3aed"></div>Early Bear</div>
+          <div class="pl-item"><div class="pl-bar" style="background:#f97316"></div>Entering Window <span class="pl-date">(W35 ~Jun 22)</span></div>
+          <div class="pl-item"><div class="pl-bar" style="background:#22c55e"></div>Bottom Window <span class="pl-date">(W44–58 ~Aug–Dec)</span></div>
+          <div class="pl-item"><div class="pl-bar" style="background:#ef4444"></div>Extended Bear</div>
+        </div>
+        <div class="pl-divider"></div>
+        <div class="pl-group">
+          <span style="font-size:10px;color:#94a3b8;font-weight:600">SIGNAL DOTS:</span>
+          <div class="pl-item"><div class="pl-dot" style="color:#16a34a;background:#16a34a"></div>Extreme Accum</div>
+          <div class="pl-item"><div class="pl-dot" style="color:#22c55e;background:#22c55e"></div>Strong Accum</div>
+          <div class="pl-item"><div class="pl-dot" style="color:#3b82f6;background:#3b82f6"></div>Accumulate</div>
+          <div class="pl-item"><div class="pl-dot" style="color:#94a3b8;background:#94a3b8"></div>Watch/Neutral</div>
+          <div class="pl-item"><div class="pl-dot" style="color:#f97316;background:#f97316"></div>Elevated/Euphoric</div>
+        </div>
+      </div>
+      <div class="chart-note">Indicator overlays are normalized 0–1 on the right axis. Tooltip shows actual values. Vertical dashed lines = cycle phase transitions.</div>
     </div>
 
-    <div class="timestamp">Last updated: ${d.date}</div>
-    <div class="slack-link"><a href="${d.slackUrl}" target="_blank">View full alert in Slack →</a></div>
-  `;
+    <div class="chart-card">
+      <div class="chart-title" style="font-size:13px;font-weight:700;margin-bottom:12px">Signal Log <span style="font-size:11px;font-weight:400;color:#94a3b8">— most recent 14 tracked days</span></div>
+      <div id="history-table-wrap"><p style="color:#94a3b8;font-size:13px;padding:12px 0">No history yet — builds as the daily tracker runs.</p></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// =====================================================================
+// EMBEDDED HISTORY DATA — appended daily by scheduled task
+// {date, price, mvrv, puell, fearGreed, bottomConf, signal, big3, week, phase}
+// signal: EXTREME_ACCUM|STRONG_ACCUM|ACCUM_BOTTOM|WATCH|NEUTRAL|ELEVATED|EUPHORIC
+// phase:  EARLY_BEAR|ENTERING_WINDOW|BOTTOM_WINDOW|EXTENDED
+// =====================================================================
+const HISTORY_DATA = [
+  {"date":"2026-06-16","price":66340,"mvrv":0.36,"puell":0.75,"fearGreed":27,"bottomConf":2,"signal":"STRONG_ACCUM","big3":0,"week":34,"phase":"EARLY_BEAR"}
+];
+
+// =====================================================================
+// CYCLE PHASE BOUNDARIES (based on ATH Oct 20, 2025 + historical weeks)
+// =====================================================================
+const ATH_DATE   = '2025-10-20';
+const W35_DATE   = '2026-06-22';  // Week 35: entering bottom formation window
+const W44_DATE   = '2026-08-24';  // Week 44: bottom window start
+const W58_DATE   = '2026-12-01';  // Week 58: extended bear / end of historical window
+const CHART_END  = '2027-04-01';  // Chart horizon
+
+const PHASE_ZONES = [
+  { start: ATH_DATE, end: W35_DATE,  fill: 'rgba(124,58,237,0.05)',  label: 'Early Bear' },
+  { start: W35_DATE, end: W44_DATE,  fill: 'rgba(249,115,22,0.07)',  label: 'Entering Window' },
+  { start: W44_DATE, end: W58_DATE,  fill: 'rgba(34,197,94,0.08)',   label: 'Bottom Window' },
+  { start: W58_DATE, end: CHART_END, fill: 'rgba(239,68,68,0.05)',   label: 'Extended Bear' },
+];
+
+const V_MARKERS = [
+  { date: ATH_DATE,  color: '#ef4444', label: 'ATH ~$126K', dash: [4,2] },
+  { date: W35_DATE,  color: '#f97316', label: 'W35',        dash: [5,3] },
+  { date: W44_DATE,  color: '#22c55e', label: 'W44',        dash: [5,3] },
+  { date: W58_DATE,  color: '#8b5cf6', label: 'W58',        dash: [5,3] },
+];
+
+// =====================================================================
+// SIGNAL COLORS
+// =====================================================================
+const SIG_CLR = {
+  EXTREME_ACCUM: '#16a34a',
+  STRONG_ACCUM:  '#22c55e',
+  ACCUM_BOTTOM:  '#3b82f6',
+  WATCH:         '#94a3b8',
+  NEUTRAL:       '#cbd5e1',
+  ELEVATED:      '#f97316',
+  EUPHORIC:      '#ef4444',
+};
+const CLR = { green:'#22c55e', yellow:'#eab308', orange:'#f97316', red:'#ef4444', gray:'#94a3b8' };
+
+function sigColor(s) {
+  if (!s) return SIG_CLR.NEUTRAL;
+  const u = s.toUpperCase();
+  if (u.includes('EXTREME')) return SIG_CLR.EXTREME_ACCUM;
+  if (u.includes('STRONG'))  return SIG_CLR.STRONG_ACCUM;
+  if (u.includes('ACCUM'))   return SIG_CLR.ACCUM_BOTTOM;
+  if (u.includes('WATCH'))   return SIG_CLR.WATCH;
+  if (u.includes('ELEVATED'))return SIG_CLR.ELEVATED;
+  if (u.includes('EUPHORIC'))return SIG_CLR.EUPHORIC;
+  return SIG_CLR.NEUTRAL;
+}
+function sigLabel(s) {
+  if (!s) return '—';
+  const u = s.toUpperCase();
+  if (u.includes('EXTREME')) return 'Extreme Accum';
+  if (u.includes('STRONG'))  return 'Strong Accum';
+  if (u.includes('ACCUM'))   return 'Accumulate';
+  if (u.includes('WATCH'))   return 'Watch';
+  if (u.includes('ELEVATED'))return 'Elevated Risk';
+  if (u.includes('EUPHORIC'))return 'Euphoric Risk';
+  return 'Neutral';
+}
+function fmtDate(d) {
+  if (!d) return '';
+  const [,m,day] = d.split('-');
+  return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(m)-1]+' '+parseInt(day);
+}
+function fmtMonthYear(d) {
+  const [y,m] = d.split('-');
+  return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(m)-1]+' '+y;
+}
+function dot(c) { return `<span class="dot" style="background:${CLR[c]||CLR.gray}"></span>`; }
+
+// =====================================================================
+// SLACK PARSER (unchanged from v2)
+// =====================================================================
+function colorBefore(text, label) {
+  const idx = text.indexOf(label);
+  if (idx===-1) return null;
+  const b = text.slice(Math.max(0,idx-50), idx);
+  if (b.includes('large_green_circle'))  return 'green';
+  if (b.includes('large_orange_circle')) return 'orange';
+  if (b.includes('large_yellow_circle')) return 'yellow';
+  if (b.includes('red_circle'))          return 'red';
+  return 'gray';
+}
+function rsiColor(v) { const n=parseFloat(v); if(isNaN(n))return'gray'; if(n<40)return'green'; if(n<75)return'yellow'; if(n<85)return'orange'; return'red'; }
+function fgColor(v)  { const n=parseInt(v);   if(isNaN(n))return'gray'; if(n<20)return'green'; if(n<65)return'yellow'; if(n<85)return'orange'; return'red'; }
+function phaseClass(ph) { const p=(ph||'').toUpperCase(); if(p.includes('BOTTOM WINDOW'))return'phase-bottom'; if(p.includes('ENTERING'))return'phase-entering'; if(p.includes('EXTENDED'))return'phase-extended'; return'phase-early'; }
+function signalDotColor(sig) { const s=(sig||'').toUpperCase(); if(s.includes('STRONG ACCUM')||s.includes('EXTREME ACCUM'))return'green'; if(s.includes('BUY')||s.includes('ACCUM'))return'yellow'; if(s.includes('REDUCE'))return'orange'; if(s.includes('SELL'))return'red'; return'gray'; }
+
+function parseSlack(raw) {
+  const d = {};
+  const priceM=raw.match(/BTC \$([\d,]+)/); d.price=priceM?'$'+priceM[1]:'N/C';
+  const weekM=raw.match(/Week (\d+) from/); d.week=weekM?weekM[1]:'N/C';
+  const pu=raw.toUpperCase();
+  d.phase = pu.includes('BOTTOM WINDOW')?'BOTTOM WINDOW': pu.includes('ENTERING WINDOW')?'ENTERING WINDOW': pu.includes('EXTENDED')?'EXTENDED':'EARLY BEAR';
+  const fl=raw.split('\n')[0];
+  d.signalDotColor = fl.includes('large_green_circle')?'green': fl.includes('large_orange_circle')?'orange': fl.includes('large_yellow_circle')?'yellow': fl.includes('red_circle')?'red':'gray';
+  d.signal = fl.replace(/:[\w_]+:/g,'').replace(/[_*~]/g,'').replace(/[—-]/g,'').trim().slice(0,60);
+  d.big3=[];
+  if(raw.includes('BIG 3')) {
+    [{name:'Hash Ribbons',key:'Hash Ribbons'},{name:'SOPR Recovery',key:'SOPR Recovery'},{name:'Monthly Stoch RSI',key:'Monthly Stoch RSI'}].forEach(({name,key})=>{
+      const c=colorBefore(raw,key); if(c){const sm=raw.match(new RegExp(key+'[^\\n]*?[\\u2014\\-]\\s*([^\\n]+)')); d.big3.push({name,color:c,status:sm?sm[1].replace(/:[\w_]+:/g,'').trim().slice(0,80):''});}
+    });
+  }
+  const m=(r,def='N/C')=>{const x=raw.match(r);return x?x[1]:def;};
+  d.mvrv=m(/MVRV ([\d.]+)/); d.mvrvZone=m(/MVRV [\d.]+ \(([^)]+)\)/,''); d.puell=m(/Puell ([\d.]+)/); d.reserveRisk=m(/Reserve Risk ([^\s·\n]+)/);
+  d.realizedPrice=m(/Realized (~?\$[\d,]+)/); d.realizedDiff=m(/Realized ~?\$[\d,]+ \(([^)]+)\)/,'');
+  d.piCycle=raw.includes('Pi Cycle TRIGGERED')?'TRIGGERED ⚠️':raw.includes('Pi Cycle')?'CLEAR':'N/C';
+  const bcM=raw.match(/BOTTOM CONF:\s*(\d+\/\d+)/); d.bottomConf=bcM?bcM[1]:'0/8';
+  const bcLM=raw.match(/BOTTOM CONF:[^\n]+—\s*([^\n]+)/); d.bottomGreen=bcLM?bcLM[1].split(/[·,]/).map(s=>s.replace(/:[\w_]+:/g,'').trim()).filter(Boolean):[];
+  const suppM=raw.match(/Supporting[^:]*:\s*([^\n]+)/); d.bottomYellow=suppM?suppM[1].split('·').map(s=>s.replace(/:[\w_]+:/g,'').trim()).filter(Boolean):[];
+  const mrsiM=raw.match(/Monthly RSI[^·\n]*?~?([\d.]+)/); d.monthlyRsi=mrsiM?'~'+mrsiM[1]:'N/C'; d.monthlyRsiColor=rsiColor(mrsiM?mrsiM[1]:'');
+  const wrsiM=raw.match(/Weekly RSI[^·\n]*?~?([\d.]+)/); d.weeklyRsi=wrsiM?'~'+wrsiM[1]:'N/C'; d.weeklyRsiColor=rsiColor(wrsiM?wrsiM[1]:'');
+  d.macd=raw.includes('MACD bullish')?'Bullish':raw.includes('MACD bearish')?'Bearish':'N/C'; d.macdColor=d.macd==='Bullish'?'green':d.macd==='Bearish'?'orange':'yellow';
+  const fgM=raw.match(/F&G (\d+)/); d.fearGreed=fgM?fgM[1]:'N/C'; d.fearGreedColor=fgColor(d.fearGreed);
+  const ma200M=raw.match(/200WMA ([^\n·]+)/); d.ma200=ma200M?ma200M[1].trim().slice(0,50):'N/C'; d.ma200Color=(raw.includes('tagged')||raw.includes('testing')||raw.includes('below'))?'green':'yellow';
+  const etfM=raw.match(/ETF[:\s]+([^\n·]{10,60})/); d.etf=etfM?etfM[1].trim():'N/C'; d.etfColor=raw.includes('inflow')?'yellow':'orange'; if(raw.match(/\$\d+[BM].*inflow/)&&!raw.includes('outflow'))d.etfColor='green';
+  const dxyM=raw.match(/DXY[^·\n]+/); d.dxy=dxyM?dxyM[0].replace('DXY','').trim().slice(0,40):'N/C'; d.dxyColor=(raw.includes('DXY')&&raw.includes('bullish'))||raw.includes('down from')?'green':'yellow';
+  const m2M=raw.match(/M2 ([^\n·]+)/); d.m2=m2M?m2M[1].trim().slice(0,40):'N/C'; d.m2Color=raw.includes('expanding')?'green':raw.includes('contracting')?'orange':'yellow';
+  d.fed=raw.includes('hawkish')?'Hawkish':raw.includes('easing')?'Easing':raw.includes('on hold')?'On hold':'N/C'; d.fedColor=d.fed==='Easing'?'green':d.fed==='On hold'?'yellow':'orange';
+  const actM=raw.match(/ACTION:\s*\*{0,2}([^\n*]+)/); d.action=actM?actM[1].replace(/:[\w_]+:/g,'').replace(/[*_]/g,'').trim():'N/C';
+  d.timestamp=new Date().toLocaleString();
+  return d;
 }
 
-render();
+// =====================================================================
+// RENDER TODAY TAB
+// =====================================================================
+function renderToday(d) {
+  document.getElementById('sig-dot').style.background = CLR[d.signalDotColor]||CLR.gray;
+  document.getElementById('sig-text').textContent = d.signal||'—';
+  document.getElementById('hdr-price').textContent = d.price||'—';
+  document.getElementById('hdr-week').textContent  = d.week||'—';
+  const pb=document.getElementById('hdr-phase'); pb.textContent=d.phase||'—'; pb.className='phase-badge '+phaseClass(d.phase);
+  document.getElementById('action-text').textContent = d.action||'—';
+  if(d.big3&&d.big3.length){ document.getElementById('big3-section').style.display=''; document.getElementById('big3-grid').innerHTML=d.big3.map(t=>`<div class="big3-card"><div class="big3-dot" style="background:${CLR[t.color]||CLR.gray}"></div><div><div class="big3-name">${t.name}</div><div class="big3-status">${t.status}</div></div></div>`).join(''); }
+  const ct=parseInt((d.bottomConf||'0/8').split('/')[0])||0;
+  document.getElementById('conf-count').textContent=d.bottomConf||'0/8';
+  document.getElementById('conf-pips').innerHTML=Array.from({length:8},(_,i)=>`<div class="conf-pip${i<ct?' active':''}"></div>`).join('');
+  const gtags=(d.bottomGreen||[]).map(s=>`<span class="conf-tag conf-tag-green">${s}</span>`).join('');
+  const ytags=(d.bottomYellow||[]).map(s=>`<span class="conf-tag conf-tag-yellow">${s}</span>`).join('');
+  document.getElementById('conf-tags').innerHTML=gtags+ytags||'<span style="color:#94a3b8;font-size:12px">No indicators firing</span>';
+  document.getElementById('val-grid').innerHTML=[
+    {label:'MVRV Z-Score',value:d.mvrv,sub:d.mvrvZone},{label:'Puell Multiple',value:d.puell,sub:''},{label:'Reserve Risk',value:d.reserveRisk,sub:''},{label:'Realized Price',value:d.realizedPrice,sub:d.realizedDiff},{label:'Pi Cycle',value:d.piCycle,sub:''},
+  ].map(c=>`<div class="card"><div class="card-label">${c.label}</div><div class="card-value">${c.value||'N/C'}</div>${c.sub?`<div class="card-sub">${c.sub}</div>`:''}</div>`).join('');
+  document.getElementById('mom-grid').innerHTML=[
+    {label:'Monthly RSI',value:d.monthlyRsi,color:d.monthlyRsiColor},{label:'Weekly RSI',value:d.weeklyRsi,color:d.weeklyRsiColor},{label:'MACD',value:d.macd,color:d.macdColor},{label:'Fear & Greed',value:d.fearGreed,color:d.fearGreedColor},{label:'200W MA',value:d.ma200,color:d.ma200Color},
+  ].map(c=>`<div class="card"><div class="card-label">${c.label}</div><div class="card-value">${dot(c.color)}${c.value||'N/C'}</div></div>`).join('');
+  document.getElementById('macro-grid').innerHTML=[
+    {label:'ETF Flows',value:d.etf,color:d.etfColor},{label:'DXY',value:d.dxy,color:d.dxyColor},{label:'Global M2',value:d.m2,color:d.m2Color},{label:'Fed Policy',value:d.fed,color:d.fedColor},
+  ].map(c=>`<div class="card"><div class="card-label">${c.label}</div><div class="card-value" style="font-size:12px;font-weight:600">${dot(c.color)}${c.value||'N/C'}</div></div>`).join('');
+  document.getElementById('ts').textContent='Last updated: '+(d.timestamp||new Date().toLocaleString());
+}
+
+// =====================================================================
+// HISTORY CHART STATE
+// =====================================================================
+let mainChart = null;
+let isLogScale = false;
+let allDates = [];
+let histMap  = {};
+
+const IND_CFG = {
+  mvrv:  { key:'mvrv',       norm:10,  color:'#8b5cf6', label:'MVRV Z-Score',   fmt: v=>'MVRV Z: '+(v*10).toFixed(2) },
+  puell: { key:'puell',      norm:4,   color:'#06b6d4', label:'Puell Multiple', fmt: v=>'Puell: '+(v*4).toFixed(2) },
+  fg:    { key:'fearGreed',  norm:100, color:'#f59e0b', label:'Fear & Greed',   fmt: v=>'F&G: '+Math.round(v*100) },
+  conf:  { key:'bottomConf', norm:8,   color:'#22c55e', label:'Bottom Conf',    fmt: v=>'Conf: '+Math.round(v*8)+'/8' },
+  rsi:   { key:'weeklyRsi',  norm:100, color:'#f43f5e', label:'Weekly RSI',     fmt: v=>'W RSI: '+Math.round(v*100) },
+};
+
+// =====================================================================
+// BUILD DATE AXIS (CG + history + future through CHART_END)
+// =====================================================================
+function buildAllDates(cgMap) {
+  const set = new Set(Object.keys(cgMap));
+  HISTORY_DATA.forEach(h => set.add(h.date));
+  // Generate daily dates from today → CHART_END
+  const today = new Date(); today.setHours(0,0,0,0);
+  const end   = new Date(CHART_END);
+  for (let d = new Date(today); d <= end; d.setDate(d.getDate()+1)) {
+    set.add(d.toISOString().slice(0,10));
+  }
+  return [...set].sort();
+}
+
+// =====================================================================
+// CUSTOM CHART.JS PLUGINS
+// =====================================================================
+function makePhaseBgPlugin(datesRef) {
+  return {
+    id: 'phaseBg',
+    beforeDraw(chart) {
+      const { ctx, chartArea: { left, right, top, bottom }, scales: { x } } = chart;
+      if (!x) return;
+      PHASE_ZONES.forEach(zone => {
+        const si = datesRef.indexOf(zone.start);
+        const ei = datesRef.indexOf(zone.end);
+        if (si < 0 || ei < 0) return;
+        const x0 = Math.max(x.getPixelForValue(si), left);
+        const x1 = Math.min(x.getPixelForValue(ei), right);
+        if (x1 <= x0) return;
+        ctx.save();
+        ctx.fillStyle = zone.fill;
+        ctx.fillRect(x0, top, x1 - x0, bottom - top);
+        ctx.restore();
+      });
+    }
+  };
+}
+
+function makeVMarkerPlugin(datesRef) {
+  return {
+    id: 'vMarkers',
+    afterDraw(chart) {
+      const { ctx, chartArea: { top, bottom }, scales: { x } } = chart;
+      if (!x) return;
+      const todayStr = new Date().toISOString().slice(0,10);
+      // Draw "Today" line
+      const ti = datesRef.indexOf(todayStr);
+      if (ti >= 0) {
+        const xp = x.getPixelForValue(ti);
+        ctx.save();
+        ctx.beginPath();
+        ctx.setLineDash([2,2]);
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = 1;
+        ctx.moveTo(xp, top); ctx.lineTo(xp, bottom);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#64748b';
+        ctx.font = 'bold 9px system-ui';
+        ctx.fillText('Today', xp+3, top+22);
+        ctx.restore();
+      }
+      // Draw phase markers
+      V_MARKERS.forEach(m => {
+        const idx = datesRef.indexOf(m.date);
+        if (idx < 0) return;
+        const xp = x.getPixelForValue(idx);
+        ctx.save();
+        ctx.beginPath();
+        ctx.setLineDash(m.dash);
+        ctx.strokeStyle = m.color;
+        ctx.lineWidth = 1.5;
+        ctx.moveTo(xp, top); ctx.lineTo(xp, bottom);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = m.color;
+        ctx.font = 'bold 9px system-ui';
+        ctx.fillText(m.label, xp+3, top+10);
+        ctx.restore();
+      });
+    }
+  };
+}
+
+// =====================================================================
+// BUILD & RENDER MAIN CHART
+// =====================================================================
+async function renderHistory() {
+  // Build histMap
+  histMap = {};
+  HISTORY_DATA.forEach(h => { histMap[h.date] = h; });
+
+  // Fetch BTC price history — try CoinGecko, then Binance, then signal-only mode
+  let cgMap = {};
+  const priceStatus = document.getElementById('price-status');
+
+  // Source 1: Kraken — public CORS, no key, ~720 daily bars
+  const tryKraken = async () => {
+    const res = await fetch('https://api.kraken.com/0/public/OHLC?pair=XBTUSD&interval=1440');
+    if (!res.ok) throw new Error('Kraken '+res.status);
+    const data = await res.json();
+    if (data.error && data.error.length) throw new Error('Kraken err');
+    const rows = data.result?.XXBTZUSD || data.result?.XBTUSD || Object.values(data.result||{})[0];
+    if (!Array.isArray(rows) || rows.length < 10) throw new Error('Kraken empty');
+    const m = {};
+    rows.forEach(([ts,,,, close]) => { m[new Date(ts*1000).toISOString().slice(0,10)] = Math.round(parseFloat(close)); });
+    return m;
+  };
+
+  // Source 2: Bitstamp — public CORS, daily OHLC, up to 1000 bars
+  const tryBitstamp = async () => {
+    const res = await fetch('https://www.bitstamp.net/api/v2/ohlc/btcusd/?step=86400&limit=1000');
+    if (!res.ok) throw new Error('Bitstamp '+res.status);
+    const data = await res.json();
+    const rows = data?.data?.ohlc;
+    if (!Array.isArray(rows) || rows.length < 10) throw new Error('Bitstamp empty');
+    const m = {};
+    rows.forEach(r => { m[new Date(parseInt(r.timestamp)*1000).toISOString().slice(0,10)] = Math.round(parseFloat(r.close)); });
+    return m;
+  };
+
+  // Source 3: Bybit — public CORS, 365 daily bars
+  const tryBybit = async () => {
+    const res = await fetch('https://api.bybit.com/v5/market/kline?category=spot&symbol=BTCUSDT&interval=D&limit=365');
+    if (!res.ok) throw new Error('Bybit '+res.status);
+    const data = await res.json();
+    const rows = data?.result?.list;
+    if (!Array.isArray(rows) || rows.length < 10) throw new Error('Bybit empty');
+    const m = {};
+    rows.forEach(([ts,,,, close]) => { m[new Date(parseInt(ts)).toISOString().slice(0,10)] = Math.round(parseFloat(close)); });
+    return m;
+  };
+
+  const sources = [
+    { fn: tryKraken,   name: '' },
+    { fn: tryBitstamp, name: '(Bitstamp)' },
+    { fn: tryBybit,    name: '(Bybit)' },
+  ];
+  for (const src of sources) {
+    try { cgMap = await src.fn(); if (priceStatus) priceStatus.textContent = src.name; break; }
+    catch(_) { /* try next */ }
+  }
+  if (!Object.keys(cgMap).length && priceStatus) priceStatus.textContent = '⚠️ Price feed unavailable — showing signals only';
+
+  // Always include our tracked prices (fills in recent days + acts as floor)
+  HISTORY_DATA.forEach(h => { if (!cgMap[h.date]) cgMap[h.date] = h.price; });
+
+  allDates = buildAllDates(cgMap);
+
+  // Price dataset — null for future dates
+  const priceData = allDates.map(d => cgMap[d] ?? null);
+
+  // Signal dot datasets — one per signal tier
+  const sigGroups = {};
+  HISTORY_DATA.forEach(h => {
+    const c = sigColor(h.signal);
+    if (!sigGroups[c]) sigGroups[c] = {};
+    sigGroups[c][h.date] = cgMap[h.date] ?? h.price;
+  });
+  const sigDatasets = Object.entries(sigGroups).map(([color, dateMap]) => ({
+    type: 'line',
+    label: '__sig__'+color,
+    data: allDates.map(d => dateMap[d] ?? null),
+    borderColor: 'transparent',
+    backgroundColor: color,
+    pointBackgroundColor: color,
+    pointBorderColor: '#fff',
+    pointBorderWidth: 1.5,
+    pointRadius: ctx => dateMap[allDates[ctx.dataIndex]] != null ? 8 : 0,
+    pointHoverRadius: 10,
+    showLine: false,
+    fill: false,
+    yAxisID: 'y',
+    order: 0,
+    spanGaps: false,
+    datalabels: { display: false }
+  }));
+
+  // Indicator datasets (all hidden initially, normalized 0–1)
+  const indDatasets = Object.entries(IND_CFG).map(([id, cfg]) => ({
+    type: 'line',
+    label: '__ind__'+id,
+    data: allDates.map(d => {
+      const h = histMap[d];
+      if (!h) return null;
+      const raw = h[cfg.key];
+      if (raw == null || raw === 'N/C') return null;
+      const num = parseFloat(raw);
+      return isNaN(num) ? null : num / cfg.norm;
+    }),
+    borderColor: cfg.color,
+    backgroundColor: cfg.color + '18',
+    borderWidth: 2,
+    pointRadius: ctx => histMap[allDates[ctx.dataIndex]] ? 4 : 0,
+    pointBackgroundColor: cfg.color,
+    pointBorderColor: '#fff',
+    pointBorderWidth: 1,
+    fill: false,
+    tension: 0.3,
+    spanGaps: false,
+    yAxisID: 'yInd',
+    hidden: true,
+    order: 1
+  }));
+
+  // Tick labels: show first of each month
+  const tickLabels = allDates.map((d,i) => {
+    if (!d) return '';
+    const [y,m,day] = d.split('-');
+    return parseInt(day)===1 ? fmtMonthYear(d) : '';
+  });
+
+  // Register custom plugins
+  const phaseBgPlugin = makePhaseBgPlugin(allDates);
+  const vMarkerPlugin = makeVMarkerPlugin(allDates);
+
+  if (mainChart) { mainChart.destroy(); mainChart = null; }
+
+  const ctx = document.getElementById('chart-main').getContext('2d');
+  mainChart = new Chart(ctx, {
+    type: 'line',
+    plugins: [phaseBgPlugin, vMarkerPlugin],
+    data: {
+      labels: allDates,
+      datasets: [
+        {
+          label: '__price__',
+          data: priceData,
+          borderColor: '#60a5fa',
+          borderWidth: 1.5,
+          pointRadius: 0,
+          tension: 0.1,
+          fill: false,
+          spanGaps: true,
+          yAxisID: 'y',
+          order: 5
+        },
+        ...sigDatasets,
+        ...indDatasets
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      animation: { duration: 300 },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(15,23,42,0.92)',
+          titleColor: '#e2e8f0',
+          bodyColor: '#94a3b8',
+          borderColor: '#1e293b',
+          borderWidth: 1,
+          padding: 10,
+          callbacks: {
+            title: items => {
+              const d = allDates[items[0].dataIndex];
+              return d ? fmtDate(d) + ' ' + d.slice(0,4) : '';
+            },
+            label: item => {
+              const lbl = item.dataset.label||'';
+              if (lbl === '__price__') {
+                return item.raw != null ? '  BTC  $'+Math.round(item.raw).toLocaleString() : null;
+              }
+              if (lbl.startsWith('__sig__') || lbl.startsWith('__ind__')) return null;
+              return null;
+            },
+            afterBody: items => {
+              const d = allDates[items[0].dataIndex];
+              const h = histMap[d];
+              if (!h) return [];
+              const lines = [];
+              lines.push('  Signal: '+sigLabel(h.signal));
+              // Show active indicators
+              Object.entries(IND_CFG).forEach(([id, cfg]) => {
+                const dsIdx = mainChart.data.datasets.findIndex(ds => ds.label==='__ind__'+id);
+                if (dsIdx >= 0 && !mainChart.data.datasets[dsIdx].hidden) {
+                  const raw = h[cfg.key];
+                  if (raw != null) lines.push('  '+cfg.label+': '+raw);
+                }
+              });
+              return lines;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: {
+            maxRotation: 0,
+            callback: (_,i) => tickLabels[i]||null,
+            autoSkip: false,
+            font: { size: 10 },
+            color: '#94a3b8',
+            maxTicksLimit: 30
+          },
+          grid: { color: '#f1f5f9', lineWidth: 1 }
+        },
+        y: {
+          position: 'left',
+          type: isLogScale ? 'logarithmic' : 'linear',
+          ticks: {
+            callback: v => v>=1000?'$'+(v/1000).toFixed(0)+'K':'$'+v,
+            font: { size: 10 },
+            color: '#94a3b8',
+            maxTicksLimit: 8
+          },
+          grid: { color: '#f1f5f9' }
+        },
+        yInd: {
+          position: 'right',
+          min: 0,
+          max: 1,
+          display: 'auto',
+          ticks: {
+            callback: v => (v*100).toFixed(0)+'%',
+            font: { size: 10 },
+            color: '#94a3b8',
+            maxTicksLimit: 6
+          },
+          grid: { display: false }
+        }
+      }
+    }
+  });
+
+  buildHistoryTable();
+}
+
+// =====================================================================
+// INDICATOR TOGGLE
+// =====================================================================
+function toggleInd(id) {
+  if (!mainChart) return;
+  const dsIdx = mainChart.data.datasets.findIndex(ds => ds.label === '__ind__'+id);
+  if (dsIdx < 0) return;
+  const nowHidden = !mainChart.data.datasets[dsIdx].hidden;
+  mainChart.data.datasets[dsIdx].hidden = nowHidden;
+  const btn = document.getElementById('btn-'+id);
+  if (btn) btn.classList.toggle('active', !nowHidden);
+  // Show yInd axis only if at least one indicator is active
+  const anyActive = Object.keys(IND_CFG).some(k => {
+    const i = mainChart.data.datasets.findIndex(ds => ds.label==='__ind__'+k);
+    return i>=0 && !mainChart.data.datasets[i].hidden;
+  });
+  mainChart.options.scales.yInd.display = anyActive ? true : 'auto';
+  mainChart.update();
+}
+
+function toggleLog() {
+  if (!mainChart) return;
+  isLogScale = !isLogScale;
+  mainChart.options.scales.y.type = isLogScale ? 'logarithmic' : 'linear';
+  mainChart.update();
+  document.getElementById('log-btn').classList.toggle('active', isLogScale);
+}
+
+// =====================================================================
+// HISTORY TABLE
+// =====================================================================
+function buildHistoryTable() {
+  const rows = [...HISTORY_DATA].reverse().slice(0,14);
+  if (!rows.length) return;
+  document.getElementById('history-table-wrap').innerHTML = `
+    <table class="hist-table">
+      <thead><tr>
+        <th>Date</th><th style="text-align:right">Price</th>
+        <th style="text-align:right">MVRV</th><th style="text-align:right">Puell</th>
+        <th style="text-align:right">F&amp;G</th><th style="text-align:right">Conf</th>
+        <th style="text-align:right">Big3</th><th>Signal</th><th style="text-align:right">Wk</th>
+      </tr></thead>
+      <tbody>${rows.map(h=>`
+        <tr>
+          <td style="color:#64748b">${fmtDate(h.date)}</td>
+          <td style="text-align:right;font-weight:700">$${h.price.toLocaleString()}</td>
+          <td style="text-align:right">${h.mvrv}</td>
+          <td style="text-align:right">${h.puell}</td>
+          <td style="text-align:right">${h.fearGreed}</td>
+          <td style="text-align:right">${h.bottomConf}/8</td>
+          <td style="text-align:right">${h.big3}/3</td>
+          <td><span class="sig-pill"><span style="width:8px;height:8px;border-radius:50%;background:${sigColor(h.signal)};display:inline-block;margin-right:4px"></span>${sigLabel(h.signal)}</span></td>
+          <td style="text-align:right;color:#94a3b8">${h.week}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+// =====================================================================
+// TAB SWITCHING
+// =====================================================================
+let histLoaded = false;
+function switchTab(tab) {
+  ['today','history'].forEach(t => {
+    document.getElementById('tab-btn-'+t).classList.toggle('active', t===tab);
+    document.getElementById('tab-'+t).classList.toggle('active', t===tab);
+  });
+  if (tab==='history' && !histLoaded) {
+    histLoaded = true;
+    setTimeout(() => renderHistory(), 60);
+  }
+}
+
+// =====================================================================
+// INIT — load latest Slack alert
+// =====================================================================
+async function load() {
+  try {
+    const r = await window.cowork.callMcpTool(
+      'mcp__0e2465af-5649-4cda-a8a5-59aaf35be070__slack_read_channel',
+      { channel_id: 'D08E39X6TEU', limit: 3, response_format: 'concise' }
+    );
+    let raw;
+    try {
+      const p = r.structuredContent ?? JSON.parse(r.content[0].text);
+      raw = p.messages ?? JSON.stringify(p);
+    } catch(_) { raw = r.content?.[0]?.text ?? JSON.stringify(r); }
+    if (!raw) throw new Error('No message content from Slack');
+    renderToday(parseSlack(raw));
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+  } catch(err) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('app').innerHTML = `<div class="error-msg"><strong>Error:</strong> ${err.message}</div>`;
+    document.getElementById('app').style.display = 'block';
+  }
+}
+
+function waitForCowork(n) {
+  if (window.cowork?.callMcpTool) { load(); }
+  else if (n>0) { setTimeout(()=>waitForCowork(n-1), 300); }
+  else { document.getElementById('loading').innerHTML='<div class="error-msg">Cowork tools not available — try reopening.</div>'; }
+}
+waitForCowork(30);
 </script>
 </body>
 </html>
