@@ -840,77 +840,44 @@ function switchTab(tab) {
 }
 
 // =====================================================================
-// STANDALONE MODE — render Today from latest HISTORY_DATA entry
+// STANDALONE MODE — show history chart + simple summary bar
+// Avoids calling renderToday() which depends on Slack-parsed data
 // =====================================================================
 function renderFromHistory() {
-  const latest = HISTORY_DATA.length ? HISTORY_DATA[HISTORY_DATA.length - 1] : null;
-  if (!latest) {
-    document.getElementById('loading').innerHTML = '<div style="color:#94a3b8;padding:20px;text-align:center">No tracked data yet — dashboard populates after the first daily alert runs.</div>';
-    return;
+  try {
+    const latest = HISTORY_DATA.length ? HISTORY_DATA[HISTORY_DATA.length - 1] : null;
+
+    // Populate header with latest tracked data (or dashes if no data yet)
+    if (latest) {
+      document.getElementById('sig-dot').style.background = sigColor(latest.signal);
+      document.getElementById('sig-text').textContent = sigLabel(latest.signal) + ' — Week ' + latest.week;
+      document.getElementById('hdr-price').textContent = '$' + latest.price.toLocaleString();
+      document.getElementById('hdr-week').textContent = latest.week;
+      const pb = document.getElementById('hdr-phase');
+      const phMap = { EARLY_BEAR:'EARLY BEAR', ENTERING_WINDOW:'ENTERING WINDOW', BOTTOM_WINDOW:'BOTTOM WINDOW', EXTENDED:'EXTENDED' };
+      pb.textContent = phMap[latest.phase] || latest.phase;
+      pb.className = 'phase-badge ' + phaseClass(phMap[latest.phase] || '');
+      document.getElementById('action-text').textContent = 'Last tracked ' + latest.date + ' · MVRV ' + latest.mvrv + ' · F&G ' + latest.fearGreed + ' · Conf ' + latest.bottomConf + '/8 · Full detail in daily Slack alert';
+    }
+
+    // Hide Today tab — not meaningful without Slack data
+    document.getElementById('tab-btn-today').style.display = 'none';
+    document.getElementById('tab-today').style.display = 'none';
+
+    // Show the app and default to History tab
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    switchTab('history');
+
+  } catch(err) {
+    // Show the error visibly rather than hanging on the loading screen
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('app').insertAdjacentHTML('afterbegin',
+      '<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:12px;margin-bottom:12px;font-size:12px;color:#991b1b">' +
+      '<strong>Standalone init error:</strong> ' + err.message + '</div>');
+    switchTab('history');
   }
-
-  const phaseLabel = ph => {
-    if (!ph) return 'EARLY BEAR';
-    if (ph==='ENTERING_WINDOW') return 'ENTERING WINDOW';
-    if (ph==='BOTTOM_WINDOW')   return 'BOTTOM WINDOW';
-    if (ph==='EXTENDED')        return 'EXTENDED';
-    return 'EARLY BEAR';
-  };
-  const actionLine = (sig, big3) => {
-    const s = (sig||'').toUpperCase();
-    if (s.includes('EXTREME')) return big3===3 ? 'MAXIMUM ALLOCATION — all primary triggers confirmed, extreme valuation zone.' : 'HEAVY ACCUMULATION — valuation extreme, await Big 3 confirmation for full deployment.';
-    if (s.includes('STRONG'))  return 'FIRST TRANCHE ONLY — valuation supportive, dry powder preserved for Big 3 confirmation.';
-    if (s.includes('ACCUM'))   return big3===3 ? 'DEPLOY TRANCHE 2–3 — behavioral bottom confirmed by primary triggers.' : `ADD TO POSITION — bottom confirmation building, ${big3} of 3 Big 3 firing.`;
-    if (s.includes('WATCH'))   return 'HOLD DRY POWDER — setup building, no deployment signal yet.';
-    if (s.includes('ELEVATED'))return 'REDUCE EXPOSURE — risk indicators elevated.';
-    if (s.includes('EUPHORIC'))return 'EXIT — euphoric conditions confirmed.';
-    return 'MONITOR — no action.';
-  };
-
-  const sigDotFromKey = s => {
-    const u=(s||'').toUpperCase();
-    if(u.includes('EXTREME')||u.includes('STRONG'))return'green';
-    if(u.includes('ACCUM'))return'yellow';
-    if(u.includes('ELEVATED'))return'orange';
-    if(u.includes('EUPHORIC'))return'red';
-    return'gray';
-  };
-
-  const d = {
-    signalDotColor: sigDotFromKey(latest.signal),
-    signal: `${latest.big3===3?'🟢':latest.signal.includes('STRONG')?'🟡':'🔔'} ${sigLabel(latest.signal)} — Week ${latest.week} EARLY BEAR`,
-    price: '$' + latest.price.toLocaleString(),
-    week: latest.week,
-    phase: phaseLabel(latest.phase),
-    action: actionLine(latest.signal, latest.big3||0),
-    big3: latest.big3>0 ? Array.from({length:latest.big3},()=>({name:'Big 3 trigger',color:'green',status:'confirmed'})) : [],
-    mvrv: latest.mvrv, mvrvZone: latest.mvrv<0.3?'Extreme Accum':latest.mvrv<0.5?'Strong Accum':latest.mvrv<1.2?'Watch':'Neutral',
-    puell: latest.puell, reserveRisk: 'N/C', realizedPrice: 'N/C', realizedDiff: '',
-    piCycle: 'CLEAR', bottomConf: latest.bottomConf+'/8',
-    bottomGreen: [], bottomYellow: [],
-    monthlyRsi: 'N/C', monthlyRsiColor: 'gray',
-    weeklyRsi: 'N/C', weeklyRsiColor: 'gray',
-    macd: 'N/C', macdColor: 'yellow',
-    fearGreed: latest.fearGreed, fearGreedColor: latest.fearGreed<20?'green':latest.fearGreed<35?'green':latest.fearGreed<65?'yellow':'orange',
-    ma200: 'N/C', ma200Color: 'yellow',
-    etf: 'N/C', etfColor: 'yellow',
-    dxy: 'N/C', dxyColor: 'yellow',
-    m2: 'N/C', m2Color: 'yellow',
-    fed: 'N/C', fedColor: 'yellow',
-    timestamp: `Last tracked: ${latest.date} · Full detail in daily Slack alert`
-  };
-  renderToday(d);
-
-  // Show a standalone mode banner
-  document.getElementById('action-bar').insertAdjacentHTML('afterend',
-    `<div style="background:#fef9c3;border:1px solid #fde047;border-radius:8px;padding:8px 14px;font-size:11px;color:#854d0e;margin-bottom:10px">
-      📡 <strong>Standalone mode</strong> — showing last tracked data (${latest.date}). Full live detail only available in Cowork → Artifacts.
-    </div>`);
-
-  document.getElementById('loading').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
-  // Default to History tab in standalone (price chart works fine)
-  switchTab('history');
 }
 
 // =====================================================================
@@ -942,8 +909,9 @@ function init() {
   }
 }
 
-// Give Cowork ~800ms to inject its API, then proceed either way
-setTimeout(init, window.cowork?.callMcpTool ? 0 : 800);
+// Give Cowork up to 1.5s to inject its API, then fall back to standalone
+// Re-checks window.cowork inside the timeout so it works in both environments
+setTimeout(init, 1500);
 </script>
 </body>
 </html>
