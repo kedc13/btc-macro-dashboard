@@ -141,8 +141,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 </style>
 </head>
 <body>
-<div id="loading" class="loading">Loading BTC dashboard…</div>
-<div id="app" style="display:none">
+<div id="app">
 
   <div class="header">
     <div class="signal-banner">
@@ -840,78 +839,54 @@ function switchTab(tab) {
 }
 
 // =====================================================================
-// STANDALONE MODE — show history chart + simple summary bar
-// Avoids calling renderToday() which depends on Slack-parsed data
+// INIT — no loading screen, no timeouts
+// History chart always shows immediately.
+// Cowork: also fetches Slack in background to populate Today tab.
+// GitHub Pages / local: Today tab hidden, History is default.
 // =====================================================================
-function renderFromHistory() {
-  try {
-    const latest = HISTORY_DATA.length ? HISTORY_DATA[HISTORY_DATA.length - 1] : null;
 
-    // Populate header with latest tracked data (or dashes if no data yet)
-    if (latest) {
-      document.getElementById('sig-dot').style.background = sigColor(latest.signal);
-      document.getElementById('sig-text').textContent = sigLabel(latest.signal) + ' — Week ' + latest.week;
-      document.getElementById('hdr-price').textContent = '$' + latest.price.toLocaleString();
-      document.getElementById('hdr-week').textContent = latest.week;
-      const pb = document.getElementById('hdr-phase');
-      const phMap = { EARLY_BEAR:'EARLY BEAR', ENTERING_WINDOW:'ENTERING WINDOW', BOTTOM_WINDOW:'BOTTOM WINDOW', EXTENDED:'EXTENDED' };
-      pb.textContent = phMap[latest.phase] || latest.phase;
-      pb.className = 'phase-badge ' + phaseClass(phMap[latest.phase] || '');
-      document.getElementById('action-text').textContent = 'Last tracked ' + latest.date + ' · MVRV ' + latest.mvrv + ' · F&G ' + latest.fearGreed + ' · Conf ' + latest.bottomConf + '/8 · Full detail in daily Slack alert';
-    }
-
-    // Hide Today tab — not meaningful without Slack data
-    document.getElementById('tab-btn-today').style.display = 'none';
-    document.getElementById('tab-today').style.display = 'none';
-
-    // Show the app and default to History tab
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-    switchTab('history');
-
-  } catch(err) {
-    // Show the error visibly rather than hanging on the loading screen
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-    document.getElementById('app').insertAdjacentHTML('afterbegin',
-      '<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:12px;margin-bottom:12px;font-size:12px;color:#991b1b">' +
-      '<strong>Standalone init error:</strong> ' + err.message + '</div>');
-    switchTab('history');
+// Populate header from latest HISTORY_DATA (works everywhere)
+(function populateHeader() {
+  var latest = HISTORY_DATA.length ? HISTORY_DATA[HISTORY_DATA.length - 1] : null;
+  if (!latest) return;
+  var el;
+  el = document.getElementById('sig-dot');   if (el) el.style.background = sigColor(latest.signal);
+  el = document.getElementById('sig-text');  if (el) el.textContent = sigLabel(latest.signal) + ' — Week ' + latest.week;
+  el = document.getElementById('hdr-price'); if (el) el.textContent = '$' + latest.price.toLocaleString();
+  el = document.getElementById('hdr-week');  if (el) el.textContent = latest.week;
+  el = document.getElementById('hdr-phase'); if (el) {
+    var phMap = { EARLY_BEAR:'EARLY BEAR', ENTERING_WINDOW:'ENTERING WINDOW', BOTTOM_WINDOW:'BOTTOM WINDOW', EXTENDED:'EXTENDED' };
+    el.textContent = phMap[latest.phase] || latest.phase;
+    el.className = 'phase-badge ' + phaseClass(phMap[latest.phase] || '');
   }
-}
+  el = document.getElementById('action-text');
+  if (el) el.textContent = 'Last tracked ' + latest.date + ' — MVRV ' + latest.mvrv + ' · F&G ' + latest.fearGreed + ' · Conf ' + latest.bottomConf + '/8';
+})();
 
-// =====================================================================
-// INIT — Cowork mode uses Slack; standalone falls back to HISTORY_DATA
-// =====================================================================
-async function loadFromSlack() {
-  const r = await window.cowork.callMcpTool(
+// Default to History tab (works in all environments)
+// Hide Today tab unless Cowork/Slack loads successfully
+document.getElementById('tab-btn-today').style.display = 'none';
+document.getElementById('tab-today').style.display   = 'none';
+switchTab('history');
+
+// In Cowork: try to fetch Slack data and enable Today tab
+if (window.cowork && window.cowork.callMcpTool) {
+  window.cowork.callMcpTool(
     'mcp__0e2465af-5649-4cda-a8a5-59aaf35be070__slack_read_channel',
     { channel_id: 'D08E39X6TEU', limit: 3, response_format: 'concise' }
-  );
-  let raw;
-  try {
-    const p = r.structuredContent ?? JSON.parse(r.content[0].text);
-    raw = p.messages ?? JSON.stringify(p);
-  } catch(_) { raw = r.content?.[0]?.text ?? JSON.stringify(r); }
-  if (!raw) throw new Error('empty');
-  renderToday(parseSlack(raw));
-  document.getElementById('loading').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
+  ).then(function(r) {
+    var raw;
+    try {
+      var p = r.structuredContent || JSON.parse(r.content[0].text);
+      raw = p.messages || JSON.stringify(p);
+    } catch(e) { raw = (r.content && r.content[0] && r.content[0].text) || JSON.stringify(r); }
+    if (!raw) return;
+    renderToday(parseSlack(raw));
+    // Re-enable Today tab now that we have Slack data
+    document.getElementById('tab-btn-today').style.display = '';
+    switchTab('today');
+  }).catch(function() { /* stay on history */ });
 }
-
-function init() {
-  if (window.cowork?.callMcpTool) {
-    // Cowork environment — use Slack for live Today data
-    loadFromSlack().catch(() => renderFromHistory());
-  } else {
-    // GitHub Pages / local — render from embedded HISTORY_DATA
-    renderFromHistory();
-  }
-}
-
-// Give Cowork up to 1.5s to inject its API, then fall back to standalone
-// Re-checks window.cowork inside the timeout so it works in both environments
-setTimeout(init, 1500);
 </script>
 </body>
 </html>
