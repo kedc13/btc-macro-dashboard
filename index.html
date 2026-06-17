@@ -114,6 +114,21 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   transition: all .15s;
 }
 .ctrl-btn.active { background: #1e293b; border-color: #1e293b; color: #fff; }
+.ctrl-sep { width: 1px; height: 18px; background: #e2e8f0; margin: 0 2px; }
+.range-btn {
+  padding: 5px 10px;
+  border-radius: 20px;
+  border: 1.5px solid #e2e8f0;
+  background: #f8fafc;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  cursor: pointer;
+  transition: all .15s;
+  letter-spacing: .03em;
+}
+.range-btn:hover { border-color: #60a5fa; color: #2563eb; }
+.range-btn.active { background: #2563eb; border-color: #2563eb; color: #fff; }
 
 /* CHART WRAP */
 .chart-wrap { position: relative; }
@@ -208,6 +223,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
           <div class="chart-subtitle">Full bear market · phase zones · click indicators below to overlay against price <span id="price-status" style="color:#f97316;font-size:10px"></span></div>
         </div>
         <div class="chart-controls">
+          <button class="range-btn" id="rb-1W"  onclick="setRange('1W')">1W</button>
+          <button class="range-btn" id="rb-1M"  onclick="setRange('1M')">1M</button>
+          <button class="range-btn" id="rb-3M"  onclick="setRange('3M')">3M</button>
+          <button class="range-btn active" id="rb-ALL" onclick="setRange('ALL')">ALL</button>
+          <div class="ctrl-sep"></div>
           <button class="ctrl-btn" id="log-btn" onclick="toggleLog()">Log Scale</button>
         </div>
       </div>
@@ -819,6 +839,31 @@ function toggleLog() {
   mainChart.options.scales.y.type = isLogScale ? 'logarithmic' : 'linear';
   mainChart.update();
   document.getElementById('log-btn').classList.toggle('active', isLogScale);
+}
+
+let activeRange = 'ALL';
+function setRange(range) {
+  if (!mainChart || !allDates.length) return;
+  activeRange = range;
+  ['1W','1M','3M','ALL'].forEach(r => {
+    const b = document.getElementById('rb-'+r);
+    if (b) b.classList.toggle('active', r === range);
+  });
+  let minDate = null;
+  const now = new Date();
+  if (range === '1W') { const d = new Date(now); d.setDate(d.getDate()-7);   minDate = d.toISOString().slice(0,10); }
+  if (range === '1M') { const d = new Date(now); d.setMonth(d.getMonth()-1);  minDate = d.toISOString().slice(0,10); }
+  if (range === '3M') { const d = new Date(now); d.setMonth(d.getMonth()-3);  minDate = d.toISOString().slice(0,10); }
+  if (minDate) {
+    // Clamp to first available date >= minDate
+    const start = allDates.find(d => d >= minDate) || allDates[0];
+    mainChart.options.scales.x.min = start;
+    mainChart.options.scales.x.max = CHART_END;
+  } else {
+    mainChart.options.scales.x.min = allDates[0];
+    mainChart.options.scales.x.max = CHART_END;
+  }
+  mainChart.update('none');
 }
 
 // =====================================================================
