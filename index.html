@@ -933,12 +933,14 @@ function setRange(range) {
   if (range === '1W') { const d = new Date(now); d.setDate(d.getDate()-7);   minDate = d.toISOString().slice(0,10); }
   if (range === '1M') { const d = new Date(now); d.setMonth(d.getMonth()-1);  minDate = d.toISOString().slice(0,10); }
   if (range === '3M') { const d = new Date(now); d.setMonth(d.getMonth()-3);  minDate = d.toISOString().slice(0,10); }
+  const todayStr = new Date().toISOString().slice(0,10);
   if (minDate) {
-    // Clamp to first available date >= minDate
+    // Clamp start to first available date >= minDate; end at today (not future)
     const start = allDates.find(d => d >= minDate) || allDates[0];
     mainChart.options.scales.x.min = start;
-    mainChart.options.scales.x.max = CHART_END;
+    mainChart.options.scales.x.max = todayStr;
   } else {
+    // ALL: full range including future phase zones
     mainChart.options.scales.x.min = allDates[0];
     mainChart.options.scales.x.max = CHART_END;
   }
