@@ -163,6 +163,31 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .hist-table tr:last-child td { border-bottom: none; }
 .sig-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; }
 
+/* COMPOSITE SCORE */
+.score-row { display:flex; align-items:center; gap:10px; margin-top:6px; }
+.score-track { flex:1; height:8px; background:#f1f5f9; border-radius:4px; overflow:hidden; }
+.score-fill  { height:100%; border-radius:4px; transition:width .3s; }
+.score-num   { font-size:24px; font-weight:800; min-width:44px; text-align:right; line-height:1; }
+.score-tier  { font-size:11px; font-weight:700; min-width:110px; }
+
+/* CYCLE BAR */
+.cycle-track { position:relative; height:16px; border-radius:8px; overflow:hidden; background:#f1f5f9; }
+.cycle-needle{ position:absolute; top:0; height:100%; width:2px; background:#1e293b; }
+
+/* UPGRADE BOX */
+.upgrade-box { margin-top:10px; padding:10px 12px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0; }
+.upgrade-lbl { font-size:10px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.07em; margin-bottom:5px; }
+.upgrade-tip { font-size:11px; color:#475569; margin-bottom:3px; }
+
+/* PRICE LEVELS BOX */
+.levels-box { margin-top:8px; padding:8px 12px; background:#f0f9ff; border-radius:8px; border:1px solid #bae6fd; }
+.levels-lbl { font-size:10px; font-weight:700; color:#0284c7; text-transform:uppercase; letter-spacing:.07em; margin-bottom:4px; }
+.levels-row { display:flex; gap:16px; flex-wrap:wrap; }
+.levels-item { font-size:11px; color:#0369a1; }
+
+/* BIG 3 SECTION */
+.big3-section-hdr { font-size:10px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.07em; margin:10px 0 6px; }
+
 /* MISC */
 .loading { display: flex; align-items: center; justify-content: center; height: 200px; color: #64748b; font-size: 14px; }
 .error-msg { background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 14px; color: #dc2626; font-size: 13px; }
@@ -255,7 +280,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
           <span class="ind-panel-date" id="ind-panel-date">Latest signal</span>
           <span class="ind-panel-hint">Hover chart to inspect any date</span>
         </div>
-        <div class="ind-grid" id="ind-grid"></div>
+        <div id="ind-grid"></div>
       </div>
 
       <div class="phase-legend">
@@ -267,12 +292,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
         </div>
         <div class="pl-divider"></div>
         <div class="pl-group">
-          <span style="font-size:10px;color:#94a3b8;font-weight:600">SIGNAL DOTS:</span>
-          <div class="pl-item"><div class="pl-dot" style="color:#16a34a;background:#16a34a"></div>Extreme Accum</div>
-          <div class="pl-item"><div class="pl-dot" style="color:#22c55e;background:#22c55e"></div>Strong Accum</div>
-          <div class="pl-item"><div class="pl-dot" style="color:#3b82f6;background:#3b82f6"></div>Accumulate</div>
-          <div class="pl-item"><div class="pl-dot" style="color:#94a3b8;background:#94a3b8"></div>Watch/Neutral</div>
-          <div class="pl-item"><div class="pl-dot" style="color:#f97316;background:#f97316"></div>Elevated/Euphoric</div>
+          <span style="font-size:10px;color:#94a3b8;font-weight:600">VALUATION DOTS (MVRV+F&amp;G):</span>
+          <div class="pl-item"><div class="pl-dot" style="color:#16a34a;background:#16a34a"></div>Extreme Cheap</div>
+          <div class="pl-item"><div class="pl-dot" style="color:#22c55e;background:#22c55e"></div>Very Cheap</div>
+          <div class="pl-item"><div class="pl-dot" style="color:#3b82f6;background:#3b82f6"></div>Cheap</div>
+          <div class="pl-item"><div class="pl-dot" style="color:#94a3b8;background:#94a3b8"></div>Fair Value</div>
+          <div class="pl-item"><div class="pl-dot" style="color:#f97316;background:#f97316"></div>Expensive</div>
         </div>
       </div>
       <div class="chart-note">Indicator overlays are normalized 0–1 on the right axis. Tooltip shows actual values. Vertical dashed lines = cycle phase transitions.</div>
@@ -394,6 +419,111 @@ function fmtMonthYear(d) {
   return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(m)-1]+' '+y;
 }
 function dot(c) { return `<span class="dot" style="background:${CLR[c]||CLR.gray}"></span>`; }
+
+// =====================================================================
+// VALUATION COLOR — phase-weighted dot color
+// KEY DESIGN DECISION: Early Bear (W1-34) requires MUCH more extreme
+// readings to show green. Mid-bear rallies look "cheap" on MVRV but
+// almost always go lower. Time + valuation + metrics must all align.
+// =====================================================================
+function valuationColor(h) {
+  const m     = parseFloat(h.mvrv)      || 999;
+  const fg    = parseFloat(h.fearGreed) || 50;
+  const phase = h.phase || 'EARLY_BEAR';
+  const week  = h.week  || 0;
+
+  if (phase === 'EARLY_BEAR' || week < 35) {
+    // Pre-W35: bear market typically has 2-3 relief rallies before true bottom.
+    // Only flag green if readings are TRULY extreme — not just "cheap vs ATH"
+    if (m < 0.3)               return '#16a34a'; // MVRV this low is extreme regardless
+    if (m < 0.42 && fg < 22)  return '#16a34a'; // cheap + extreme fear combined
+    if (m < 0.55 && fg < 18)  return '#22c55e'; // cheap + maximum fear
+    if (m < 0.55)              return '#3b82f6'; // cheap but timing risk — caution
+    if (m < 1.0)               return '#94a3b8'; // watch — likely more downside
+    if (m < 1.5)               return '#cbd5e1'; // neutral
+    return '#f97316';
+  }
+
+  if (phase === 'ENTERING_WINDOW' || (week >= 35 && week < 44)) {
+    // W35-43: timing aligning, thresholds loosen
+    if (m < 0.3 || (m < 0.5 && fg < 25)) return '#16a34a';
+    if (m < 0.65 || (m < 0.75 && fg < 30)) return '#22c55e';
+    if (m < 0.9 && fg < 50)               return '#3b82f6';
+    if (m < 1.2)                            return '#94a3b8';
+    if (m < 3.5)                            return '#cbd5e1';
+    return '#f97316';
+  }
+
+  // BOTTOM_WINDOW (W44-58) — full thresholds, timing confirmed historically
+  if (m < 0.3)              return '#16a34a';
+  if (m < 0.5 && fg < 30)  return '#16a34a';
+  if (m < 0.65)             return '#22c55e';
+  if (m < 0.9 && fg < 50)  return '#3b82f6';
+  if (m < 1.2)              return '#94a3b8';
+  if (m < 3.5)              return '#cbd5e1';
+  if (m < 7)                return '#f97316';
+  return '#ef4444';
+}
+
+// =====================================================================
+// COMPOSITE BUY SCORE 0–100
+// MVRV 35% | F&G 20% | Puell 15% | Bottom Conf 20% | Big3 10%
+// Phase multiplier: Early Bear = 0.62 (timing risk penalty)
+// =====================================================================
+function computeScore(h) {
+  const m     = parseFloat(h.mvrv)      || 999;
+  const fg    = parseFloat(h.fearGreed) || 50;
+  const p     = parseFloat(h.puell)     || 1;
+  const c     = h.bottomConf            || 0;
+  const b     = h.big3                  || 0;
+  const phase = h.phase                 || 'EARLY_BEAR';
+
+  const ms = m  < 0.3 ? 100 : m  < 0.5 ? 82 : m  < 0.8 ? 60 : m  < 1.2 ? 38 : m  < 3.5 ? 18 : 5;
+  const fs = fg < 10  ? 100 : fg < 20  ? 88 : fg < 35  ? 65 : fg < 55  ? 40 : fg < 75  ? 18 : 5;
+  const ps = p  < 0.5 ? 100 : p  < 0.8 ? 80 : p  < 1.5 ? 50 : p  < 2.5 ? 22 : 5;
+  const cs = [5,25,45,65,80,90,95,98,100][Math.min(c, 8)];
+  const bs = b  === 3 ? 100 : b === 2 ? 68 : b === 1 ? 32 : 5;
+  const raw = ms*0.35 + fs*0.20 + ps*0.15 + cs*0.20 + bs*0.10;
+
+  // Phase timing multiplier — early bear has high false-bottom risk
+  const mult = phase === 'BOTTOM_WINDOW'    ? 1.00
+             : phase === 'ENTERING_WINDOW'  ? 0.85
+             : phase === 'EXTENDED'         ? 0.78
+             : 0.62; // EARLY_BEAR: significant timing penalty
+
+  return Math.round(raw * mult);
+}
+
+function scoreTier(score) {
+  if (score >= 80) return { label:'MAX ALLOCATION', color:'#16a34a', desc:'All signals + timing aligned — accumulate heavily' };
+  if (score >= 65) return { label:'STRONG BUY',     color:'#22c55e', desc:'Multiple signals confirming — add aggressively' };
+  if (score >= 50) return { label:'ACCUMULATE',     color:'#3b82f6', desc:'Valuation favorable — deploy first tranches' };
+  if (score >= 35) return { label:'WATCH',          color:'#f59e0b', desc:'Approaching buy zone — wait for confirmation' };
+  if (score >= 20) return { label:'HOLD CASH',      color:'#94a3b8', desc:'Preserve capital — likely more downside' };
+  return               { label:'WAIT',              color:'#cbd5e1', desc:'Too early or overvalued' };
+}
+
+function whatWouldUpgrade(h) {
+  const tips  = [];
+  const m     = parseFloat(h.mvrv)      || 1;
+  const fg    = parseFloat(h.fearGreed) || 50;
+  const p     = parseFloat(h.puell)     || 1;
+  const c     = h.bottomConf            || 0;
+  const b     = h.big3                  || 0;
+  const phase = h.phase                 || 'EARLY_BEAR';
+
+  if (phase === 'EARLY_BEAR')
+    tips.push('Reach W35 entering window (~' + W35_DATE + ') — biggest score unlock');
+  if (b === 0)
+    tips.push('Any Big 3 fires: Hash Ribbons, SOPR Recovery, or Monthly Stoch RSI compressing below 20');
+  else if (b < 3)
+    tips.push((3-b) + ' more Big 3 trigger' + (3-b>1?'s':'') + ' → max allocation signal');
+  if (m  > 0.5)  tips.push('MVRV drops below 0.5 (now ' + m.toFixed(2) + ')');
+  if (fg > 20)   tips.push('F&G below 20 extreme fear (now ' + fg + ')');
+  if (c  < 4)    tips.push('Bottom conf 4+/8 (now ' + c + '/8)');
+  if (p  > 0.8)  tips.push('Puell drops below 0.8 (now ' + p.toFixed(2) + ')');
+  return { tips: tips.slice(0, 3) };
+}
 
 // =====================================================================
 // SLACK PARSER (unchanged from v2)
@@ -537,13 +667,13 @@ function phaseInfo(p) {
 let lastPanelDate = null;
 
 function updateIndicatorPanel(h, isHover) {
-  const grid  = document.getElementById('ind-grid');
+  const wrap  = document.getElementById('ind-grid');
   const label = document.getElementById('ind-panel-date');
-  if (!grid) return;
+  if (!wrap) return;
 
   if (!h) {
     if (label) label.textContent = 'No signal data for this date';
-    grid.innerHTML = '';
+    wrap.innerHTML = '';
     return;
   }
 
@@ -553,26 +683,128 @@ function updateIndicatorPanel(h, isHover) {
       : 'Latest · ' + fmtDate(h.date) + ', ' + h.date.slice(0,4);
   }
 
-  const ph = phaseInfo(h.phase);
-  const cards = [
-    { lbl:'Signal',          val: sigLabel(h.signal),     zone:{ label:'Week '+h.week, color: sigColor(h.signal) } },
-    { lbl:'BTC Price',       val:'$'+Math.round(h.price).toLocaleString(), zone:{ label: ph.label, color: ph.color } },
-    { lbl:'MVRV Z-Score',   val: h.mvrv != null ? h.mvrv.toFixed(2) : 'N/C', zone: h.mvrv != null ? mvrvZone(h.mvrv) : {label:'N/C',color:'#94a3b8'} },
-    { lbl:'Puell Multiple', val: h.puell != null ? h.puell.toFixed(2) : 'N/C', zone: h.puell != null ? puellZone(h.puell) : {label:'N/C',color:'#94a3b8'} },
-    { lbl:'Fear & Greed',   val: h.fearGreed != null ? h.fearGreed : 'N/C',   zone: h.fearGreed != null ? fgZone(h.fearGreed) : {label:'N/C',color:'#94a3b8'} },
-    { lbl:'Bottom Conf',    val: h.bottomConf+'/8', zone: confZone(h.bottomConf) },
-    { lbl:'Big 3 Triggers', val: h.big3+'/3',       zone: big3Zone(h.big3) },
-  ];
+  const ph    = phaseInfo(h.phase);
+  const score = computeScore(h);
+  const tier  = scoreTier(score);
+  const upg   = whatWouldUpgrade(h);
+  const week  = h.week || 0;
 
-  grid.innerHTML = cards.map(c => `
-    <div class="ind-card">
-      <div class="ind-card-bar" style="background:${c.zone.color}"></div>
-      <div class="ind-card-body">
-        <div class="ind-card-lbl">${c.lbl}</div>
-        <div class="ind-card-val" style="color:${c.zone.color}">${c.val}</div>
-        <div class="ind-card-zone" style="color:${c.zone.color}">${c.zone.label}</div>
+  // --- Phase risk warning (early bear only) ---
+  const isEarlyBear = (h.phase === 'EARLY_BEAR');
+  const phaseWarning = isEarlyBear ? `
+    <div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;padding:10px 12px;margin-bottom:12px">
+      <div style="font-size:11px;font-weight:700;color:#92400e;margin-bottom:3px">⚠️ Early Bear Phase — High False-Bottom Risk</div>
+      <div style="font-size:11px;color:#78350f;line-height:1.5">Bear markets typically produce 2-3 rallies before true capitulation. Historical BTC bottoms form W44–58 (Aug–Dec 2026). Price could still reach $40-50K. Score penalized 38% for timing risk.</div>
+    </div>` : '';
+
+  // --- Composite score bar ---
+  const scoreHtml = `
+    <div style="margin-bottom:14px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:5px">
+        <span style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em">Composite Buy Score</span>
+        <span style="font-size:11px;color:#94a3b8">${tier.desc}</span>
       </div>
-    </div>`).join('');
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="flex:1;height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden">
+          <div style="height:100%;width:${score}%;background:${tier.color};border-radius:4px;transition:width .3s"></div>
+        </div>
+        <span style="font-size:22px;font-weight:800;color:${tier.color};min-width:42px;text-align:right;line-height:1">${score}</span>
+        <span style="font-size:11px;font-weight:700;color:${tier.color};min-width:105px">${tier.label}</span>
+      </div>
+    </div>`;
+
+  // --- Bear cycle progress bar ---
+  const TOTAL_WKS = 58;
+  const earlyPct    = (34/TOTAL_WKS*100).toFixed(1);
+  const enterPct    = (9/TOTAL_WKS*100).toFixed(1);
+  const bottomPct   = (15/TOTAL_WKS*100).toFixed(1);
+  const needlePct   = Math.min((week/TOTAL_WKS)*100, 100).toFixed(1);
+  const daysToW35   = week < 35 ? Math.round((35-week)*7) : 0;
+  const daysToW44   = week < 44 ? Math.round((44-week)*7) : 0;
+  const cycleNote   = daysToW44 > 0
+    ? (daysToW35 > 0 ? `${daysToW35}d to W35 · ${daysToW44}d to Bottom Window` : `${daysToW44}d to Bottom Window (W44)`)
+    : 'In bottom window';
+  const cycleHtml = `
+    <div style="margin-bottom:14px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:5px">
+        <span style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em">Bear Cycle · Week ${week}</span>
+        <span style="font-size:10px;color:#94a3b8">${cycleNote}</span>
+      </div>
+      <div style="position:relative;height:16px;border-radius:8px;overflow:hidden;background:#f1f5f9">
+        <div style="position:absolute;left:0;top:0;height:100%;width:${earlyPct}%;background:rgba(124,58,237,0.35)"></div>
+        <div style="position:absolute;left:${earlyPct}%;top:0;height:100%;width:${enterPct}%;background:rgba(249,115,22,0.5)"></div>
+        <div style="position:absolute;left:${(parseFloat(earlyPct)+parseFloat(enterPct)).toFixed(1)}%;top:0;height:100%;width:${bottomPct}%;background:rgba(34,197,94,0.55)"></div>
+        <div style="position:absolute;left:${needlePct}%;top:0;width:2px;height:100%;background:#1e293b;transform:translateX(-1px)"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:3px;font-size:9px;color:#94a3b8">
+        <span>W1</span><span style="color:#a78bfa">Early Bear W1–34</span><span style="color:#fb923c">W35</span><span style="color:#4ade80">Bottom W44–58 ✓</span><span>W58+</span>
+      </div>
+    </div>`;
+
+  // --- Indicator cards ---
+  const cards = [
+    { lbl:'BTC Price',      val:'$'+Math.round(h.price).toLocaleString(),                                    zone:{ label:ph.label, color:ph.color } },
+    { lbl:'MVRV Z-Score',  val:h.mvrv  != null ? (+h.mvrv).toFixed(2)  : 'N/C', zone:h.mvrv  != null ? mvrvZone(+h.mvrv)  : {label:'N/C',color:'#94a3b8'} },
+    { lbl:'Puell Multiple',val:h.puell != null ? (+h.puell).toFixed(2) : 'N/C', zone:h.puell != null ? puellZone(+h.puell) : {label:'N/C',color:'#94a3b8'} },
+    { lbl:'Fear & Greed',  val:h.fearGreed != null ? h.fearGreed : 'N/C',        zone:h.fearGreed != null ? fgZone(+h.fearGreed) : {label:'N/C',color:'#94a3b8'} },
+    { lbl:'Bottom Conf',   val:h.bottomConf+'/8', zone:confZone(h.bottomConf) },
+  ];
+  const cardsHtml = `<div class="ind-grid" style="margin-bottom:10px">
+    ${cards.map(c=>`
+      <div class="ind-card">
+        <div class="ind-card-bar" style="background:${c.zone.color}"></div>
+        <div class="ind-card-body">
+          <div class="ind-card-lbl">${c.lbl}</div>
+          <div class="ind-card-val" style="color:${c.zone.color}">${c.val}</div>
+          <div class="ind-card-zone" style="color:${c.zone.color}">${c.zone.label}</div>
+        </div>
+      </div>`).join('')}
+  </div>`;
+
+  // --- Big 3 breakdown (named individually) ---
+  // Note: HISTORY_DATA stores a count (0-3), not individual flags.
+  // Hash Ribbons is historically earliest to fire. SOPR next. Monthly Stoch RSI last.
+  const BIG3 = [
+    { name:'Hash Ribbons',      desc:'Miner capitulation ends — cost basis recovery' },
+    { name:'SOPR Recovery',     desc:'Spent outputs returning to profit — trend shift' },
+    { name:'Monthly Stoch RSI', desc:'Lines compressing/tightening below 20 (pre-cross = strongest signal; cross itself is lagging)' },
+  ];
+  const big3Html = `
+    <div class="big3-section-hdr">🎯 Big 3 Triggers (${h.big3}/3 confirmed)</div>
+    <div class="ind-grid" style="margin-bottom:10px">
+      ${BIG3.map((b3, i) => {
+        const active = i < (h.big3||0);
+        return `<div class="ind-card">
+          <div class="ind-card-bar" style="background:${active?'#22c55e':'#e2e8f0'}"></div>
+          <div class="ind-card-body">
+            <div class="ind-card-lbl">${b3.name}</div>
+            <div class="ind-card-val" style="color:${active?'#22c55e':'#94a3b8'};font-size:14px">${active?'✓ ACTIVE':'— Waiting'}</div>
+            <div class="ind-card-zone" style="color:${active?'#16a34a':'#94a3b8'};font-size:9px;white-space:normal;line-height:1.3">${b3.desc}</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+
+  // --- Key price levels ---
+  const below200wma = h.price < 61000;
+  const belowLTH    = h.price < 48000;
+  const levelsHtml = `
+    <div class="levels-box">
+      <div class="levels-lbl">Key Price Levels</div>
+      <div class="levels-row">
+        <span class="levels-item">200WMA ~$61K &nbsp;<strong style="color:${below200wma?'#16a34a':'#94a3b8'}">${below200wma?'BELOW ✓':'Above'}</strong></span>
+        <span class="levels-item">LTH Cost ~$48K &nbsp;<strong style="color:${belowLTH?'#16a34a':'#94a3b8'}">${belowLTH?'BELOW ✓':'Above'}</strong></span>
+      </div>
+    </div>`;
+
+  // --- What would upgrade ---
+  const upgradeHtml = upg.tips.length ? `
+    <div class="upgrade-box">
+      <div class="upgrade-lbl">⬆ What would upgrade this signal</div>
+      ${upg.tips.map(t=>`<div class="upgrade-tip">· ${t}</div>`).join('')}
+    </div>` : '';
+
+  wrap.innerHTML = phaseWarning + scoreHtml + cycleHtml + cardsHtml + big3Html + levelsHtml + upgradeHtml;
 }
 
 // =====================================================================
@@ -661,6 +893,39 @@ function makeVMarkerPlugin(datesRef) {
   };
 }
 
+function makePriceLevelPlugin() {
+  return {
+    id: 'priceLevels',
+    afterDraw(chart) {
+      const { ctx, chartArea: { left, right }, scales: { y } } = chart;
+      if (!y) return;
+      const levels = [
+        { price: 61000, color: '#0284c7', label: '200WMA ~$61K', dash: [8,4] },
+        { price: 48000, color: '#7c3aed', label: 'LTH Cost ~$48K', dash: [5,3] },
+      ];
+      levels.forEach(lv => {
+        if (lv.price < y.min || lv.price > y.max) return;
+        const yp = y.getPixelForValue(lv.price);
+        ctx.save();
+        ctx.beginPath();
+        ctx.setLineDash(lv.dash);
+        ctx.strokeStyle = lv.color;
+        ctx.lineWidth = 1.5;
+        ctx.globalAlpha = 0.7;
+        ctx.moveTo(left, yp);
+        ctx.lineTo(right, yp);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = lv.color;
+        ctx.font = 'bold 9px system-ui';
+        ctx.fillText(lv.label, left+5, yp-4);
+        ctx.restore();
+      });
+    }
+  };
+}
+
 // =====================================================================
 // BUILD & RENDER MAIN CHART
 // =====================================================================
@@ -739,10 +1004,11 @@ async function renderHistory() {
   // Price dataset — null for future dates
   const priceData = allDates.map(d => cgMap[d] ?? null);
 
-  // Signal dot datasets — one per signal tier
+  // Signal dot datasets — grouped by valuation color (MVRV+F&G+phase)
+  // NOT by alert signal tier — so dots show "is it cheap?" not "is it confirmed?"
   const sigGroups = {};
   HISTORY_DATA.forEach(h => {
-    const c = sigColor(h.signal);
+    const c = valuationColor(h);
     if (!sigGroups[c]) sigGroups[c] = {};
     sigGroups[c][h.date] = cgMap[h.date] ?? h.price;
   });
@@ -775,15 +1041,16 @@ async function renderHistory() {
   });
 
   // Register custom plugins
-  const phaseBgPlugin = makePhaseBgPlugin(allDates);
-  const vMarkerPlugin = makeVMarkerPlugin(allDates);
+  const phaseBgPlugin    = makePhaseBgPlugin(allDates);
+  const vMarkerPlugin    = makeVMarkerPlugin(allDates);
+  const priceLevelPlugin = makePriceLevelPlugin();
 
   if (mainChart) { mainChart.destroy(); mainChart = null; }
 
   const ctx = document.getElementById('chart-main').getContext('2d');
   mainChart = new Chart(ctx, {
     type: 'line',
-    plugins: [phaseBgPlugin, vMarkerPlugin],
+    plugins: [phaseBgPlugin, vMarkerPlugin, priceLevelPlugin],
     data: {
       labels: allDates,
       datasets: [
@@ -957,22 +1224,27 @@ function buildHistoryTable() {
     <table class="hist-table">
       <thead><tr>
         <th>Date</th><th style="text-align:right">Price</th>
-        <th style="text-align:right">MVRV</th><th style="text-align:right">Puell</th>
-        <th style="text-align:right">F&amp;G</th><th style="text-align:right">Conf</th>
-        <th style="text-align:right">Big3</th><th>Signal</th><th style="text-align:right">Wk</th>
+        <th style="text-align:right">MVRV</th><th style="text-align:right">F&amp;G</th>
+        <th style="text-align:right">Conf</th><th style="text-align:right">Big3</th>
+        <th style="text-align:right">Score</th><th>Valuation</th><th style="text-align:right">Wk</th>
       </tr></thead>
-      <tbody>${rows.map(h=>`
+      <tbody>${rows.map(h=>{
+        const sc  = computeScore(h);
+        const ti  = scoreTier(sc);
+        const vc  = valuationColor(h);
+        const vlbl= vc==='#16a34a'?'Extreme Cheap':vc==='#22c55e'?'Very Cheap':vc==='#3b82f6'?'Cheap':vc==='#94a3b8'?'Fair Value':vc==='#f97316'?'Expensive':'Neutral';
+        return `
         <tr>
           <td style="color:#64748b">${fmtDate(h.date)}</td>
           <td style="text-align:right;font-weight:700">$${h.price.toLocaleString()}</td>
           <td style="text-align:right">${h.mvrv}</td>
-          <td style="text-align:right">${h.puell}</td>
           <td style="text-align:right">${h.fearGreed}</td>
           <td style="text-align:right">${h.bottomConf}/8</td>
           <td style="text-align:right">${h.big3}/3</td>
-          <td><span class="sig-pill"><span style="width:8px;height:8px;border-radius:50%;background:${sigColor(h.signal)};display:inline-block;margin-right:4px"></span>${sigLabel(h.signal)}</span></td>
+          <td style="text-align:right;font-weight:700;color:${ti.color}">${sc}</td>
+          <td><span class="sig-pill"><span style="width:8px;height:8px;border-radius:50%;background:${vc};display:inline-block;margin-right:4px"></span>${vlbl}</span></td>
           <td style="text-align:right;color:#94a3b8">${h.week}</td>
-        </tr>`).join('')}
+        </tr>`;}).join('')}
       </tbody>
     </table>`;
 }
