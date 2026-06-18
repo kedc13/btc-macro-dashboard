@@ -627,6 +627,16 @@ async function renderHistory() {
   }
   if (!Object.keys(cgMap).length && priceStatus) priceStatus.textContent = '⚠️ Price feed unavailable — showing signals only';
 
+  // Update header price with live feed value for today (or most recent available)
+  if (Object.keys(cgMap).length) {
+    const todayStr = new Date().toISOString().slice(0,10);
+    const livePrice = cgMap[todayStr] || cgMap[Object.keys(cgMap).sort().pop()];
+    if (livePrice) {
+      const el = document.getElementById('hdr-price');
+      if (el) el.textContent = '$' + Math.round(livePrice).toLocaleString();
+    }
+  }
+
   // Always include our tracked prices (fills in recent days + acts as floor)
   HISTORY_DATA.forEach(h => { if (!cgMap[h.date]) cgMap[h.date] = h.price; });
 
