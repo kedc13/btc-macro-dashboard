@@ -133,6 +133,20 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 /* CHART WRAP */
 .chart-wrap { position: relative; }
 
+/* INDICATOR PANEL */
+.ind-panel { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px 18px; margin-top: 16px; }
+.ind-panel-hdr { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; }
+.ind-panel-date { font-size: 12px; font-weight: 700; color: #1e293b; }
+.ind-panel-hint { font-size: 11px; color: #94a3b8; }
+.ind-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+.ind-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; transition: box-shadow .15s; }
+.ind-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,.07); }
+.ind-card-bar { height: 4px; }
+.ind-card-body { padding: 10px 12px; }
+.ind-card-lbl { font-size: 10px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 5px; }
+.ind-card-val { font-size: 20px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+.ind-card-zone { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+
 /* PHASE LEGEND */
 .phase-legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; padding-top: 12px; border-top: 1px solid #f1f5f9; }
 .pl-group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
@@ -232,17 +246,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
         </div>
       </div>
 
-      <div class="ind-row">
-        <span class="ind-label">Overlay:</span>
-        <button class="ind-btn" id="btn-mvrv"  style="--c:#8b5cf6" onclick="toggleInd('mvrv')"> <span class="ind-swatch"></span>MVRV Z-Score</button>
-        <button class="ind-btn" id="btn-puell" style="--c:#06b6d4" onclick="toggleInd('puell')"><span class="ind-swatch"></span>Puell Multiple</button>
-        <button class="ind-btn" id="btn-fg"    style="--c:#f59e0b" onclick="toggleInd('fg')">   <span class="ind-swatch"></span>Fear &amp; Greed</button>
-        <button class="ind-btn" id="btn-conf"  style="--c:#22c55e" onclick="toggleInd('conf')"> <span class="ind-swatch"></span>Bottom Conf</button>
-        <button class="ind-btn" id="btn-rsi"   style="--c:#f43f5e" onclick="toggleInd('rsi')">  <span class="ind-swatch"></span>Weekly RSI</button>
+      <div class="chart-wrap" style="height:420px">
+        <canvas id="chart-main"></canvas>
       </div>
 
-      <div class="chart-wrap" style="height:440px">
-        <canvas id="chart-main"></canvas>
+      <div class="ind-panel" id="ind-panel">
+        <div class="ind-panel-hdr">
+          <span class="ind-panel-date" id="ind-panel-date">Latest signal</span>
+          <span class="ind-panel-hint">Hover chart to inspect any date</span>
+        </div>
+        <div class="ind-grid" id="ind-grid"></div>
       </div>
 
       <div class="phase-legend">
@@ -482,6 +495,87 @@ const IND_CFG = {
 };
 
 // =====================================================================
+// INDICATOR ZONE CLASSIFIERS
+// =====================================================================
+function mvrvZone(v)  {
+  if (v < 0.3) return { label:'EXTREME ACCUM', color:'#16a34a' };
+  if (v < 0.5) return { label:'STRONG ACCUM',  color:'#22c55e' };
+  if (v < 1.2) return { label:'WATCH',          color:'#f59e0b' };
+  if (v < 3.5) return { label:'NEUTRAL',        color:'#94a3b8' };
+  if (v < 7)   return { label:'ELEVATED',       color:'#f97316' };
+  return               { label:'EUPHORIC',      color:'#ef4444' };
+}
+function puellZone(v) {
+  if (v < 0.5) return { label:'EXTREME ACCUM', color:'#16a34a' };
+  if (v < 0.8) return { label:'ACCUMULATION',  color:'#22c55e' };
+  if (v < 2)   return { label:'NEUTRAL',        color:'#94a3b8' };
+  if (v < 4)   return { label:'CAUTION',        color:'#f97316' };
+  return               { label:'DANGER',        color:'#ef4444' };
+}
+function fgZone(v) {
+  if (v < 20)  return { label:'EXTREME FEAR',  color:'#16a34a' };
+  if (v < 35)  return { label:'FEAR',           color:'#22c55e' };
+  if (v < 65)  return { label:'NEUTRAL',        color:'#94a3b8' };
+  if (v < 85)  return { label:'GREED',          color:'#f97316' };
+  return               { label:'EXTREME GREED', color:'#ef4444' };
+}
+function confZone(v) {
+  if (v >= 4)  return { label:'CONFIRMED ✓',   color:'#16a34a' };
+  if (v >= 2)  return { label:'BUILDING',       color:'#f59e0b' };
+  return               { label:'EARLY',         color:'#ef4444' };
+}
+function big3Zone(v) {
+  if (v === 3) return { label:'ALL FIRING ✓',  color:'#16a34a' };
+  if (v === 2) return { label:'2 OF 3',         color:'#22c55e' };
+  if (v === 1) return { label:'1 OF 3',         color:'#f59e0b' };
+  return               { label:'NONE FIRING',   color:'#ef4444' };
+}
+function phaseInfo(p) {
+  return { EARLY_BEAR:{label:'EARLY BEAR',color:'#7c3aed'}, ENTERING_WINDOW:{label:'ENTERING WINDOW',color:'#f97316'}, BOTTOM_WINDOW:{label:'BOTTOM WINDOW',color:'#22c55e'}, EXTENDED:{label:'EXTENDED BEAR',color:'#ef4444'} }[p] || { label:p, color:'#94a3b8' };
+}
+
+let lastPanelDate = null;
+
+function updateIndicatorPanel(h, isHover) {
+  const grid  = document.getElementById('ind-grid');
+  const label = document.getElementById('ind-panel-date');
+  if (!grid) return;
+
+  if (!h) {
+    if (label) label.textContent = 'No signal data for this date';
+    grid.innerHTML = '';
+    return;
+  }
+
+  if (label) {
+    label.textContent = isHover
+      ? fmtDate(h.date) + ', ' + h.date.slice(0,4)
+      : 'Latest · ' + fmtDate(h.date) + ', ' + h.date.slice(0,4);
+  }
+
+  const ph = phaseInfo(h.phase);
+  const cards = [
+    { lbl:'Signal',          val: sigLabel(h.signal),     zone:{ label:'Week '+h.week, color: sigColor(h.signal) } },
+    { lbl:'BTC Price',       val:'$'+Math.round(h.price).toLocaleString(), zone:{ label: ph.label, color: ph.color } },
+    { lbl:'MVRV Z-Score',   val: h.mvrv != null ? h.mvrv.toFixed(2) : 'N/C', zone: h.mvrv != null ? mvrvZone(h.mvrv) : {label:'N/C',color:'#94a3b8'} },
+    { lbl:'Puell Multiple', val: h.puell != null ? h.puell.toFixed(2) : 'N/C', zone: h.puell != null ? puellZone(h.puell) : {label:'N/C',color:'#94a3b8'} },
+    { lbl:'Fear & Greed',   val: h.fearGreed != null ? h.fearGreed : 'N/C',   zone: h.fearGreed != null ? fgZone(h.fearGreed) : {label:'N/C',color:'#94a3b8'} },
+    { lbl:'Bottom Conf',    val: h.bottomConf+'/8', zone: confZone(h.bottomConf) },
+    { lbl:'Big 3 Triggers', val: h.big3+'/3',       zone: big3Zone(h.big3) },
+  ];
+
+  grid.innerHTML = cards.map(c => `
+    <div class="ind-card">
+      <div class="ind-card-bar" style="background:${c.zone.color}"></div>
+      <div class="ind-card-body">
+        <div class="ind-card-lbl">${c.lbl}</div>
+        <div class="ind-card-val" style="color:${c.zone.color}">${c.val}</div>
+        <div class="ind-card-zone" style="color:${c.zone.color}">${c.zone.label}</div>
+      </div>
+    </div>`).join('');
+}
+
+// =====================================================================
 // BUILD DATE AXIS (CG + history + future through CHART_END)
 // =====================================================================
 function buildAllDates(cgMap) {
@@ -671,32 +765,7 @@ async function renderHistory() {
     datalabels: { display: false }
   }));
 
-  // Indicator datasets (all hidden initially, normalized 0–1)
-  const indDatasets = Object.entries(IND_CFG).map(([id, cfg]) => ({
-    type: 'line',
-    label: '__ind__'+id,
-    data: allDates.map(d => {
-      const h = histMap[d];
-      if (!h) return null;
-      const raw = h[cfg.key];
-      if (raw == null || raw === 'N/C') return null;
-      const num = parseFloat(raw);
-      return isNaN(num) ? null : num / cfg.norm;
-    }),
-    borderColor: cfg.color,
-    backgroundColor: cfg.color + '18',
-    borderWidth: 2,
-    pointRadius: ctx => histMap[allDates[ctx.dataIndex]] ? 4 : 0,
-    pointBackgroundColor: cfg.color,
-    pointBorderColor: '#fff',
-    pointBorderWidth: 1,
-    fill: false,
-    tension: 0.3,
-    spanGaps: false,
-    yAxisID: 'yInd',
-    hidden: true,
-    order: 1
-  }));
+  // (indicator overlay datasets removed — indicator data shown in panel below chart)
 
   // Tick labels: show first of each month
   const tickLabels = allDates.map((d,i) => {
@@ -730,8 +799,7 @@ async function renderHistory() {
           yAxisID: 'y',
           order: 5
         },
-        ...sigDatasets,
-        ...indDatasets
+        ...sigDatasets
       ]
     },
     options: {
@@ -739,43 +807,46 @@ async function renderHistory() {
       maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
       animation: { duration: 300 },
+      onHover: (evt, elements, chart) => {
+        const pts = chart.getElementsAtEventForMode(evt, 'index', { intersect: false }, false);
+        if (pts.length) {
+          const d = allDates[pts[0].index];
+          if (d !== lastPanelDate) {
+            lastPanelDate = d;
+            updateIndicatorPanel(histMap[d] || null, true);
+          }
+        }
+      },
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: 'rgba(15,23,42,0.92)',
-          titleColor: '#e2e8f0',
+          backgroundColor: 'rgba(15,23,42,0.95)',
+          titleColor: '#f8fafc',
           bodyColor: '#94a3b8',
-          borderColor: '#1e293b',
+          borderColor: '#334155',
           borderWidth: 1,
-          padding: 10,
+          padding: 12,
           callbacks: {
             title: items => {
               const d = allDates[items[0].dataIndex];
               return d ? fmtDate(d) + ' ' + d.slice(0,4) : '';
             },
             label: item => {
-              const lbl = item.dataset.label||'';
-              if (lbl === '__price__') {
-                return item.raw != null ? '  BTC  $'+Math.round(item.raw).toLocaleString() : null;
-              }
-              if (lbl.startsWith('__sig__') || lbl.startsWith('__ind__')) return null;
+              if (item.dataset.label === '__price__')
+                return item.raw != null ? '  BTC  $' + Math.round(item.raw).toLocaleString() : null;
               return null;
             },
             afterBody: items => {
               const d = allDates[items[0].dataIndex];
               const h = histMap[d];
               if (!h) return [];
-              const lines = [];
-              lines.push('  Signal: '+sigLabel(h.signal));
-              // Show active indicators
-              Object.entries(IND_CFG).forEach(([id, cfg]) => {
-                const dsIdx = mainChart.data.datasets.findIndex(ds => ds.label==='__ind__'+id);
-                if (dsIdx >= 0 && !mainChart.data.datasets[dsIdx].hidden) {
-                  const raw = h[cfg.key];
-                  if (raw != null) lines.push('  '+cfg.label+': '+raw);
-                }
-              });
-              return lines;
+              const dot = c => c === '#16a34a' ? '🟢' : c === '#22c55e' ? '🟢' : c === '#f59e0b' ? '🟡' : c === '#ef4444' ? '🔴' : '⚪';
+              return [
+                '',
+                '  ' + dot(sigColor(h.signal)) + ' ' + sigLabel(h.signal) + '  ·  Wk ' + h.week,
+                '  MVRV ' + (h.mvrv||'—') + '  ·  Puell ' + (h.puell||'—'),
+                '  F&G ' + (h.fearGreed||'—') + '  ·  Conf ' + h.bottomConf + '/8  ·  Big3 ' + h.big3 + '/3',
+              ];
             }
           }
         }
@@ -802,23 +873,21 @@ async function renderHistory() {
             maxTicksLimit: 8
           },
           grid: { color: '#f1f5f9' }
-        },
-        yInd: {
-          position: 'right',
-          min: 0,
-          max: 1,
-          display: 'auto',
-          ticks: {
-            callback: v => (v*100).toFixed(0)+'%',
-            font: { size: 10 },
-            color: '#94a3b8',
-            maxTicksLimit: 6
-          },
-          grid: { display: false }
         }
       }
     }
   });
+
+  // Mouse leaves chart → reset panel to latest
+  document.getElementById('chart-main').addEventListener('mouseleave', () => {
+    lastPanelDate = null;
+    const latest = HISTORY_DATA[HISTORY_DATA.length - 1];
+    if (latest) updateIndicatorPanel(latest, false);
+  });
+
+  // Populate panel with latest on init
+  const latest = HISTORY_DATA[HISTORY_DATA.length - 1];
+  if (latest) updateIndicatorPanel(latest, false);
 
   buildHistoryTable();
 }
