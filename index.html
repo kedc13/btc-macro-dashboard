@@ -220,6 +220,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
   <div class="tabs" style="margin-top:14px">
     <button class="tab-btn active" id="tab-btn-today"   onclick="switchTab('today')">📊 Today</button>
+    <button class="tab-btn"        id="tab-btn-plan"    onclick="switchTab('plan')">📐 My Plan</button>
     <button class="tab-btn"        id="tab-btn-history" onclick="switchTab('history')">📈 History</button>
   </div>
 
@@ -250,6 +251,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <span class="tg-item"><span class="dot" style="background:#22c55e"></span><span class="dot" style="background:#22c55e"></span><span class="dot" style="background:#22c55e"></span> Big 3 all green = max allocation</span>
     </div>
     <div class="timestamp" id="ts"></div>
+  </div>
+
+  <!-- ===== MY PLAN TAB ===== -->
+  <div class="tab-panel" id="tab-plan">
+    <div id="plan-content"><div class="loading">Loading plan...</div></div>
   </div>
 
   <!-- ===== HISTORY TAB ===== -->
@@ -358,6 +364,28 @@ const W35_DATE   = '2026-06-22';  // Week 35: entering bottom formation window
 const W44_DATE   = '2026-08-24';  // Week 44: bottom window start
 const W58_DATE   = '2026-12-01';  // Week 58: extended bear / end of historical window
 const CHART_END  = '2027-04-01';  // Chart horizon
+
+// =====================================================================
+// PERSONAL DCA PLAN — update PLAN.deployed as buys happen
+// =====================================================================
+const PLAN = {
+  totalBudget:   150000,
+  deployed:       13000,   // $ spent so far (DCA + confirmed tranche fills)
+  dcaBudget:      64000,   // allocated to weekly DCA
+  trancheBudget:  86000,   // allocated to limit-order tranches
+  dcaWeekly:       1500,   // standard: 3 × $500/wk Sun / Tue / Thu
+  dcaDouble:       3000,   // aggressive: 3 × $1,000/wk on big drops
+  dcaStartDate: '2026-06-09',
+  // doubleThreshold: switch to aggressive if weekly price drop >= this %
+  doubleDropPct:    0.08,
+  tranches: [
+    { price: 58000, label: 'T1', size: null, filled: false, note: '' },
+    { price: 53000, label: 'T2', size: 7000, filled: false, note: 'Limit set' },
+    { price: 49000, label: 'T3', size: null, filled: false, note: '' },
+    { price: 43000, label: 'T4', size: null, filled: false, note: '' },
+    { price: 38000, label: 'T5', size: null, filled: false, note: '' },
+  ]
+};
 
 const PHASE_ZONES = [
   { start: ATH_DATE, end: W35_DATE,  fill: 'rgba(124,58,237,0.05)',  label: 'Early Bear' },
@@ -615,6 +643,7 @@ let mainChart = null;
 let isLogScale = false;
 let allDates = [];
 let histMap  = {};
+let livePrice = null; // set after API fetch, used by renderPlan()
 
 const IND_CFG = {
   mvrv:  { key:'mvrv',       norm:10,  color:'#8b5cf6', label:'MVRV Z-Score',   fmt: v=>'MVRV Z: '+(v*10).toFixed(2) },
@@ -899,19 +928,31 @@ function makePriceLevelPlugin() {
     afterDraw(chart) {
       const { ctx, chartArea: { left, right }, scales: { y } } = chart;
       if (!y) return;
-      const levels = [
-        { price: 61000, color: '#0284c7', label: '200WMA ~$61K', dash: [8,4] },
-        { price: 48000, color: '#7c3aed', label: 'LTH Cost ~$48K', dash: [5,3] },
+
+      // Market reference levels
+      const marketLevels = [
+        { price: 61000, color: '#0284c7', label: '200WMA ~$61K', dash: [8,4], width: 1.5, alpha: 0.75 },
+        { price: 48000, color: '#7c3aed', label: 'LTH Cost ~$48K', dash: [5,3], width: 1.5, alpha: 0.75 },
       ];
-      levels.forEach(lv => {
+
+      // Personal tranche targets
+      const trancheColors = ['#f97316','#f97316','#ef4444','#ef4444','#dc2626'];
+      const trancheLevels = PLAN.tranches.map((t, i) => ({
+        price: t.price,
+        color: t.filled ? '#94a3b8' : trancheColors[i],
+        label: t.label + ' $' + (t.price/1000).toFixed(0) + 'K' + (t.note ? ' · '+t.note : ''),
+        dash: [4,3], width: 1, alpha: t.filled ? 0.3 : 0.55,
+      }));
+
+      [...marketLevels, ...trancheLevels].forEach(lv => {
         if (lv.price < y.min || lv.price > y.max) return;
         const yp = y.getPixelForValue(lv.price);
         ctx.save();
         ctx.beginPath();
         ctx.setLineDash(lv.dash);
         ctx.strokeStyle = lv.color;
-        ctx.lineWidth = 1.5;
-        ctx.globalAlpha = 0.7;
+        ctx.lineWidth = lv.width;
+        ctx.globalAlpha = lv.alpha;
         ctx.moveTo(left, yp);
         ctx.lineTo(right, yp);
         ctx.stroke();
@@ -989,8 +1030,9 @@ async function renderHistory() {
   // Update header price with live feed value for today (or most recent available)
   if (Object.keys(cgMap).length) {
     const todayStr = new Date().toISOString().slice(0,10);
-    const livePrice = cgMap[todayStr] || cgMap[Object.keys(cgMap).sort().pop()];
-    if (livePrice) {
+    const fetched = cgMap[todayStr] || cgMap[Object.keys(cgMap).sort().pop()];
+    if (fetched) {
+      livePrice = fetched;
       const el = document.getElementById('hdr-price');
       if (el) el.textContent = '$' + Math.round(livePrice).toLocaleString();
     }
@@ -1250,17 +1292,193 @@ function buildHistoryTable() {
 }
 
 // =====================================================================
+// MY PLAN — personal DCA strategy tracker
+// =====================================================================
+function renderPlan() {
+  const el = document.getElementById('plan-content');
+  if (!el) return;
+
+  const now      = new Date();
+  const price    = livePrice || (HISTORY_DATA.length ? HISTORY_DATA[HISTORY_DATA.length-1].price : null);
+  const latest   = HISTORY_DATA.length ? HISTORY_DATA[HISTORY_DATA.length-1] : null;
+  const score    = latest ? computeScore(latest) : 0;
+  const tier     = scoreTier(score);
+
+  // ── Capital deployment ──────────────────────────────────────────
+  const deployed   = PLAN.deployed;
+  const remaining  = PLAN.totalBudget - deployed;
+  const pct        = (deployed / PLAN.totalBudget * 100).toFixed(1);
+  const dcaSpent   = Math.min(deployed, PLAN.dcaBudget);
+  const trancheSp  = Math.max(0, deployed - PLAN.dcaBudget);
+
+  // ── DCA week + this-week schedule ───────────────────────────────
+  const startMs  = new Date(PLAN.dcaStartDate).getTime();
+  const weekNum  = Math.floor((now.getTime() - startMs) / (7*86400000)) + 1;
+  const totalDcaWeeks = Math.ceil(PLAN.dcaBudget / PLAN.dcaWeekly);
+  const dcaRemaining  = PLAN.dcaBudget - dcaSpent;
+  const weeksLeft     = Math.ceil(dcaRemaining / PLAN.dcaWeekly);
+
+  // Day-of-week labels for Sun/Tue/Thu (0=Sun,2=Tue,4=Thu)
+  const dayNames  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const todayDow  = now.getDay(); // 0-6
+  const buyDays   = [0, 2, 4];   // Sun, Tue, Thu
+  const buyLabels = buyDays.map(d => {
+    const diff = ((d - todayDow + 7) % 7);
+    const date = new Date(now); date.setDate(date.getDate() + diff);
+    const label = diff === 0 ? '← TODAY' : diff === 7 ? '← NEXT WEEK' : '';
+    return { name: dayNames[d], date: date.toLocaleDateString('en-US',{month:'short',day:'numeric'}), isToday: diff===0, isPast: diff>3 && todayDow > d };
+  });
+
+  // ── Tranche distances ────────────────────────────────────────────
+  const trancheRows = PLAN.tranches.map(t => {
+    const dist   = price ? (((price - t.price) / price) * 100).toFixed(1) : null;
+    const hit    = price && price <= t.price;
+    const near   = price && !hit && dist && parseFloat(dist) < 8;
+    const status = t.filled ? '✓ Filled' : hit ? '⚡ Triggered!' : t.note ? t.note : 'Pending';
+    const color  = t.filled ? '#94a3b8' : hit ? '#16a34a' : near ? '#f97316' : '#64748b';
+    const bg     = t.filled ? '#f8fafc' : hit ? '#f0fdf4' : near ? '#fff7ed' : '#fff';
+    const border = t.filled ? '#e2e8f0' : hit ? '#bbf7d0' : near ? '#fed7aa' : '#e2e8f0';
+    return { ...t, dist, hit, near, status, color, bg, border };
+  });
+
+  // ── Double DCA trigger ───────────────────────────────────────────
+  // Suggest doubling if current price is ≥ 8% below the most recent tracked price
+  const prevPrice   = HISTORY_DATA.length > 1 ? HISTORY_DATA[HISTORY_DATA.length-2].price : null;
+  const weeklyDrop  = price && prevPrice ? (prevPrice - price) / prevPrice : 0;
+  const shouldDouble = weeklyDrop >= PLAN.doubleDropPct;
+  const dcaAmount   = shouldDouble ? PLAN.dcaDouble : PLAN.dcaWeekly;
+  const dcaLabel    = shouldDouble ? '$1,000/buy · AGGRESSIVE MODE' : '$500/buy · standard';
+
+  // ── Next key milestone ───────────────────────────────────────────
+  const w35Ms   = new Date(W35_DATE).getTime();
+  const w44Ms   = new Date(W44_DATE).getTime();
+  const daysToW35 = Math.max(0, Math.ceil((w35Ms - now.getTime()) / 86400000));
+  const daysToW44 = Math.max(0, Math.ceil((w44Ms - now.getTime()) / 86400000));
+  const milestone = daysToW35 > 0
+    ? { label: 'W35 Entering Window', days: daysToW35, date: W35_DATE, color:'#f97316', note:'Score multiplier jumps from 0.62× → 0.85×' }
+    : { label: 'W44 Bottom Window',   days: daysToW44, date: W44_DATE, color:'#22c55e', note:'Full score thresholds unlock — historical buy zone' };
+
+  // ── Emotional anchor text ────────────────────────────────────────
+  let anchor, anchorColor, anchorBg;
+  if (score >= 65) {
+    anchor = 'Multiple signals aligned. Your indicators are green. Execute the plan — this is what you prepared for.';
+    anchorColor = '#16a34a'; anchorBg = '#f0fdf4';
+  } else if (score >= 50) {
+    anchor = 'Valuation is favorable and timing is approaching. Keep DCAing, watch for tranche triggers.';
+    anchorColor = '#2563eb'; anchorBg = '#eff6ff';
+  } else if (score >= 35) {
+    anchor = 'Bear market phase risk is real — but your tranches are set and your DCA is working. Stay the course.';
+    anchorColor = '#d97706'; anchorBg = '#fffbeb';
+  } else {
+    anchor = 'Too early for heavy allocation. Your $500/week DCA is accumulating. Patience protects capital.';
+    anchorColor = '#64748b'; anchorBg = '#f8fafc';
+  }
+
+  // ── Render ───────────────────────────────────────────────────────
+  el.innerHTML = `
+
+  <!-- EMOTIONAL ANCHOR -->
+  <div style="background:${anchorBg};border-left:4px solid ${anchorColor};border-radius:0 10px 10px 0;padding:14px 16px;margin-bottom:12px">
+    <div style="font-size:11px;font-weight:700;color:${anchorColor};text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">📌 Plan Status — Score ${score}/100 · ${tier.label}</div>
+    <div style="font-size:13px;color:#1e293b;line-height:1.5">${anchor}</div>
+  </div>
+
+  <!-- CAPITAL DEPLOYMENT -->
+  <div class="chart-card" style="margin-bottom:10px">
+    <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Capital Deployment</div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+      <div style="flex:1;height:10px;background:#f1f5f9;border-radius:5px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:${tier.color};border-radius:5px;transition:width .4s"></div>
+      </div>
+      <span style="font-size:14px;font-weight:800;color:${tier.color};white-space:nowrap">${pct}% deployed</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+      <div class="card"><div class="card-label">Deployed</div><div class="card-value" style="color:#1e293b">$${deployed.toLocaleString()}</div></div>
+      <div class="card"><div class="card-label">Remaining</div><div class="card-value" style="color:#22c55e">$${remaining.toLocaleString()}</div></div>
+      <div class="card"><div class="card-label">Total Budget</div><div class="card-value">$${PLAN.totalBudget.toLocaleString()}</div></div>
+      <div class="card"><div class="card-label">DCA Remaining</div><div class="card-value">$${dcaRemaining.toLocaleString()}</div><div class="card-sub">${weeksLeft} weeks left</div></div>
+      <div class="card"><div class="card-label">Tranche Budget</div><div class="card-value">$${PLAN.trancheBudget.toLocaleString()}</div><div class="card-sub">5 levels set</div></div>
+      <div class="card"><div class="card-label">DCA Week</div><div class="card-value">Week ${weekNum}</div><div class="card-sub">of ~${totalDcaWeeks}</div></div>
+    </div>
+  </div>
+
+  <!-- THIS WEEK'S DCA -->
+  <div class="chart-card" style="margin-bottom:10px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em">This Week's DCA</div>
+      <div style="font-size:12px;font-weight:700;color:${shouldDouble?'#ef4444':'#22c55e'}">${dcaLabel}</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      ${buyLabels.map(b => `
+        <div style="flex:1;text-align:center;padding:10px 6px;border-radius:8px;border:1.5px solid ${b.isToday?'#2563eb':'#e2e8f0'};background:${b.isToday?'#eff6ff':'#f8fafc'}">
+          <div style="font-size:12px;font-weight:700;color:${b.isToday?'#2563eb':'#1e293b'}">${b.name}</div>
+          <div style="font-size:10px;color:#94a3b8;margin-top:2px">${b.date}</div>
+          <div style="font-size:13px;font-weight:800;color:${b.isToday?'#2563eb':'#22c55e'};margin-top:4px">$${(shouldDouble?1000:500).toLocaleString()}</div>
+          ${b.isToday?'<div style="font-size:9px;color:#2563eb;margin-top:2px;font-weight:700">BUY TODAY</div>':''}
+        </div>`).join('')}
+    </div>
+    ${shouldDouble?`<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 12px;font-size:12px;color:#dc2626;font-weight:600">⚡ Aggressive DCA triggered — price dropped ${(weeklyDrop*100).toFixed(1)}% recently. Switch to $1,000/buy this week.</div>`
+    : `<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 12px;font-size:12px;color:#16a34a">✓ Standard DCA. Switch to $1,000/buy if price drops ${(PLAN.doubleDropPct*100).toFixed(0)}%+ in a week or hits $59K.</div>`}
+  </div>
+
+  <!-- TRANCHE STATUS -->
+  <div class="chart-card" style="margin-bottom:10px">
+    <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Tranche Targets ${price?'· Live $'+Math.round(price).toLocaleString():''}</div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      ${trancheRows.map(t => `
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;border:1.5px solid ${t.border};background:${t.bg}">
+          <div style="font-size:13px;font-weight:800;color:${t.color};min-width:52px">${t.label}</div>
+          <div style="font-size:14px;font-weight:700;color:#1e293b;min-width:72px">$${t.price.toLocaleString()}</div>
+          ${t.size?`<div style="font-size:11px;color:#64748b;min-width:60px">$${t.size.toLocaleString()} set</div>`:'<div style="min-width:60px"></div>'}
+          <div style="flex:1"></div>
+          ${t.dist && !t.filled?`<div style="font-size:11px;color:${t.color};font-weight:600">${t.hit?'AT LEVEL':'↓ '+t.dist+'% away'}</div>`:''}
+          <div style="font-size:11px;font-weight:700;color:${t.color};min-width:80px;text-align:right">${t.status}</div>
+        </div>`).join('')}
+    </div>
+    <div style="margin-top:10px;font-size:11px;color:#94a3b8">Tranche lines are drawn on the History chart. Mark filled=true in PLAN.tranches when a level executes.</div>
+  </div>
+
+  <!-- MILESTONE COUNTDOWN -->
+  <div class="chart-card" style="margin-bottom:10px">
+    <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Next Milestone</div>
+    <div style="display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:10px;background:${milestone.color}18;border:1.5px solid ${milestone.color}44">
+      <div style="font-size:32px;font-weight:900;color:${milestone.color};min-width:44px;text-align:center;line-height:1">${milestone.days}</div>
+      <div>
+        <div style="font-size:13px;font-weight:700;color:#1e293b">${milestone.label} <span style="color:#94a3b8;font-weight:400">· ${milestone.date}</span></div>
+        <div style="font-size:11px;color:#64748b;margin-top:3px">${milestone.note}</div>
+      </div>
+    </div>
+    ${daysToW35 > 0 ? `<div style="margin-top:8px;font-size:11px;color:#94a3b8">After W35: score multiplier lifts to 0.85×. After W44 (${daysToW44}d): full thresholds unlock — historical bottom zone.</div>` : `<div style="margin-top:8px;font-size:11px;color:#16a34a;font-weight:600">✓ In entering window. Watch for Stoch RSI compression + SOPR recovery as bottom confirmation.</div>`}
+  </div>
+
+  <!-- STRATEGY REMINDER -->
+  <div style="background:#0f172a;border-radius:10px;padding:14px 16px;color:#94a3b8;font-size:11px;line-height:1.7">
+    <div style="color:#f1f5f9;font-weight:700;margin-bottom:6px">Your Strategy in Plain Terms</div>
+    $500 × Sun/Tue/Thu every week regardless. If price drops hard (8%+ in a week), double to $1,000/buy.
+    Tranches at $58K, $53K, $49K, $43K, $38K are set — they fill automatically when price hits them.
+    The emotional job of this dashboard: <span style="color:#60a5fa">remind you the plan is working when it feels like it isn't.</span>
+    Bear markets are won by people who don't panic. Your average cost matters more than any single entry.
+  </div>`;
+}
+
+// =====================================================================
 // TAB SWITCHING
 // =====================================================================
 let histLoaded = false;
 function switchTab(tab) {
-  ['today','history'].forEach(t => {
-    document.getElementById('tab-btn-'+t).classList.toggle('active', t===tab);
-    document.getElementById('tab-'+t).classList.toggle('active', t===tab);
+  ['today','plan','history'].forEach(t => {
+    const btn = document.getElementById('tab-btn-'+t);
+    const panel = document.getElementById('tab-'+t);
+    if (btn) btn.classList.toggle('active', t===tab);
+    if (panel) panel.classList.toggle('active', t===tab);
   });
   if (tab==='history' && !histLoaded) {
     histLoaded = true;
     setTimeout(() => renderHistory(), 60);
+  }
+  if (tab==='plan') {
+    // Render plan with latest live price if available
+    setTimeout(() => renderPlan(), 30);
   }
 }
 
@@ -1289,11 +1507,11 @@ function switchTab(tab) {
   if (el) el.textContent = 'Last tracked ' + latest.date + ' — MVRV ' + latest.mvrv + ' · F&G ' + latest.fearGreed + ' · Conf ' + latest.bottomConf + '/8';
 })();
 
-// Default to History tab (works in all environments)
+// Default to My Plan tab (works everywhere, no API needed)
 // Hide Today tab unless Cowork/Slack loads successfully
 document.getElementById('tab-btn-today').style.display = 'none';
 document.getElementById('tab-today').style.display   = 'none';
-switchTab('history');
+switchTab('plan');
 
 // In Cowork: try to fetch Slack data and enable Today tab
 if (window.cowork && window.cowork.callMcpTool) {
