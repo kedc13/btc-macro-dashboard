@@ -1437,6 +1437,7 @@ async function renderHistory() {
       livePrice = fetched;
       const el = document.getElementById('hdr-price');
       if (el) el.textContent = '$' + Math.round(livePrice).toLocaleString();
+      if (mainChart) mainChart.update('none');
     }
   }
 
@@ -1521,13 +1522,49 @@ async function renderHistory() {
   const phaseBgPlugin    = makePhaseBgPlugin(allDates);
   const vMarkerPlugin    = makeVMarkerPlugin(allDates);
   const priceLevelPlugin = makePriceLevelPlugin();
+  const livePricePlugin  = {
+    id: 'livePrice',
+    afterDraw(chart) {
+      const price = livePrice;
+      if (!price) return;
+      const { ctx, scales: { x, y } } = chart;
+      const yPos = y.getPixelForValue(price);
+      if (yPos < y.top || yPos > y.bottom) return;
+      // Dotted line
+      ctx.save();
+      ctx.setLineDash([3, 4]);
+      ctx.strokeStyle = 'rgba(239,68,68,0.7)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x.left, yPos);
+      ctx.lineTo(x.right, yPos);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // Price badge on right edge
+      const label = '$' + Math.round(price).toLocaleString();
+      ctx.font = '700 10px Inter,sans-serif';
+      const tw = ctx.measureText(label).width;
+      const pad = 5, bh = 18, bw = tw + pad * 2;
+      const bx = x.right + 2;
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(bx, yPos - bh/2, bw, bh, 3);
+      else ctx.rect(bx, yPos - bh/2, bw, bh);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, bx + pad, yPos);
+      ctx.restore();
+    }
+  };
 
   if (mainChart) { mainChart.destroy(); mainChart = null; }
 
   const ctx = document.getElementById('chart-main').getContext('2d');
   mainChart = new Chart(ctx, {
     type: 'line',
-    plugins: [phaseBgPlugin, vMarkerPlugin, priceLevelPlugin],
+    plugins: [phaseBgPlugin, vMarkerPlugin, priceLevelPlugin, livePricePlugin],
     data: {
       labels: allDates,
       datasets: [
