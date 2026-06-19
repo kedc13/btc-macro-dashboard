@@ -273,7 +273,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     </div>
     <div class="header-nav">
       <button class="hnav-btn" id="tab-btn-today"   onclick="switchTab('today')">Today</button>
-      <button class="hnav-btn active" id="tab-btn-history" onclick="switchTab('history')">History</button>
+      <button class="hnav-btn active" id="tab-btn-history" onclick="switchTab('history')">Signals</button>
       <button class="hnav-btn"        id="tab-btn-plan"    onclick="switchTab('plan')">My Plan</button>
     </div>
   </div>
@@ -332,8 +332,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
         <div class="chart-controls">
           <button class="range-btn" id="rb-1W"  onclick="setRange('1W')">1W</button>
           <button class="range-btn" id="rb-1M"  onclick="setRange('1M')">1M</button>
-          <button class="range-btn" id="rb-3M"  onclick="setRange('3M')">3M</button>
-          <button class="range-btn active" id="rb-ALL" onclick="setRange('ALL')">ALL</button>
+          <button class="range-btn active" id="rb-3M"  onclick="setRange('3M')">3M</button>
+          <button class="range-btn" id="rb-ALL" onclick="setRange('ALL')">ALL</button>
           <div class="ctrl-sep"></div>
           <button class="ctrl-btn" id="log-btn" onclick="toggleLog()">Log Scale</button>
         </div>
@@ -1438,6 +1438,7 @@ async function renderHistory() {
   if (latest) updateIndicatorPanel(latest, false);
 
   buildHistoryTable();
+  setRange('3M');
 }
 
 // =====================================================================
