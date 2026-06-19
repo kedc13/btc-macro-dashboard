@@ -1642,13 +1642,63 @@ function switchTab(tab) {
   if (el) el.textContent = 'Last tracked ' + latest.date + ' — MVRV ' + latest.mvrv + ' · F&G ' + latest.fearGreed + ' · Conf ' + latest.bottomConf + '/8';
 })();
 
+// Adapter: converts compact HISTORY_DATA entry → renderToday() format
+function histToTodayData(h) {
+  const sigLabelMap = {
+    EXTREME_ACCUM:'🟢 EXTREME ACCUM', STRONG_ACCUM:'🟢 STRONG ACCUM',
+    ACCUM_BOTTOM:'🔵 ACCUMULATE', WATCH:'⚪ WATCH',
+    NEUTRAL:'⚪ NEUTRAL', ELEVATED:'🟠 ELEVATED', EUPHORIC:'🔴 EUPHORIC'
+  };
+  const sigDotMap = {
+    EXTREME_ACCUM:'darkgreen', STRONG_ACCUM:'green',
+    ACCUM_BOTTOM:'blue', WATCH:'gray', NEUTRAL:'gray',
+    ELEVATED:'orange', EUPHORIC:'red'
+  };
+  const phMap = {
+    EARLY_BEAR:'Early Bear', ENTERING_WINDOW:'Entering Window',
+    BOTTOM_WINDOW:'Bottom Window', EXTENDED:'Extended'
+  };
+  // Big 3 display based on count
+  const big3Names = ['Hash Ribbons','SOPR Recovery','Monthly Stoch RSI'];
+  const big3Count = parseInt(h.big3) || 0;
+  const big3Arr = big3Names.map((name, i) => ({
+    name,
+    color: i < big3Count ? 'green' : 'gray',
+    status: i < big3Count ? 'Confirmed 🟢' : 'Not yet triggered'
+  }));
+
+  return {
+    signalDotColor: sigDotMap[h.signal] || 'gray',
+    signal: sigLabelMap[h.signal] || h.signal || '—',
+    price: '$' + (h.price||0).toLocaleString(),
+    week: h.week,
+    phase: phMap[h.phase] || h.phase || '—',
+    action: 'Snapshot ' + h.date,
+    big3: big3Arr,
+    bottomConf: (h.bottomConf||0) + '/8',
+    bottomGreen: [],
+    bottomYellow: [],
+    mvrv:       h.mvrv  != null ? String(h.mvrv)      : null,
+    puell:      h.puell != null ? String(h.puell)     : null,
+    fearGreed:  h.fearGreed != null ? String(h.fearGreed) : null,
+    reserveRisk:  null, realizedPrice: null, realizedDiff: null, piCycle: null,
+    monthlyRsi: null, weeklyRsi: null,
+    macd: null, macdColor: 'gray',
+    ma200: null, ma200Color: 'gray',
+    etf: null, etfColor: 'gray',
+    dxy: null, dxyColor: 'gray',
+    m2: null, m2Color: 'gray',
+    fed: null, fedColor: 'gray',
+    timestamp: h.date
+  };
+}
+
 // Today tab always renders from latest HISTORY_DATA entry.
-// The daily scheduled task writes fresh data here and pushes to GitHub,
-// so whatever was captured during the last run is always current.
-// F&G is additionally refreshed live from the alternative.me API.
+// Daily task writes fresh data here → persists on GitHub Pages.
+// F&G refreshed live from alternative.me API.
 (function() {
   var latest = HISTORY_DATA[HISTORY_DATA.length - 1];
-  if (latest) renderToday(latest);
+  if (latest) renderToday(histToTodayData(latest));
   fetchLiveFG();
 })();
 switchTab('today');
