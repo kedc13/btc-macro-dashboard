@@ -371,17 +371,19 @@ const CHART_END  = '2027-04-01';  // Chart horizon
 // =====================================================================
 const PLAN = {
   totalBudget:   150000,
-  deployed:       13000,   // $ spent so far (DCA + confirmed tranche fills)
+  deployed:       14250,   // updated Jun 18 2026
+                           // Jun 2 $2,000@$67,358 · Jun 3 $8,000@$63,201
+                           // Jun 5 $750@$61,214 · Jun 5 $3,000@$59,800
+                           // Jun 16 $500@$65,557
   dcaBudget:      64000,   // allocated to weekly DCA
   trancheBudget:  86000,   // allocated to limit-order tranches
   dcaWeekly:       1500,   // standard: 3 × $500/wk Sun / Tue / Thu
   dcaDouble:       3000,   // aggressive: 3 × $1,000/wk on big drops
   dcaStartDate: '2026-06-09',
-  // doubleThreshold: switch to aggressive if weekly price drop >= this %
   doubleDropPct:    0.08,
   tranches: [
-    { price: 58000, label: 'T1', size: null, filled: false, note: '' },
-    { price: 53000, label: 'T2', size: 7000, filled: false, note: 'Limit set' },
+    { price: 58168, label: 'T1', size: 4000, filled: false, note: 'Order set @ $58,168' },
+    { price: 53696, label: 'T2', size: 7252, filled: false, note: 'Order set @ $53,696' },
     { price: 49000, label: 'T3', size: null, filled: false, note: '' },
     { price: 43000, label: 'T4', size: null, filled: false, note: '' },
     { price: 38000, label: 'T5', size: null, filled: false, note: '' },
