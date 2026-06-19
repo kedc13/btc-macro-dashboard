@@ -68,7 +68,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .big3-meter { flex: 1; height: 4px; background: #222; border-radius: 2px; overflow: hidden; }
 .big3-meter-fill { height: 100%; border-radius: 2px; transition: width .4s; }
 .big3-pct { font-size: 9px; color: #555; min-width: 28px; text-align: right; }
-.big3-spark { display: block; width: 100%; height: 80px; }
+.big3-spark { display: block; width: 100%; height: 90px; }
 /* Tooltip on big3 cards */
 .big3-card[data-b3tip]:hover::after {
   content: attr(data-b3tip);
@@ -841,7 +841,7 @@ function calcStochK(rsiVals, period, smooth) {
 
 function makeSpark(vals, color, threshold) {
   if (!vals || vals.length < 2) return '';
-  const w = 200, h = 28, pad = 2;
+  const w = 200, h = 60, pad = 4;
   const lo = Math.min(...vals), hi = Math.max(...vals);
   const range = hi - lo || 1;
   const pts = vals.map((v,i) => {
@@ -851,9 +851,8 @@ function makeSpark(vals, color, threshold) {
   }).join(' ');
   const thY = threshold != null ? ((h-pad) - ((threshold - lo) / range) * (h - 2*pad)).toFixed(1) : null;
   return `<svg class="big3-spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
-    ${thY ? `<line x1="${pad}" y1="${thY}" x2="${w-pad}" y2="${thY}" stroke="#333" stroke-width="1" stroke-dasharray="3,2"/>` : ''}
+    ${thY ? `<line x1="${pad}" y1="${thY}" x2="${w-pad}" y2="${thY}" stroke="#2a2a2a" stroke-width="1" stroke-dasharray="3,2"/>` : ''}
     <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
-    <circle cx="${vals.length>1?(pad+(w-2*pad)).toFixed(1):pad}" cy="${((h-pad)-((vals[vals.length-1]-lo)/range)*(h-2*pad)).toFixed(1)}" r="2.5" fill="${color}"/>
   </svg>`;
 }
 
@@ -862,7 +861,7 @@ function renderBig3Cards(big3arr, liveData) {
   if (!grid) return;
   grid.innerHTML = BIG3_META.map((meta, i) => {
     const active = big3arr[i] && big3arr[i].color === 'green';
-    const dotColor = active ? '#22c55e' : '#333';
+    const dotColor = active ? '#22c55e' : '#555';
     const status   = active ? '✓ ACTIVE' : '— Waiting';
     const statusClr= active ? '#22c55e' : '#555';
 
@@ -871,9 +870,12 @@ function renderBig3Cards(big3arr, liveData) {
       const d = liveData[i];
       pct = d.pct;
       // Only show color when active; otherwise keep everything muted
-      meterColor = active ? '#22c55e' : '#2a2a2a';
-      const sparkColor = active ? '#22c55e' : '#3a3a3a';
-      sparkSvg = d.spark ? d.spark.replace(/stroke="[^"]*"/g, `stroke="${sparkColor}"`).replace(/fill="[^"]*"(?=[^/]*\/>)/g, `fill="${sparkColor}"`) : '';
+      meterColor = active ? '#22c55e' : '#fff';
+      const sparkColor = active ? '#22c55e' : '#666';
+      if (d.spark) {
+        // Just replace stroke color — polyline has fill="none", no circle to worry about
+        sparkSvg = d.spark.replace(/stroke="[^"]*"/g, `stroke="${sparkColor}"`);
+      }
       pctLabel = Math.round(pct) + '%';
     }
 
