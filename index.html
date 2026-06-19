@@ -1024,12 +1024,11 @@ function updateIndicatorPanel(h, isHover) {
     </div>` : '';
 
   const scoreCycleHtml = `<div style="display:flex;gap:10px;margin-bottom:10px">${scoreHtml}${cycleHtml}</div>`;
-  const rightCol = `<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:8px">${levelsHtml}${upgradeHtml}</div>`;
-  const mainRow  = `<div style="display:flex;gap:10px;align-items:flex-start">`
-                 + `<div style="flex:1;min-width:0">${cardsHtml}</div>`
-                 + rightCol
+  const notesRow = `<div style="display:flex;gap:8px;margin-top:8px">`
+                 + `<div style="flex:1;min-width:0">${levelsHtml}</div>`
+                 + `<div style="flex:1;min-width:0">${upgradeHtml}</div>`
                  + `</div>`;
-  wrap.innerHTML = phaseWarning + scoreCycleHtml + mainRow;
+  wrap.innerHTML = phaseWarning + scoreCycleHtml + cardsHtml + notesRow;
 }
 
 // =====================================================================
