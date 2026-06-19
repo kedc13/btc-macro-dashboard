@@ -191,6 +191,20 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 /* BIG 3 SECTION */
 .big3-section-hdr { font-size:10px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.07em; margin:10px 0 6px; }
 
+/* METER CARDS */
+.meter-card { background:#fff; border-radius:10px; padding:14px 16px; border:1px solid #e2e8f0; }
+.mc-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:#94a3b8; margin-bottom:5px; display:flex; align-items:center; gap:5px; }
+.live-badge { background:#16a34a; color:#fff; font-size:8px; font-weight:700; padding:1px 5px; border-radius:20px; letter-spacing:.04em; }
+.mc-value { font-size:22px; font-weight:800; line-height:1; margin-bottom:3px; }
+.mc-zone  { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; margin-bottom:9px; }
+.mc-track { position:relative; height:8px; border-radius:4px; background:linear-gradient(to right,#16a34a 0%,#22c55e 18%,#94a3b8 45%,#f97316 75%,#ef4444 100%); margin-bottom:4px; }
+.mc-pin   { position:absolute; top:50%; transform:translate(-50%,-50%); width:14px; height:14px; border-radius:50%; background:#fff; border:2.5px solid #1e293b; box-shadow:0 1px 4px rgba(0,0,0,.25); pointer-events:none; }
+.mc-ends  { display:flex; justify-content:space-between; font-size:9px; font-weight:600; }
+/* QUAL CARDS */
+.qual-card { background:#fff; border-radius:10px; padding:12px 14px; border:1px solid #e2e8f0; border-left:3px solid #94a3b8; }
+.qual-val  { font-size:12px; font-weight:600; color:#1e293b; margin-top:5px; line-height:1.35; display:flex; align-items:center; gap:5px; }
+.qual-sub  { font-size:10px; color:#94a3b8; margin-top:3px; }
+.q-dot     { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
 /* MISC */
 .loading { display: flex; align-items: center; justify-content: center; height: 200px; color: #64748b; font-size: 14px; }
 .error-msg { background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 14px; color: #dc2626; font-size: 13px; }
@@ -237,11 +251,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <div class="conf-tags" id="conf-tags"></div>
     </div>
     <div class="section-title">📊 Valuation</div>
-    <div class="grid-auto" id="val-grid"></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:10px" id="val-grid"></div>
     <div class="section-title">🌡️ Momentum &amp; Sentiment</div>
-    <div class="grid-auto" id="mom-grid"></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:10px" id="mom-grid"></div>
     <div class="section-title">💧 Macro</div>
-    <div class="grid-4" id="macro-grid"></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px" id="macro-grid"></div>
     <div class="tranche-guide">
       <span style="font-weight:600;color:#475569">Tranche guide:</span>
       <span class="tg-item"><span class="dot" style="background:#eab308"></span> BUY = first tranche</span>
@@ -557,6 +571,94 @@ function whatWouldUpgrade(h) {
 }
 
 // =====================================================================
+// METER CARD HELPERS — zones, rendering
+// =====================================================================
+const ZONES = {
+  mvrv: [
+    { max:0.3,  label:'Extreme Accum', color:'#16a34a' },
+    { max:0.5,  label:'Strong Accum',  color:'#22c55e' },
+    { max:1.2,  label:'Accumulate',    color:'#3b82f6' },
+    { max:3.5,  label:'Neutral / Watch', color:'#94a3b8' },
+    { max:7,    label:'Elevated',      color:'#f97316' },
+    { max:999,  label:'Euphoric',      color:'#ef4444' },
+  ],
+  puell: [
+    { max:0.5,  label:'Extreme Accum', color:'#16a34a' },
+    { max:0.8,  label:'Accumulate',    color:'#22c55e' },
+    { max:2.0,  label:'Neutral',       color:'#94a3b8' },
+    { max:3.0,  label:'Caution',       color:'#f97316' },
+    { max:999,  label:'Danger',        color:'#ef4444' },
+  ],
+  fg: [
+    { max:20,   label:'Extreme Fear — Best Buy',   color:'#16a34a' },
+    { max:35,   label:'Fear — Accumulate',          color:'#22c55e' },
+    { max:65,   label:'Neutral',                    color:'#94a3b8' },
+    { max:80,   label:'Greed — Caution',            color:'#f97316' },
+    { max:100,  label:'Extreme Greed — Avoid',      color:'#ef4444' },
+  ],
+  rsi: [
+    { max:30,   label:'Oversold — Max Opportunity', color:'#16a34a' },
+    { max:50,   label:'Low — Favorable',            color:'#22c55e' },
+    { max:70,   label:'Neutral',                    color:'#94a3b8' },
+    { max:80,   label:'High — Caution',             color:'#f97316' },
+    { max:100,  label:'Overbought — Avoid',         color:'#ef4444' },
+  ],
+  rr: [
+    { max:0.002, label:'Extreme Accum', color:'#16a34a' },
+    { max:0.006, label:'Accumulate',    color:'#22c55e' },
+    { max:0.012, label:'Neutral',       color:'#94a3b8' },
+    { max:0.02,  label:'Caution',       color:'#f97316' },
+    { max:999,   label:'Avoid',         color:'#ef4444' },
+  ],
+};
+
+function getZone(val, zones) {
+  return zones.find(z => val <= z.max) || zones[zones.length - 1];
+}
+function meterPct(val, min, max) {
+  return Math.min(100, Math.max(0, (val - min) / (max - min) * 100)).toFixed(1);
+}
+function meterCard(label, displayVal, numVal, min, max, zoneKey, live=false, id='') {
+  const valid = numVal !== null && !isNaN(numVal);
+  const zone  = valid ? getZone(numVal, ZONES[zoneKey]) : { label:'N/C', color:'#94a3b8' };
+  const pct   = valid ? meterPct(numVal, min, max) : 50;
+  return `<div class="meter-card"${id ? ` id="${id}"` : ''}>
+    <div class="mc-label">${label}${live ? ' <span class="live-badge">LIVE</span>' : ''}</div>
+    <div class="mc-value" style="color:${zone.color}">${displayVal || 'N/C'}</div>
+    <div class="mc-zone"  style="color:${zone.color}">${zone.label}</div>
+    <div class="mc-track"><div class="mc-pin" style="left:${pct}%"></div></div>
+    <div class="mc-ends"><span style="color:#16a34a">Max Opportunity</span><span style="color:#ef4444">Avoid</span></div>
+  </div>`;
+}
+function qualCard(label, value, color, sub='') {
+  return `<div class="qual-card" style="border-left-color:${color}">
+    <div class="mc-label">${label}</div>
+    <div class="qual-val"><span class="q-dot" style="background:${color}"></span>${value || 'N/C'}</div>
+    ${sub ? `<div class="qual-sub">${sub}</div>` : ''}
+  </div>`;
+}
+
+// Live Fear & Greed fetch
+async function fetchLiveFG() {
+  try {
+    const r = await fetch('https://api.alternative.me/fng/?limit=1');
+    const d = await r.json();
+    const val = parseInt(d.data[0].value);
+    const card = document.getElementById('fg-live-card');
+    if (!card) return;
+    const zone = getZone(val, ZONES.fg);
+    const pct  = meterPct(val, 0, 100);
+    card.outerHTML = `<div class="meter-card" id="fg-live-card">
+      <div class="mc-label">Fear &amp; Greed <span class="live-badge">LIVE</span></div>
+      <div class="mc-value" style="color:${zone.color}">${val}</div>
+      <div class="mc-zone"  style="color:${zone.color}">${zone.label}</div>
+      <div class="mc-track"><div class="mc-pin" style="left:${pct}%"></div></div>
+      <div class="mc-ends"><span style="color:#16a34a">Max Opportunity</span><span style="color:#ef4444">Avoid</span></div>
+    </div>`;
+  } catch(e) { /* keep Slack value */ }
+}
+
+// =====================================================================
 // SLACK PARSER (unchanged from v2)
 // =====================================================================
 function colorBefore(text, label) {
@@ -629,15 +731,39 @@ function renderToday(d) {
   const gtags=(d.bottomGreen||[]).map(s=>`<span class="conf-tag conf-tag-green">${s}</span>`).join('');
   const ytags=(d.bottomYellow||[]).map(s=>`<span class="conf-tag conf-tag-yellow">${s}</span>`).join('');
   document.getElementById('conf-tags').innerHTML=gtags+ytags||'<span style="color:#94a3b8;font-size:12px">No indicators firing</span>';
-  document.getElementById('val-grid').innerHTML=[
-    {label:'MVRV Z-Score',value:d.mvrv,sub:d.mvrvZone},{label:'Puell Multiple',value:d.puell,sub:''},{label:'Reserve Risk',value:d.reserveRisk,sub:''},{label:'Realized Price',value:d.realizedPrice,sub:d.realizedDiff},{label:'Pi Cycle',value:d.piCycle,sub:''},
-  ].map(c=>`<div class="card"><div class="card-label">${c.label}</div><div class="card-value">${c.value||'N/C'}</div>${c.sub?`<div class="card-sub">${c.sub}</div>`:''}</div>`).join('');
-  document.getElementById('mom-grid').innerHTML=[
-    {label:'Monthly RSI',value:d.monthlyRsi,color:d.monthlyRsiColor},{label:'Weekly RSI',value:d.weeklyRsi,color:d.weeklyRsiColor},{label:'MACD',value:d.macd,color:d.macdColor},{label:'Fear & Greed',value:d.fearGreed,color:d.fearGreedColor},{label:'200W MA',value:d.ma200,color:d.ma200Color},
-  ].map(c=>`<div class="card"><div class="card-label">${c.label}</div><div class="card-value">${dot(c.color)}${c.value||'N/C'}</div></div>`).join('');
-  document.getElementById('macro-grid').innerHTML=[
-    {label:'ETF Flows',value:d.etf,color:d.etfColor},{label:'DXY',value:d.dxy,color:d.dxyColor},{label:'Global M2',value:d.m2,color:d.m2Color},{label:'Fed Policy',value:d.fed,color:d.fedColor},
-  ].map(c=>`<div class="card"><div class="card-label">${c.label}</div><div class="card-value" style="font-size:12px;font-weight:600">${dot(c.color)}${c.value||'N/C'}</div></div>`).join('');
+  // Parse numerics for meters
+  const mvrvN = parseFloat(d.mvrv);
+  const puellN = parseFloat(d.puell);
+  const rrN    = parseFloat(d.reserveRisk);
+  const fgN    = parseInt(d.fearGreed);
+  const mrsiN  = parseFloat((d.monthlyRsi||'').replace('~',''));
+  const wrsiN  = parseFloat((d.weeklyRsi||'').replace('~',''));
+
+  // Valuation — meters + qual cards
+  const rlzdColor = (d.realizedDiff||'').includes('-') ? '#22c55e' : '#f97316';
+  const piColor   = (d.piCycle||'').includes('TRIGGERED') ? '#ef4444' : '#22c55e';
+  document.getElementById('val-grid').innerHTML =
+    meterCard('MVRV Z-Score',   d.mvrv||'N/C', mvrvN, 0, 7,    'mvrv') +
+    meterCard('Puell Multiple', d.puell||'N/C', puellN, 0, 4,   'puell') +
+    meterCard('Reserve Risk',   d.reserveRisk||'N/C', rrN, 0, 0.02, 'rr') +
+    qualCard('Realized Price',  d.realizedPrice, rlzdColor, d.realizedDiff) +
+    qualCard('Pi Cycle',        d.piCycle,       piColor);
+
+  // Momentum — meters + qual cards
+  document.getElementById('mom-grid').innerHTML =
+    meterCard('Fear &amp; Greed', d.fearGreed||'N/C', fgN, 0, 100, 'fg', true, 'fg-live-card') +
+    meterCard('Monthly RSI',    d.monthlyRsi||'N/C', mrsiN, 0, 100, 'rsi') +
+    meterCard('Weekly RSI',     d.weeklyRsi||'N/C',  wrsiN, 0, 100, 'rsi') +
+    qualCard('MACD',   d.macd,  CLR[d.macdColor]||CLR.gray) +
+    qualCard('200W MA', d.ma200, CLR[d.ma200Color]||CLR.gray);
+
+  // Macro — qual cards only (qualitative data)
+  document.getElementById('macro-grid').innerHTML =
+    qualCard('ETF Flows',  d.etf, CLR[d.etfColor]||CLR.gray) +
+    qualCard('DXY',        d.dxy, CLR[d.dxyColor]||CLR.gray) +
+    qualCard('Global M2',  d.m2,  CLR[d.m2Color]||CLR.gray) +
+    qualCard('Fed Policy', d.fed, CLR[d.fedColor]||CLR.gray);
+
   document.getElementById('ts').textContent='Last updated: '+(d.timestamp||new Date().toLocaleString());
 }
 
@@ -1535,6 +1661,7 @@ if (window.cowork && window.cowork.callMcpTool) {
     document.getElementById('tab-btn-today').style.display = '';
     document.getElementById('tab-today').style.display = '';  // clear inline hide
     switchTab('today');
+    fetchLiveFG(); // update F&G card with real-time value
   }).catch(function() { /* stay on history */ });
 }
 </script>
