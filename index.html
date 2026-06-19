@@ -908,23 +908,24 @@ function updateIndicatorPanel(h, isHover) {
       <div style="font-size:11px;color:#666;line-height:1.5">Bear markets typically produce 2-3 rallies before true capitulation. Historical BTC bottoms form W44–58 (Aug–Dec 2026). Price could still reach $40-50K. Score penalized 38% for timing risk.</div>
     </div>` : '';
 
-  // --- Composite score bar ---
+  // --- Composite score card ---
   const scoreHtml = `
-    <div style="margin-bottom:14px">
-      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:5px">
-        <span style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em">Composite Buy Score</span>
-        <span style="font-size:11px;color:#94a3b8">${tier.desc}</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="flex:1;height:8px;background:#2a2a2a;border-radius:4px;overflow:hidden">
-          <div style="height:100%;width:${score}%;background:${tier.color};border-radius:4px;transition:width .3s"></div>
+    <div class="chart-card" style="flex:1;min-width:0">
+      <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Composite Buy Score</div>
+      <div style="display:flex;align-items:flex-end;gap:10px;margin-bottom:10px">
+        <span style="font-size:48px;font-weight:900;color:${tier.color};line-height:1">${score}</span>
+        <div style="padding-bottom:6px">
+          <div style="font-size:14px;font-weight:800;color:${tier.color}">${tier.label}</div>
+          <div style="font-size:10px;color:#64748b;margin-top:2px">/100</div>
         </div>
-        <span style="font-size:22px;font-weight:800;color:${tier.color};min-width:42px;text-align:right;line-height:1">${score}</span>
-        <span style="font-size:11px;font-weight:700;color:${tier.color};min-width:105px">${tier.label}</span>
       </div>
+      <div style="height:6px;background:#2a2a2a;border-radius:3px;overflow:hidden;margin-bottom:8px">
+        <div style="height:100%;width:${score}%;background:${tier.color};border-radius:3px;transition:width .3s"></div>
+      </div>
+      <div style="font-size:11px;color:#555">${tier.desc}</div>
     </div>`;
 
-  // --- Bear cycle progress bar ---
+  // --- Bear cycle card ---
   const TOTAL_WKS = 58;
   const earlyPct    = (34/TOTAL_WKS*100).toFixed(1);
   const enterPct    = (9/TOTAL_WKS*100).toFixed(1);
@@ -932,23 +933,30 @@ function updateIndicatorPanel(h, isHover) {
   const needlePct   = Math.min((week/TOTAL_WKS)*100, 100).toFixed(1);
   const daysToW35   = week < 35 ? Math.round((35-week)*7) : 0;
   const daysToW44   = week < 44 ? Math.round((44-week)*7) : 0;
-  const cycleNote   = daysToW44 > 0
-    ? (daysToW35 > 0 ? `${daysToW35}d to W35 · ${daysToW44}d to Bottom Window` : `${daysToW44}d to Bottom Window (W44)`)
-    : 'In bottom window';
+  const cyclePhaseLabel = week < 35 ? 'Early Bear' : week < 44 ? 'Entering Window' : week < 58 ? 'Bottom Window' : 'Extended';
+  const cyclePhaseColor = week < 35 ? '#a78bfa' : week < 44 ? '#fb923c' : week < 58 ? '#4ade80' : '#f87171';
   const cycleHtml = `
-    <div style="margin-bottom:14px">
-      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:5px">
-        <span style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em">Bear Cycle · Week ${week}</span>
-        <span style="font-size:10px;color:#94a3b8">${cycleNote}</span>
+    <div class="chart-card" style="flex:1;min-width:0">
+      <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Bear Cycle</div>
+      <div style="display:flex;align-items:flex-end;gap:10px;margin-bottom:10px">
+        <span style="font-size:48px;font-weight:900;color:${cyclePhaseColor};line-height:1">W${week}</span>
+        <div style="padding-bottom:6px">
+          <div style="font-size:14px;font-weight:800;color:${cyclePhaseColor}">${cyclePhaseLabel}</div>
+          <div style="font-size:10px;color:#64748b;margin-top:2px">of 58 bear weeks</div>
+        </div>
       </div>
-      <div style="position:relative;height:16px;border-radius:8px;overflow:hidden;background:#334155">
-        <div style="position:absolute;left:0;top:0;height:100%;width:${earlyPct}%;background:rgba(124,58,237,0.35)"></div>
-        <div style="position:absolute;left:${earlyPct}%;top:0;height:100%;width:${enterPct}%;background:rgba(249,115,22,0.5)"></div>
-        <div style="position:absolute;left:${(parseFloat(earlyPct)+parseFloat(enterPct)).toFixed(1)}%;top:0;height:100%;width:${bottomPct}%;background:rgba(34,197,94,0.55)"></div>
-        <div style="position:absolute;left:${needlePct}%;top:0;width:2px;height:100%;background:#e5e5e5;transform:translateX(-1px)"></div>
+      <div style="position:relative;height:8px;border-radius:4px;overflow:hidden;background:#1a1a1a;margin-bottom:6px">
+        <div style="position:absolute;left:0;top:0;height:100%;width:${earlyPct}%;background:rgba(124,58,237,0.5)"></div>
+        <div style="position:absolute;left:${earlyPct}%;top:0;height:100%;width:${enterPct}%;background:rgba(249,115,22,0.6)"></div>
+        <div style="position:absolute;left:${(parseFloat(earlyPct)+parseFloat(enterPct)).toFixed(1)}%;top:0;height:100%;width:${bottomPct}%;background:rgba(34,197,94,0.65)"></div>
+        <div style="position:absolute;left:${needlePct}%;top:-2px;width:2px;height:12px;background:#fff;border-radius:1px;transform:translateX(-1px)"></div>
       </div>
-      <div style="display:flex;justify-content:space-between;margin-top:3px;font-size:9px;color:#94a3b8">
-        <span>W1</span><span style="color:#a78bfa">Early Bear W1–34</span><span style="color:#fb923c">W35</span><span style="color:#4ade80">Bottom W44–58 ✓</span><span>W58+</span>
+      <div style="display:flex;justify-content:space-between;font-size:9px;color:#444;margin-bottom:10px">
+        <span>W1</span><span style="color:#7c3aed">W35</span><span style="color:#22c55e">W44</span><span>W58</span>
+      </div>
+      <div style="display:flex;gap:8px">
+        ${daysToW35 > 0 ? `<div style="flex:1;background:#0a0a0a;border:1px solid #222;border-radius:6px;padding:7px 10px"><div style="font-size:18px;font-weight:800;color:#a78bfa">${daysToW35}d</div><div style="font-size:9px;color:#555;margin-top:1px">to W35</div></div>` : ''}
+        ${daysToW44 > 0 ? `<div style="flex:1;background:#0a0a0a;border:1px solid #222;border-radius:6px;padding:7px 10px"><div style="font-size:18px;font-weight:800;color:#4ade80">${daysToW44}d</div><div style="font-size:9px;color:#555;margin-top:1px">to Bottom Window</div></div>` : `<div style="flex:1;background:#0a0a0a;border:1px solid #14532d;border-radius:6px;padding:7px 10px"><div style="font-size:11px;font-weight:700;color:#4ade80">✓ In bottom window</div></div>`}
       </div>
     </div>`;
 
@@ -1015,7 +1023,8 @@ function updateIndicatorPanel(h, isHover) {
       ${upg.tips.map(t=>`<div class="upgrade-tip">· ${t}</div>`).join('')}
     </div>` : '';
 
-  wrap.innerHTML = phaseWarning + scoreHtml + cycleHtml + cardsHtml + big3Html + levelsHtml + upgradeHtml;
+  const scoreCycleHtml = `<div style="display:flex;gap:10px;margin-bottom:10px">${scoreHtml}${cycleHtml}</div>`;
+  wrap.innerHTML = phaseWarning + scoreCycleHtml + cardsHtml + big3Html + levelsHtml + upgradeHtml;
 }
 
 // =====================================================================
