@@ -59,10 +59,25 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .card-value { font-size: 15px; font-weight: 700; color: #e5e5e5; display: flex; align-items: center; gap: 6px; }
 .card-sub   { font-size: 11px; color: #555; margin-top: 3px; }
 .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
-.big3-card { background: #141414; border-radius: 10px; padding: 12px 14px; border: 1px solid #222; display: flex; align-items: flex-start; gap: 10px; }
-.big3-dot  { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
-.big3-name { font-size: 12px; font-weight: 700; color: #e5e5e5; margin-bottom: 3px; }
-.big3-status { font-size: 11px; color: #555; line-height: 1.4; }
+.big3-card { background: #141414; border-radius: 10px; padding: 12px 14px; border: 1px solid #222; display: flex; flex-direction: column; gap: 8px; position: relative; cursor: default; }
+.big3-card-top { display: flex; align-items: center; gap: 8px; }
+.big3-dot  { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.big3-name { font-size: 12px; font-weight: 700; color: #e5e5e5; flex: 1; }
+.big3-status { font-size: 10px; font-weight: 700; color: #555; white-space: nowrap; }
+.big3-meter-row { display: flex; align-items: center; gap: 6px; }
+.big3-meter { flex: 1; height: 4px; background: #222; border-radius: 2px; overflow: hidden; }
+.big3-meter-fill { height: 100%; border-radius: 2px; transition: width .4s; }
+.big3-pct { font-size: 9px; color: #555; min-width: 28px; text-align: right; }
+.big3-spark { display: block; width: 100%; height: 28px; }
+/* Tooltip on big3 cards */
+.big3-card[data-b3tip]:hover::after {
+  content: attr(data-b3tip);
+  position: absolute; bottom: calc(100% + 8px); left: 0; right: 0;
+  background: #1a1a1a; border: 1px solid #333; color: #ccc;
+  font-size: 10px; line-height: 1.5; white-space: normal;
+  padding: 8px 10px; border-radius: 7px; pointer-events: none;
+  z-index: 99; box-shadow: 0 4px 16px rgba(0,0,0,.5);
+}
 .conf-bar { background: #141414; border-radius: 10px; padding: 14px; border: 1px solid #222; margin-bottom: 10px; }
 .conf-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 .conf-count { font-size: 22px; font-weight: 800; }
@@ -776,6 +791,165 @@ function parseSlack(raw) {
 // =====================================================================
 // RENDER TODAY TAB
 // =====================================================================
+// BIG 3 ENHANCED CARDS + LIVE DATA
+// =====================================================================
+const BIG3_META = [
+  { name:'Hash Ribbons',
+    tip:'Fires when the 30-day hashrate MA crosses back above the 60-day MA after miner capitulation. Historically one of the highest-conviction BTC buy signals — price often doubles within 6 months after trigger.',
+    proxySrc:'mvrv' },
+  { name:'SOPR Recovery',
+    tip:'Spent Output Profit Ratio sustained above 1.0 signals that coins are being moved at a profit — a bear-to-recovery trend shift. Watch for it to hold above 1 for multiple weeks.',
+    proxySrc:'fg' },
+  { name:'Monthly Stoch RSI',
+    tip:'Stochastic RSI on the monthly chart. Lines compressing below 20 = oversold. Pre-cross (K tightening) is the strongest signal. The actual cross lags but confirms direction.',
+    proxySrc:'live' },
+];
+
+function calcRSI(closes, period) {
+  if (closes.length < period + 1) return closes.map(() => 50);
+  const rsi = [];
+  let gains = 0, losses = 0;
+  for (let i = 1; i <= period; i++) {
+    const d = closes[i] - closes[i-1];
+    if (d > 0) gains += d; else losses -= d;
+  }
+  gains /= period; losses /= period;
+  rsi.push(losses === 0 ? 100 : 100 - 100 / (1 + gains/losses));
+  for (let i = period + 1; i < closes.length; i++) {
+    const d = closes[i] - closes[i-1];
+    gains = (gains * (period-1) + Math.max(d,0)) / period;
+    losses = (losses * (period-1) + Math.max(-d,0)) / period;
+    rsi.push(losses === 0 ? 100 : 100 - 100 / (1 + gains/losses));
+  }
+  return rsi;
+}
+
+function calcStochK(rsiVals, period, smooth) {
+  const raw = [];
+  for (let i = period - 1; i < rsiVals.length; i++) {
+    const slice = rsiVals.slice(i - period + 1, i + 1);
+    const lo = Math.min(...slice), hi = Math.max(...slice);
+    raw.push(hi === lo ? 50 : (rsiVals[i] - lo) / (hi - lo) * 100);
+  }
+  // smooth K
+  const k = [];
+  for (let i = smooth - 1; i < raw.length; i++) {
+    k.push(raw.slice(i - smooth + 1, i + 1).reduce((a,b)=>a+b,0) / smooth);
+  }
+  return k;
+}
+
+function makeSpark(vals, color, threshold) {
+  if (!vals || vals.length < 2) return '';
+  const w = 200, h = 28, pad = 2;
+  const lo = Math.min(...vals), hi = Math.max(...vals);
+  const range = hi - lo || 1;
+  const pts = vals.map((v,i) => {
+    const x = pad + (i / (vals.length-1)) * (w - 2*pad);
+    const y = (h-pad) - ((v - lo) / range) * (h - 2*pad);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  const thY = threshold != null ? ((h-pad) - ((threshold - lo) / range) * (h - 2*pad)).toFixed(1) : null;
+  return `<svg class="big3-spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+    ${thY ? `<line x1="${pad}" y1="${thY}" x2="${w-pad}" y2="${thY}" stroke="#333" stroke-width="1" stroke-dasharray="3,2"/>` : ''}
+    <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${vals.length>1?(pad+(w-2*pad)).toFixed(1):pad}" cy="${((h-pad)-((vals[vals.length-1]-lo)/range)*(h-2*pad)).toFixed(1)}" r="2.5" fill="${color}"/>
+  </svg>`;
+}
+
+function renderBig3Cards(big3arr, liveData) {
+  const grid = document.getElementById('big3-grid');
+  if (!grid) return;
+  grid.innerHTML = BIG3_META.map((meta, i) => {
+    const active = big3arr[i] && big3arr[i].color === 'green';
+    const dotColor = active ? '#22c55e' : '#333';
+    const status   = active ? '✓ ACTIVE' : '— Waiting';
+    const statusClr= active ? '#22c55e' : '#555';
+
+    let pct = 0, meterColor = '#333', sparkSvg = '', pctLabel = '—';
+    if (liveData) {
+      const d = liveData[i];
+      pct = d.pct; meterColor = d.color; sparkSvg = d.spark; pctLabel = Math.round(pct) + '%';
+    }
+
+    return `<div class="big3-card" data-b3tip="${meta.tip}">
+      <div class="big3-card-top">
+        <div class="big3-dot" style="background:${dotColor}"></div>
+        <div class="big3-name">${meta.name}</div>
+        <div class="big3-status" style="color:${statusClr}">${status}</div>
+      </div>
+      <div class="big3-meter-row">
+        <div class="big3-meter"><div class="big3-meter-fill" style="width:${pct}%;background:${meterColor}"></div></div>
+        <span class="big3-pct" style="color:${meterColor}">${pctLabel}</span>
+      </div>
+      ${sparkSvg || `<div style="height:28px;background:#0d0d0d;border-radius:4px;display:flex;align-items:center;justify-content:center"><span style="font-size:9px;color:#333">loading…</span></div>`}
+    </div>`;
+  }).join('');
+}
+
+async function fetchBig3Live(big3arr) {
+  try {
+    // Fetch ~400 days of daily prices for monthly grouping
+    const resp = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=400&interval=daily');
+    const json = await resp.json();
+    const prices = json.prices; // [[ts, price],...]
+
+    // Group into monthly closes
+    const byMonth = {};
+    prices.forEach(([ts, p]) => {
+      const d = new Date(ts);
+      const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+      byMonth[key] = p;
+    });
+    const monthlyCloses = Object.keys(byMonth).sort().map(k => byMonth[k]);
+
+    // Compute Monthly Stoch RSI
+    const rsiVals = calcRSI(monthlyCloses, 14);
+    const stochK  = calcStochK(rsiVals, 14, 3);
+    const lastK   = stochK[stochK.length - 1] ?? 50;
+    const stochSpark = makeSpark(stochK.slice(-14), lastK < 20 ? '#22c55e' : lastK < 40 ? '#f97316' : '#94a3b8', 20);
+    const stochPct = lastK < 20
+      ? 85 + (1 - lastK/20) * 10        // below 20 — very close
+      : lastK < 40
+        ? 50 + (40 - lastK) / 20 * 35   // 20-40 range
+        : Math.max(10, 50 - (lastK-40)/60*40);
+    const stochColor = lastK < 20 ? '#22c55e' : lastK < 40 ? '#f97316' : '#64748b';
+
+    // Hash Ribbons proxy: 30d vs 60d MA of price (price-based ribbon)
+    const dailyPrices = prices.map(([,p]) => p);
+    const ma30 = dailyPrices.slice(-30).reduce((a,b)=>a+b,0)/30;
+    const ma60 = dailyPrices.slice(-60).reduce((a,b)=>a+b,0)/60;
+    const ratio = ma30 / ma60; // >1 = bullish cross, <1 = still under
+    // Track ratio trend over last 60 days (every 5 days)
+    const ratioHistory = [];
+    for (let i = 60; i <= dailyPrices.length; i += 5) {
+      const s30 = dailyPrices.slice(i-30, i).reduce((a,b)=>a+b,0)/30;
+      const s60 = dailyPrices.slice(i-60, i).reduce((a,b)=>a+b,0)/60;
+      ratioHistory.push((s30/s60 - 0.85) / 0.3 * 100); // normalize to 0-100 range
+    }
+    const hrPct = Math.min(95, Math.max(5, (ratio - 0.85) / 0.2 * 100));
+    const hrColor = ratio > 1 ? '#22c55e' : ratio > 0.96 ? '#f97316' : '#64748b';
+    const hrSpark = makeSpark(ratioHistory.slice(-12), hrColor, 50);
+
+    // SOPR proxy: use F&G trend from recent HISTORY_DATA
+    const fgHistory = HISTORY_DATA.slice(-14).map(h => h.fearGreed != null ? +h.fearGreed : 50);
+    const latestFG  = fgHistory[fgHistory.length-1] ?? 50;
+    const fgPct = latestFG < 15 ? 70 : latestFG < 25 ? 50 : latestFG < 40 ? 35 : 20;
+    const soprColor = latestFG < 20 ? '#f97316' : '#64748b';
+    const soprSpark = makeSpark(fgHistory, soprColor, 25);
+
+    const liveData = [
+      { pct: Math.round(hrPct),    color: hrColor,    spark: hrSpark },
+      { pct: fgPct,                color: soprColor,  spark: soprSpark },
+      { pct: Math.round(stochPct), color: stochColor, spark: stochSpark },
+    ];
+    renderBig3Cards(big3arr, liveData);
+  } catch(e) {
+    console.warn('Big3 live fetch failed', e);
+  }
+}
+
+// =====================================================================
 function renderToday(d) {
   document.getElementById('sig-dot').style.background = CLR[d.signalDotColor]||CLR.gray;
   document.getElementById('sig-text').textContent = d.signal||'—';
@@ -783,7 +957,7 @@ function renderToday(d) {
   document.getElementById('hdr-week').textContent  = d.week||'—';
   const pb=document.getElementById('hdr-phase'); pb.textContent=d.phase||'—'; pb.className='phase-badge '+phaseClass(d.phase);
   document.getElementById('action-text').textContent = d.action||'—';
-  if(d.big3&&d.big3.length){ document.getElementById('big3-section').style.display=''; document.getElementById('big3-grid').innerHTML=d.big3.map(t=>`<div class="big3-card"><div class="big3-dot" style="background:${CLR[t.color]||CLR.gray}"></div><div><div class="big3-name">${t.name}</div><div class="big3-status">${t.status}</div></div></div>`).join(''); }
+  if(d.big3&&d.big3.length){ document.getElementById('big3-section').style.display=''; renderBig3Cards(d.big3, null); fetchBig3Live(d.big3); }
   const ct=parseInt((d.bottomConf||'0/8').split('/')[0])||0;
   document.getElementById('conf-count').textContent=d.bottomConf||'0/8';
   document.getElementById('conf-pips').innerHTML=Array.from({length:8},(_,i)=>`<div class="conf-pip${i<ct?' active':''}"></div>`).join('');
