@@ -856,9 +856,9 @@ function updateIndicatorPanel(h, isHover) {
   // --- Phase risk warning (early bear only) ---
   const isEarlyBear = (h.phase === 'EARLY_BEAR');
   const phaseWarning = isEarlyBear ? `
-    <div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;padding:10px 12px;margin-bottom:12px">
-      <div style="font-size:11px;font-weight:700;color:#92400e;margin-bottom:3px">⚠️ Early Bear Phase — High False-Bottom Risk</div>
-      <div style="font-size:11px;color:#78350f;line-height:1.5">Bear markets typically produce 2-3 rallies before true capitulation. Historical BTC bottoms form W44–58 (Aug–Dec 2026). Price could still reach $40-50K. Score penalized 38% for timing risk.</div>
+    <div style="background:#111;border-left:3px solid #78350f;border-radius:0 6px 6px 0;padding:10px 12px;margin-bottom:12px">
+      <div style="font-size:11px;font-weight:700;color:#fbbf24;margin-bottom:3px">⚠️ Early Bear Phase — High False-Bottom Risk</div>
+      <div style="font-size:11px;color:#666;line-height:1.5">Bear markets typically produce 2-3 rallies before true capitulation. Historical BTC bottoms form W44–58 (Aug–Dec 2026). Price could still reach $40-50K. Score penalized 38% for timing risk.</div>
     </div>` : '';
 
   // --- Composite score bar ---
@@ -1494,28 +1494,28 @@ function renderPlan() {
     : { label: 'W44 Bottom Window',   days: daysToW44, date: W44_DATE, color:'#22c55e', note:'Full score thresholds unlock — historical buy zone' };
 
   // ── Emotional anchor text ────────────────────────────────────────
-  let anchor, anchorColor, anchorBg;
+  let anchor, anchorColor;
   if (score >= 65) {
     anchor = 'Multiple signals aligned. Your indicators are green. Execute the plan — this is what you prepared for.';
-    anchorColor = '#4ade80'; anchorBg = '#14532d33';
+    anchorColor = '#4ade80';
   } else if (score >= 50) {
     anchor = 'Valuation is favorable and timing is approaching. Keep DCAing, watch for tranche triggers.';
-    anchorColor = '#60a5fa'; anchorBg = '#1e3a5f33';
+    anchorColor = '#60a5fa';
   } else if (score >= 35) {
     anchor = 'Bear market phase risk is real — but your tranches are set and your DCA is working. Stay the course.';
-    anchorColor = '#fbbf24'; anchorBg = '#78350f33';
+    anchorColor = '#fbbf24';
   } else {
     anchor = 'Too early for heavy allocation. Your $500/week DCA is accumulating. Patience protects capital.';
-    anchorColor = '#555'; anchorBg = '#111';
+    anchorColor = '#555';
   }
 
   // ── Render ───────────────────────────────────────────────────────
   el.innerHTML = `
 
   <!-- EMOTIONAL ANCHOR -->
-  <div style="background:${anchorBg};border-left:4px solid ${anchorColor};border-radius:0 10px 10px 0;padding:14px 16px;margin-bottom:12px">
+  <div style="background:#111;border-left:3px solid ${anchorColor};border-radius:0 6px 6px 0;padding:12px 16px;margin-bottom:12px">
     <div style="font-size:11px;font-weight:700;color:${anchorColor};text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">📌 Plan Status — Score ${score}/100 · ${tier.label}</div>
-    <div style="font-size:13px;color:#ccc;line-height:1.5">${anchor}</div>
+    <div style="font-size:12px;color:#666;line-height:1.5">${anchor}</div>
   </div>
 
   <!-- CAPITAL DEPLOYMENT -->
@@ -1552,8 +1552,8 @@ function renderPlan() {
           ${b.isToday?'<div style="font-size:9px;color:#2563eb;margin-top:2px;font-weight:700">BUY TODAY</div>':''}
         </div>`).join('')}
     </div>
-    ${shouldDouble?`<div style="background:#450a0a;border:1px solid #7f1d1d;border-radius:8px;padding:10px 12px;font-size:12px;color:#fca5a5;font-weight:600">⚡ Aggressive DCA triggered — price dropped ${(weeklyDrop*100).toFixed(1)}% recently. Switch to $1,000/buy this week.</div>`
-    : `<div style="background:#052e16;border:1px solid #14532d;border-radius:8px;padding:10px 12px;font-size:12px;color:#4ade80">✓ Standard DCA. Switch to $1,000/buy if price drops ${(PLAN.doubleDropPct*100).toFixed(0)}%+ in a week or hits $59K.</div>`}
+    ${shouldDouble?`<div style="background:#111;border-left:3px solid #ef4444;border-radius:0 6px 6px 0;padding:9px 12px;font-size:12px;color:#f87171;font-weight:600">⚡ Aggressive DCA triggered — price dropped ${(weeklyDrop*100).toFixed(1)}% recently. Switch to $1,000/buy this week.</div>`
+    : `<div style="background:#111;border-left:3px solid #22c55e;border-radius:0 6px 6px 0;padding:9px 12px;font-size:12px;color:#555">✓ Standard DCA. Switch to $1,000/buy if price drops ${(PLAN.doubleDropPct*100).toFixed(0)}%+ in a week or hits $59K.</div>`}
   </div>
 
   <!-- TRANCHE STATUS -->
@@ -1576,7 +1576,7 @@ function renderPlan() {
   <!-- MILESTONE COUNTDOWN -->
   <div class="chart-card" style="margin-bottom:10px">
     <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Next Milestone</div>
-    <div style="display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:10px;background:${milestone.color}18;border:1.5px solid ${milestone.color}44">
+    <div style="display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:6px;background:#111;border-left:3px solid ${milestone.color}">
       <div style="font-size:32px;font-weight:900;color:${milestone.color};min-width:44px;text-align:center;line-height:1">${milestone.days}</div>
       <div>
         <div style="font-size:13px;font-weight:700;color:#e5e5e5">${milestone.label} <span style="color:#555;font-weight:400">· ${milestone.date}</span></div>
