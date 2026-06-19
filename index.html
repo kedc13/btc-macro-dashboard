@@ -444,6 +444,14 @@ const PLAN = {
   doubleDropPct:     0.08,
   btcQty:       0.2343,    // total BTC acquired — update with each buy
   avgPrice:    62952,      // weighted avg cost basis — update with each buy
+  buys: [
+    { date: '2026-06-02', price: 67358, qty: 0.02969, label: 'DCA $2K' },
+    { date: '2026-06-03', price: 63201, qty: 0.12658, label: 'T1 $8K' },
+    { date: '2026-06-05', price: 61214, qty: 0.01225, label: 'DCA $750' },
+    { date: '2026-06-05', price: 59800, qty: 0.05017, label: 'T2 $3K' },
+    { date: '2026-06-16', price: 65557, qty: 0.00763, label: 'DCA $500' },
+    { date: '2026-06-18', price: 62578, qty: 0.00799, label: 'DCA $500' },
+  ],
   tranches: [
     { price: 63201, label: 'T1', size:  8000, filled: true,  note: 'Filled Jun 3 @ $63,201' },
     { price: 59800, label: 'T2', size:  3000, filled: true,  note: 'Filled Jun 5 @ $59,800' },
@@ -1268,6 +1276,35 @@ async function renderHistory() {
     datalabels: { display: false }
   }));
 
+  // Buy markers — green triangles at each purchase price
+  const buysByDate = {};
+  (PLAN.buys || []).forEach(b => {
+    if (!buysByDate[b.date]) buysByDate[b.date] = [];
+    buysByDate[b.date].push(b);
+  });
+  const buyData = allDates.map(d => {
+    const bs = buysByDate[d];
+    if (!bs || !bs.length) return null;
+    const totQty = bs.reduce((s,b) => s + b.qty, 0);
+    return bs.reduce((s,b) => s + b.price * b.qty, 0) / totQty;
+  });
+  const buyLabelsMap = {};
+  Object.entries(buysByDate).forEach(([d, bs]) => {
+    buyLabelsMap[d] = bs.map(b => b.label).join(' + ');
+  });
+  const buyDataset = {
+    label: '__buys__',
+    data: buyData,
+    showLine: false,
+    backgroundColor: '#22c55e',
+    borderColor: '#16a34a',
+    pointStyle: 'triangle',
+    pointRadius: buyData.map(v => v !== null ? 9 : 0),
+    pointHoverRadius: 11,
+    yAxisID: 'y',
+    order: 0
+  };
+
   // (indicator overlay datasets removed — indicator data shown in panel below chart)
 
   // Tick labels: quarterly (Jan/Apr/Jul/Oct) — Jan shows year, others show month abbr
@@ -1307,7 +1344,8 @@ async function renderHistory() {
           yAxisID: 'y',
           order: 5
         },
-        ...sigDatasets
+        ...sigDatasets,
+        buyDataset
       ]
     },
     options: {
@@ -1340,6 +1378,8 @@ async function renderHistory() {
               return d ? fmtDate(d) + ' ' + d.slice(0,4) : '';
             },
             label: item => {
+              if (item.dataset.label === '__buys__')
+                return item.raw != null ? '  ▲ Buy  $' + Math.round(item.raw).toLocaleString() + '  · ' + (buyLabelsMap[allDates[item.dataIndex]] || '') : null;
               if (item.dataset.label === '__price__')
                 return item.raw != null ? '  BTC  $' + Math.round(item.raw).toLocaleString() : null;
               return null;
