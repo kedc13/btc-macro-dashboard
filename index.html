@@ -580,7 +580,9 @@ function parseSlack(raw) {
   const weekM=raw.match(/Week (\d+) from/); d.week=weekM?weekM[1]:'N/C';
   const pu=raw.toUpperCase();
   d.phase = pu.includes('BOTTOM WINDOW')?'BOTTOM WINDOW': pu.includes('ENTERING WINDOW')?'ENTERING WINDOW': pu.includes('EXTENDED')?'EXTENDED':'EARLY BEAR';
-  const fl=raw.split('\n')[0];
+  // Skip Slack MCP channel-header lines ("Channel: DM ..." or "Messages:") to get actual signal line
+  const lines = raw.split('\n');
+  const fl = lines.find(l => l.includes('circle') || l.includes('ACCUM') || l.includes('WATCH') || l.includes('NEUTRAL') || l.includes('BTC $')) || lines[0];
   d.signalDotColor = fl.includes('large_green_circle')?'green': fl.includes('large_orange_circle')?'orange': fl.includes('large_yellow_circle')?'yellow': fl.includes('red_circle')?'red':'gray';
   d.signal = fl.replace(/:[\w_]+:/g,'').replace(/[_*~]/g,'').replace(/[—-]/g,'').trim().slice(0,60);
   d.big3=[];
@@ -1531,6 +1533,7 @@ if (window.cowork && window.cowork.callMcpTool) {
     renderToday(parseSlack(raw));
     // Re-enable Today tab now that we have Slack data
     document.getElementById('tab-btn-today').style.display = '';
+    document.getElementById('tab-today').style.display = '';  // clear inline hide
     switchTab('today');
   }).catch(function() { /* stay on history */ });
 }
