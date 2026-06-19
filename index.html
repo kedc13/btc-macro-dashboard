@@ -186,15 +186,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .cycle-track { position:relative; height:16px; border-radius:8px; overflow:hidden; background:#2a2a2a; }
 .cycle-needle{ position:absolute; top:0; height:100%; width:2px; background:#e5e5e5; }
 
-/* UPGRADE BOX */
-.upgrade-box { margin-top:10px; padding:10px 12px; background:#0d0d0d; border-radius:8px; border:1px solid #222; }
-.upgrade-lbl { font-size:10px; font-weight:700; color:#444; text-transform:uppercase; letter-spacing:.07em; margin-bottom:5px; }
+/* UPGRADE BOX — matches levels-box style */
+.upgrade-box { padding:8px 12px; background:#0d0d0d; border-radius:8px; border:1px solid #2a2a2a; }
+.upgrade-lbl { font-size:10px; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:.07em; margin-bottom:4px; }
 .upgrade-tip { font-size:11px; color:#555; margin-bottom:3px; }
 
 /* PRICE LEVELS BOX */
-.levels-box { margin-top:8px; padding:8px 12px; background:#0d0d0d; border-radius:8px; border:1px solid #2a2a2a; }
+.levels-box { padding:8px 12px; background:#0d0d0d; border-radius:8px; border:1px solid #2a2a2a; }
 .levels-lbl { font-size:10px; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:.07em; margin-bottom:4px; }
-.levels-row { display:flex; gap:16px; flex-wrap:wrap; }
+.levels-row { display:flex; flex-direction:column; gap:5px; }
 .levels-item { font-size:11px; color:#aaa; }
 
 /* BIG 3 SECTION */
@@ -1024,7 +1024,12 @@ function updateIndicatorPanel(h, isHover) {
     </div>` : '';
 
   const scoreCycleHtml = `<div style="display:flex;gap:10px;margin-bottom:10px">${scoreHtml}${cycleHtml}</div>`;
-  wrap.innerHTML = phaseWarning + scoreCycleHtml + cardsHtml + big3Html + levelsHtml + upgradeHtml;
+  const rightCol = `<div style="display:flex;flex-direction:column;gap:8px;width:220px;flex-shrink:0">${levelsHtml}${upgradeHtml}</div>`;
+  const mainRow  = `<div style="display:flex;gap:10px;align-items:flex-start">`
+                 + `<div style="flex:1;min-width:0">${cardsHtml}${big3Html}</div>`
+                 + rightCol
+                 + `</div>`;
+  wrap.innerHTML = phaseWarning + scoreCycleHtml + mainRow;
 }
 
 // =====================================================================
