@@ -384,23 +384,24 @@ const CHART_END  = '2027-04-01';  // Chart horizon
 // PERSONAL DCA PLAN — update PLAN.deployed as buys happen
 // =====================================================================
 const PLAN = {
-  totalBudget:   150000,
-  deployed:       14250,   // updated Jun 18 2026
-                           // Jun 2 $2,000@$67,358 · Jun 3 $8,000@$63,201
-                           // Jun 5 $750@$61,214 · Jun 5 $3,000@$59,800
-                           // Jun 16 $500@$65,557
-  dcaBudget:      64000,   // allocated to weekly DCA
-  trancheBudget:  86000,   // allocated to limit-order tranches
-  dcaWeekly:       1500,   // standard: 3 × $500/wk Sun / Tue / Thu
-  dcaDouble:       3000,   // aggressive: 3 × $1,000/wk on big drops
+  totalBudget:    150000,
+  deployed:        14250,   // total deployed Jun 18 2026
+  dcaDeployed:      3250,   // DCA only: Jun 2 $2K + Jun 5 $750 + Jun 16 $500
+  trancheDeployed: 11000,   // tranche fills: $8K @$63K (Jun 3) + $3K @$60K (Jun 5)
+  dcaBudget:       64000,   // allocated to weekly DCA
+  trancheBudget:   86000,   // allocated to limit-order tranches
+  dcaWeekly:        1500,   // standard: 3 × $500/wk Sun / Tue / Thu
+  dcaDouble:        3000,   // aggressive: 3 × $1,000/wk on big drops
   dcaStartDate: '2026-06-09',
-  doubleDropPct:    0.08,
+  doubleDropPct:     0.08,
   tranches: [
-    { price: 58168, label: 'T1', size: 4000, filled: false, note: 'Order set @ $58,168' },
-    { price: 53696, label: 'T2', size: 7252, filled: false, note: 'Order set @ $53,696' },
-    { price: 49000, label: 'T3', size: null, filled: false, note: '' },
-    { price: 43000, label: 'T4', size: null, filled: false, note: '' },
-    { price: 38000, label: 'T5', size: null, filled: false, note: '' },
+    { price: 63201, label: 'T1', size:  8000, filled: true,  note: 'Filled Jun 3 @ $63,201' },
+    { price: 59800, label: 'T2', size:  3000, filled: true,  note: 'Filled Jun 5 @ $59,800' },
+    { price: 58168, label: 'T3', size:  4000, filled: false, note: 'Order set @ $58,168' },
+    { price: 53696, label: 'T4', size:  7252, filled: false, note: 'Order set @ $53,696' },
+    { price: 49000, label: 'T5', size:  null, filled: false, note: '' },
+    { price: 43000, label: 'T6', size:  null, filled: false, note: '' },
+    { price: 38000, label: 'T7', size:  null, filled: false, note: '' },
   ]
 };
 
@@ -1439,8 +1440,8 @@ function renderPlan() {
   const deployed   = PLAN.deployed;
   const remaining  = PLAN.totalBudget - deployed;
   const pct        = (deployed / PLAN.totalBudget * 100).toFixed(1);
-  const dcaSpent   = Math.min(deployed, PLAN.dcaBudget);
-  const trancheSp  = Math.max(0, deployed - PLAN.dcaBudget);
+  const dcaSpent   = PLAN.dcaDeployed   || 0;
+  const trancheSp  = PLAN.trancheDeployed || 0;
 
   // ── DCA week + this-week schedule ───────────────────────────────
   const startMs  = new Date(PLAN.dcaStartDate).getTime();
@@ -1524,11 +1525,11 @@ function renderPlan() {
       <span style="font-size:14px;font-weight:800;color:${tier.color};white-space:nowrap">${pct}% deployed</span>
     </div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-      <div class="card"><div class="card-label">Deployed</div><div class="card-value" style="color:#1e293b">$${deployed.toLocaleString()}</div></div>
+      <div class="card"><div class="card-label">Total Deployed</div><div class="card-value" style="color:#1e293b">$${deployed.toLocaleString()}</div></div>
       <div class="card"><div class="card-label">Remaining</div><div class="card-value" style="color:#22c55e">$${remaining.toLocaleString()}</div></div>
       <div class="card"><div class="card-label">Total Budget</div><div class="card-value">$${PLAN.totalBudget.toLocaleString()}</div></div>
-      <div class="card"><div class="card-label">DCA Remaining</div><div class="card-value">$${dcaRemaining.toLocaleString()}</div><div class="card-sub">${weeksLeft} weeks left</div></div>
-      <div class="card"><div class="card-label">Tranche Budget</div><div class="card-value">$${PLAN.trancheBudget.toLocaleString()}</div><div class="card-sub">5 levels set</div></div>
+      <div class="card"><div class="card-label">DCA Deployed</div><div class="card-value">$${dcaSpent.toLocaleString()}</div><div class="card-sub">of $${PLAN.dcaBudget.toLocaleString()} · ${weeksLeft}wk left</div></div>
+      <div class="card"><div class="card-label">Tranches Filled</div><div class="card-value">$${trancheSp.toLocaleString()}</div><div class="card-sub">of $${PLAN.trancheBudget.toLocaleString()} · 2 of 7 hit</div></div>
       <div class="card"><div class="card-label">DCA Week</div><div class="card-value">Week ${weekNum}</div><div class="card-sub">of ~${totalDcaWeeks}</div></div>
     </div>
   </div>
