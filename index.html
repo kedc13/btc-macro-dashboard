@@ -1500,7 +1500,8 @@ async function renderHistory() {
     const bs = buysByDate[d];
     if (!bs || !bs.length) return null;
     const totQty = bs.reduce((s,b) => s + b.qty, 0);
-    return bs.reduce((s,b) => s + b.price * b.qty, 0) / totQty;
+    // Offset 2% above actual price so triangle sits above the signal dot
+    return bs.reduce((s,b) => s + b.price * b.qty, 0) / totQty * 1.02;
   });
   const buyLabelsMap = {};
   Object.entries(buysByDate).forEach(([d, bs]) => {
@@ -1511,12 +1512,13 @@ async function renderHistory() {
     data: buyData,
     showLine: false,
     backgroundColor: '#22c55e',
-    borderColor: '#16a34a',
+    borderColor: '#fff',
+    borderWidth: 1.5,
     pointStyle: 'triangle',
-    pointRadius: buyData.map(v => v !== null ? 9 : 0),
-    pointHoverRadius: 11,
+    pointRadius: buyData.map(v => v !== null ? 12 : 0),
+    pointHoverRadius: 14,
     yAxisID: 'y',
-    order: 0
+    order: -1   // draw on top of signal dots
   };
 
   // (indicator overlay datasets removed — indicator data shown in panel below chart)
@@ -1629,7 +1631,7 @@ async function renderHistory() {
             },
             label: item => {
               if (item.dataset.label === '__buys__')
-                return item.raw != null ? '  ▲ Buy  $' + Math.round(item.raw).toLocaleString() + '  · ' + (buyLabelsMap[allDates[item.dataIndex]] || '') : null;
+                return item.raw != null ? '  ▲ Buy  $' + Math.round(item.raw / 1.02).toLocaleString() + '  · ' + (buyLabelsMap[allDates[item.dataIndex]] || '') : null;
               if (item.dataset.label === '__price__')
                 return item.raw != null ? '  BTC  $' + Math.round(item.raw).toLocaleString() : null;
               return null;
