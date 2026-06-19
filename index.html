@@ -111,6 +111,18 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .range-btn:hover { border-color: #888; color: #ccc; }
 .range-btn.active { background: #e5e5e5; border-color: #e5e5e5; color: #0a0a0a; }
 
+/* MOBILE HEADER STACK */
+@media (max-width: 600px) {
+  .header { flex-wrap: wrap; }
+  .signal-banner { flex: 1; min-width: 0; }
+  .header-meta {
+    order: 3; width: 100%;
+    text-align: left; padding-top: 8px; margin-top: 4px;
+    border-top: 1px solid #222;
+  }
+  .header-nav { flex-shrink: 0; }
+}
+
 /* CHART WRAP */
 .chart-wrap { position: relative; }
 
