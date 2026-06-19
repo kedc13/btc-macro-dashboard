@@ -20,19 +20,22 @@
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f1f5f9; color: #1e293b; padding: 16px; min-height: 100vh; }
 
 /* HEADER */
-.header { background: #0f172a; border-radius: 12px; padding: 18px 20px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
-.signal-banner { font-size: 18px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
-.signal-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
-.header-meta { color: #94a3b8; font-size: 13px; text-align: right; }
+.header { background: #0f172a; border-radius: 12px; padding: 12px 18px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.signal-banner { font-size: 16px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.signal-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.header-meta { color: #94a3b8; font-size: 12px; text-align: center; flex: 1; }
 .header-meta strong { color: #e2e8f0; }
-.phase-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-top: 4px; }
+.phase-badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 600; margin-top: 3px; }
 .phase-early    { background: #7c3aed22; color: #a78bfa; border: 1px solid #7c3aed44; }
 .phase-entering { background: #d9770622; color: #fb923c; border: 1px solid #d9770644; }
 .phase-bottom   { background: #16a34a22; color: #4ade80; border: 1px solid #16a34a44; }
 .phase-extended { background: #dc262622; color: #f87171; border: 1px solid #dc262644; }
-.action-bar { background: #0f172a; border-radius: 10px; padding: 13px 20px; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
-.action-label { color: #64748b; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; white-space: nowrap; }
-.action-text  { color: #f1f5f9; font-size: 14px; font-weight: 600; }
+/* Header nav tabs */
+.header-nav { display: flex; gap: 4px; flex-shrink: 0; }
+.hnav-btn { padding: 6px 14px; border-radius: 20px; border: 1.5px solid rgba(255,255,255,0.12); background: transparent; font-size: 12px; font-weight: 600; color: #64748b; cursor: pointer; transition: all .15s; white-space: nowrap; }
+.hnav-btn:hover { border-color: rgba(255,255,255,0.25); color: #cbd5e1; }
+.hnav-btn.active { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); color: #fff; }
+.action-text { color: #64748b; font-size: 11px; margin-bottom: 6px; }
 
 /* TABS */
 .tabs { display: flex; background: #e2e8f0; border-radius: 10px; padding: 3px; margin-bottom: 12px; }
@@ -203,14 +206,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <span id="sig-text">—</span>
     </div>
     <div class="header-meta">
-      <div><strong id="hdr-price">—</strong> &nbsp;·&nbsp; Week <span id="hdr-week">—</span> from Oct 2025 ATH</div>
-      <div><span class="phase-badge phase-early" id="hdr-phase">—</span></div>
+      <div><strong id="hdr-price">—</strong> &nbsp;·&nbsp; Wk <span id="hdr-week">—</span> &nbsp;·&nbsp; <span class="phase-badge phase-early" id="hdr-phase">—</span></div>
     </div>
-  </div>
-
-  <div class="action-bar">
-    <span class="action-label">📋 Action</span>
-    <span class="action-text" id="action-text">—</span>
+    <div class="header-nav">
+      <button class="hnav-btn" id="tab-btn-today"   onclick="switchTab('today')">Today</button>
+      <button class="hnav-btn active" id="tab-btn-plan"    onclick="switchTab('plan')">My Plan</button>
+      <button class="hnav-btn"        id="tab-btn-history" onclick="switchTab('history')">History</button>
+    </div>
   </div>
 
   <div id="big3-section" style="display:none">
@@ -218,11 +220,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <div class="grid-3" id="big3-grid"></div>
   </div>
 
-  <div class="tabs" style="margin-top:14px">
-    <button class="tab-btn active" id="tab-btn-today"   onclick="switchTab('today')">📊 Today</button>
-    <button class="tab-btn"        id="tab-btn-plan"    onclick="switchTab('plan')">📐 My Plan</button>
-    <button class="tab-btn"        id="tab-btn-history" onclick="switchTab('history')">📈 History</button>
-  </div>
+  <!-- hidden action-text anchor kept for renderToday() compat -->
+  <div id="action-text" style="display:none"></div>
 
   <!-- ===== TODAY TAB ===== -->
   <div class="tab-panel active" id="tab-today">
@@ -277,7 +276,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
         </div>
       </div>
 
-      <div class="chart-wrap" style="height:420px">
+      <div class="chart-wrap" style="height:360px">
         <canvas id="chart-main"></canvas>
       </div>
 
