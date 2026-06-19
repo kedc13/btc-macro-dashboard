@@ -124,7 +124,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .ind-panel-hdr { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; }
 .ind-panel-date { font-size: 12px; font-weight: 700; color: #e5e5e5; }
 .ind-panel-hint { font-size: 11px; color: #555; }
-.ind-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+.ind-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; }
 .ind-card { background: #141414; border: 1px solid #222; border-radius: 8px; overflow: hidden; transition: box-shadow .15s; }
 .ind-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,.6); }
 .ind-card-bar { height: 4px; }
@@ -968,7 +968,7 @@ function updateIndicatorPanel(h, isHover) {
     { lbl:'Fear & Greed',  val:h.fearGreed != null ? h.fearGreed : 'N/C',        zone:h.fearGreed != null ? fgZone(+h.fearGreed) : {label:'N/C',color:'#94a3b8'} },
     { lbl:'Bottom Conf',   val:h.bottomConf+'/8', zone:confZone(h.bottomConf) },
   ];
-  const cardsHtml = `<div class="ind-grid" style="margin-bottom:10px">
+  const cardsHtml = `<div class="ind-grid">
     ${cards.map(c=>`
       <div class="ind-card">
         <div class="ind-card-bar" style="background:${c.zone.color}"></div>
@@ -1024,9 +1024,9 @@ function updateIndicatorPanel(h, isHover) {
     </div>` : '';
 
   const scoreCycleHtml = `<div style="display:flex;gap:10px;margin-bottom:10px">${scoreHtml}${cycleHtml}</div>`;
-  const rightCol = `<div style="display:flex;flex-direction:column;gap:8px;width:220px;flex-shrink:0">${levelsHtml}${upgradeHtml}</div>`;
+  const rightCol = `<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:8px">${levelsHtml}${upgradeHtml}</div>`;
   const mainRow  = `<div style="display:flex;gap:10px;align-items:flex-start">`
-                 + `<div style="flex:1;min-width:0">${cardsHtml}${big3Html}</div>`
+                 + `<div style="flex:1;min-width:0">${cardsHtml}</div>`
                  + rightCol
                  + `</div>`;
   wrap.innerHTML = phaseWarning + scoreCycleHtml + mainRow;
