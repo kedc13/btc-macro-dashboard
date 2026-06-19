@@ -1451,6 +1451,13 @@ async function renderHistory() {
   // Always include our tracked prices (fills in recent days + acts as floor)
   HISTORY_DATA.forEach(h => { if (!cgMap[h.date]) cgMap[h.date] = h.price; });
 
+  // Fallback: if APIs failed, set livePrice from most recent HISTORY_DATA entry
+  if (!livePrice && HISTORY_DATA.length) {
+    livePrice = HISTORY_DATA[HISTORY_DATA.length - 1].price;
+    const el = document.getElementById('hdr-price');
+    if (el) el.textContent = '$' + Math.round(livePrice).toLocaleString() + '*';
+  }
+
   allDates = buildAllDates(cgMap);
 
   // Price dataset — null for future dates
