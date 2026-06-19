@@ -402,6 +402,8 @@ const PLAN = {
   dcaDouble:        3000,   // aggressive: 3 × $1,000/wk on big drops
   dcaStartDate: '2026-06-09',
   doubleDropPct:     0.08,
+  btcQty:       0.2078,    // total BTC acquired — update with each buy
+  avgPrice:    68580,      // weighted avg cost basis — update with each buy
   tranches: [
     { price: 63201, label: 'T1', size:  8000, filled: true,  note: 'Filled Jun 3 @ $63,201' },
     { price: 59800, label: 'T2', size:  3000, filled: true,  note: 'Filled Jun 5 @ $59,800' },
@@ -1539,6 +1541,20 @@ function renderPlan() {
       <div class="card"><div class="card-label">DCA Deployed</div><div class="card-value">$${dcaSpent.toLocaleString()}</div><div class="card-sub">of $${PLAN.dcaBudget.toLocaleString()} · ${weeksLeft}wk left</div></div>
       <div class="card"><div class="card-label">Tranches Filled</div><div class="card-value">$${trancheSp.toLocaleString()}</div><div class="card-sub">of $${PLAN.trancheBudget.toLocaleString()} · 2 of 7 hit</div></div>
       <div class="card"><div class="card-label">DCA Week</div><div class="card-value">Week ${weekNum}</div><div class="card-sub">of ~${totalDcaWeeks}</div></div>
+      ${(()=>{
+        const qty = PLAN.btcQty || 0;
+        const avg = PLAN.avgPrice || 0;
+        const nowPrice = price || 0;
+        const mktVal = qty * nowPrice;
+        const cost = qty * avg;
+        const pnl = mktVal - cost;
+        const pnlPct = cost > 0 ? (pnl / cost * 100) : 0;
+        const pnlColor = pnl >= 0 ? '#22c55e' : '#ef4444';
+        const pnlSign = pnl >= 0 ? '+' : '';
+        return `
+      <div class="card"><div class="card-label">BTC Acquired</div><div class="card-value">${qty.toFixed(4)} BTC</div><div class="card-sub">${nowPrice ? '≈ $' + Math.round(mktVal).toLocaleString() + ' mkt value' : 'update btcQty in PLAN'}</div></div>
+      <div class="card"><div class="card-label">Avg Cost Basis</div><div class="card-value">$${avg.toLocaleString()}</div><div class="card-sub" style="color:${pnlColor}">${nowPrice && qty ? pnlSign + '$' + Math.round(pnl).toLocaleString() + ' (' + pnlSign + pnlPct.toFixed(1) + '%)' : 'update avgPrice in PLAN'}</div></div>`;
+      })()}
     </div>
   </div>
 
