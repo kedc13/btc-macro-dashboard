@@ -1642,13 +1642,15 @@ function switchTab(tab) {
   if (el) el.textContent = 'Last tracked ' + latest.date + ' — MVRV ' + latest.mvrv + ' · F&G ' + latest.fearGreed + ' · Conf ' + latest.bottomConf + '/8';
 })();
 
-// Default to My Plan tab (works everywhere, no API needed)
-// Hide Today tab unless Cowork/Slack loads successfully
-document.getElementById('tab-btn-today').style.display = 'none';
-document.getElementById('tab-today').style.display   = 'none';
-switchTab('plan');
+// Always show Today tab — render from latest history data as fallback
+(function() {
+  var latest = HISTORY_DATA[HISTORY_DATA.length - 1];
+  if (latest) renderToday(latest);
+  fetchLiveFG();
+})();
+switchTab('today');
 
-// In Cowork: try to fetch Slack data and enable Today tab
+// In Cowork: override with live Slack data if available
 if (window.cowork && window.cowork.callMcpTool) {
   window.cowork.callMcpTool(
     'mcp__0e2465af-5649-4cda-a8a5-59aaf35be070__slack_read_channel',
@@ -1661,12 +1663,8 @@ if (window.cowork && window.cowork.callMcpTool) {
     } catch(e) { raw = (r.content && r.content[0] && r.content[0].text) || JSON.stringify(r); }
     if (!raw) return;
     renderToday(parseSlack(raw));
-    // Re-enable Today tab now that we have Slack data
-    document.getElementById('tab-btn-today').style.display = '';
-    document.getElementById('tab-today').style.display = '';  // clear inline hide
-    switchTab('today');
-    fetchLiveFG(); // update F&G card with real-time value
-  }).catch(function() { /* stay on history */ });
+    fetchLiveFG();
+  }).catch(function() { /* keep history fallback */ });
 }
 </script>
 </body>
