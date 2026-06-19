@@ -945,7 +945,32 @@ async function fetchBig3Live(big3arr) {
     ];
     renderBig3Cards(big3arr, liveData);
   } catch(e) {
-    console.warn('Big3 live fetch failed', e);
+    console.warn('Big3 live fetch failed — using HISTORY_DATA fallback', e);
+    // Fallback: derive all 3 from HISTORY_DATA only, no external fetch
+    const h = HISTORY_DATA[HISTORY_DATA.length - 1] || {};
+    const mvrv = h.mvrv != null ? +h.mvrv : 1;
+    const fg   = h.fearGreed != null ? +h.fearGreed : 50;
+
+    // Hash Ribbons proxy: MVRV < 1 = near capitulation
+    const hrPct = Math.min(90, Math.max(5, Math.round((1 - Math.min(mvrv, 2) / 2) * 80)));
+    const hrColor = hrPct > 60 ? '#22c55e' : hrPct > 35 ? '#f97316' : '#64748b';
+    const hrVals = HISTORY_DATA.slice(-14).map(d => d.mvrv != null ? Math.max(0, 1 - Math.min(+d.mvrv, 2)/2) * 100 : 50);
+
+    // SOPR proxy: F&G
+    const soprPct = fg < 15 ? 70 : fg < 25 ? 50 : fg < 40 ? 35 : 20;
+    const soprColor = soprPct > 60 ? '#22c55e' : soprPct > 35 ? '#f97316' : '#64748b';
+    const soprVals = HISTORY_DATA.slice(-14).map(d => d.fearGreed != null ? Math.max(0, 50 - +d.fearGreed) : 25);
+
+    // Stoch RSI proxy: composite score trend
+    const stochPct = Math.round(Math.min(90, Math.max(10, (HISTORY_DATA.slice(-14).map(d => computeScore(d)).reduce((a,b)=>a+b,0) / 14))));
+    const stochColor = stochPct > 65 ? '#22c55e' : stochPct > 40 ? '#f97316' : '#64748b';
+    const stochVals = HISTORY_DATA.slice(-14).map(d => computeScore(d));
+
+    renderBig3Cards(big3arr, [
+      { pct: hrPct,    color: hrColor,    spark: makeSpark(hrVals,    hrColor,    50) },
+      { pct: soprPct,  color: soprColor,  spark: makeSpark(soprVals,  soprColor,  25) },
+      { pct: stochPct, color: stochColor, spark: makeSpark(stochVals, stochColor, 50) },
+    ]);
   }
 }
 
@@ -1718,6 +1743,24 @@ function renderPlan() {
   const score    = latest ? computeScore(latest) : 0;
   const tier     = scoreTier(score);
 
+  // ── Deployment target schedule ──────────────────────────────────
+  const bearWeek = latest ? (latest.week || 0) : 0;
+  const depSchedule = [
+    { from:  1, to: 34, base: 12 },
+    { from: 35, to: 43, base: 30 },
+    { from: 44, to: 49, base: 55 },
+    { from: 50, to: 57, base: 75 },
+    { from: 58, to: 99, base: 88 },
+  ];
+  const depPhase = depSchedule.find(p => bearWeek >= p.from && bearWeek <= p.to) || depSchedule[0];
+  const scoreAdj = score >= 80 ? 15 : score >= 65 ? 10 : score >= 55 ? 5 : score >= 40 ? 0 : -5;
+  const depTarget = Math.min(95, Math.max(5, depPhase.base + scoreAdj));
+  const depPhaseLabel = depPhase.from === 1  ? 'Early Bear'
+                      : depPhase.from === 35 ? 'Entering Window'
+                      : depPhase.from === 44 ? 'Bottom Window (early)'
+                      : depPhase.from === 50 ? 'Bottom Window (peak)'
+                      : 'Extended';
+
   // ── Capital deployment ──────────────────────────────────────────
   const deployed   = PLAN.deployed;
   const remaining  = PLAN.totalBudget - deployed;
@@ -1794,12 +1837,27 @@ function renderPlan() {
   <!-- CAPITAL DEPLOYMENT -->
   <div class="chart-card" style="margin-bottom:10px">
     <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">💰 Capital Deployment</div>
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
-      <div style="flex:1;height:10px;background:#334155;border-radius:5px;overflow:hidden">
-        <div style="height:100%;width:${pct}%;background:${tier.color};border-radius:5px;transition:width .4s"></div>
-      </div>
-      <span style="font-size:14px;font-weight:800;color:${tier.color};white-space:nowrap">${pct}% deployed</span>
-    </div>
+    ${(()=>{
+      const gap = parseFloat(pct) - depTarget;
+      const onTrack = Math.abs(gap) <= 5;
+      const behind  = gap < -5;
+      const statusColor = onTrack ? '#22c55e' : behind ? (gap < -15 ? '#ef4444' : '#f97316') : '#60a5fa';
+      const statusText  = onTrack ? 'On pace' : behind ? (gap < -15 ? `${Math.abs(gap.toFixed(1))}% behind — consider deploying more` : `${Math.abs(gap).toFixed(1)}% behind target`) : `${gap.toFixed(1)}% ahead of schedule`;
+      return `
+      <div style="position:relative;margin-bottom:4px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="flex:1;height:10px;background:#1a1a1a;border-radius:5px;overflow:visible;position:relative">
+            <div style="height:100%;width:${pct}%;background:${tier.color};border-radius:5px;transition:width .4s"></div>
+            <div style="position:absolute;top:-3px;left:${depTarget}%;width:2px;height:16px;background:#e5e5e5;border-radius:1px;transform:translateX(-1px)" title="Target: ${depTarget}%"></div>
+          </div>
+          <span style="font-size:14px;font-weight:800;color:${tier.color};white-space:nowrap">${pct}%</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:5px;font-size:10px">
+          <span style="color:${statusColor};font-weight:600">${statusText}</span>
+          <span style="color:#444">Target: <strong style="color:#888">${depTarget}%</strong> · ${depPhaseLabel}${scoreAdj !== 0 ? ' · Score adj: '+(scoreAdj>0?'+':'')+scoreAdj+'%' : ''}</span>
+        </div>
+      </div>`;
+    })()}
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
       <div class="card"><div class="card-label">Total Deployed</div><div class="card-value">$${deployed.toLocaleString()}</div></div>
       <div class="card"><div class="card-label">Remaining</div><div class="card-value" style="color:#22c55e">$${remaining.toLocaleString()}</div></div>
