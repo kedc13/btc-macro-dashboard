@@ -1642,30 +1642,16 @@ function switchTab(tab) {
   if (el) el.textContent = 'Last tracked ' + latest.date + ' — MVRV ' + latest.mvrv + ' · F&G ' + latest.fearGreed + ' · Conf ' + latest.bottomConf + '/8';
 })();
 
-// Always show Today tab — render from latest history data as fallback
+// Today tab always renders from latest HISTORY_DATA entry.
+// The daily scheduled task writes fresh data here and pushes to GitHub,
+// so whatever was captured during the last run is always current.
+// F&G is additionally refreshed live from the alternative.me API.
 (function() {
   var latest = HISTORY_DATA[HISTORY_DATA.length - 1];
   if (latest) renderToday(latest);
   fetchLiveFG();
 })();
 switchTab('today');
-
-// In Cowork: override with live Slack data if available
-if (window.cowork && window.cowork.callMcpTool) {
-  window.cowork.callMcpTool(
-    'mcp__0e2465af-5649-4cda-a8a5-59aaf35be070__slack_read_channel',
-    { channel_id: 'D08E39X6TEU', limit: 3, response_format: 'concise' }
-  ).then(function(r) {
-    var raw;
-    try {
-      var p = r.structuredContent || JSON.parse(r.content[0].text);
-      raw = p.messages || JSON.stringify(p);
-    } catch(e) { raw = (r.content && r.content[0] && r.content[0].text) || JSON.stringify(r); }
-    if (!raw) return;
-    renderToday(parseSlack(raw));
-    fetchLiveFG();
-  }).catch(function() { /* keep history fallback */ });
-}
 </script>
 </body>
 </html>
