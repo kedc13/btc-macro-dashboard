@@ -433,8 +433,8 @@ const CHART_END  = '2027-04-01';  // Chart horizon
 // =====================================================================
 const PLAN = {
   totalBudget:    150000,
-  deployed:        14250,   // total deployed Jun 18 2026
-  dcaDeployed:      3250,   // DCA only: Jun 2 $2K + Jun 5 $750 + Jun 16 $500
+  deployed:        14750,   // total deployed Jun 18 2026
+  dcaDeployed:      3750,   // DCA only: Jun 2 $2K + Jun 5 $750 + Jun 16 $500 + Jun 18 $500
   trancheDeployed: 11000,   // tranche fills: $8K @$63K (Jun 3) + $3K @$60K (Jun 5)
   dcaBudget:       64000,   // allocated to weekly DCA
   trancheBudget:   86000,   // allocated to limit-order tranches
@@ -442,8 +442,8 @@ const PLAN = {
   dcaDouble:        3000,   // aggressive: 3 × $1,000/wk on big drops
   dcaStartDate: '2026-06-09',
   doubleDropPct:     0.08,
-  btcQty:       0.2078,    // total BTC acquired — update with each buy
-  avgPrice:    68580,      // weighted avg cost basis — update with each buy
+  btcQty:       0.2343,    // total BTC acquired — update with each buy
+  avgPrice:    62952,      // weighted avg cost basis — update with each buy
   tranches: [
     { price: 63201, label: 'T1', size:  8000, filled: true,  note: 'Filled Jun 3 @ $63,201' },
     { price: 59800, label: 'T2', size:  3000, filled: true,  note: 'Filled Jun 5 @ $59,800' },
