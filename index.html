@@ -221,8 +221,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .live-badge { background:#16a34a; color:#fff; font-size:8px; font-weight:700; padding:1px 5px; border-radius:20px; letter-spacing:.04em; }
 .mc-value { font-size:22px; font-weight:800; line-height:1; margin-bottom:3px; }
 .mc-zone  { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; margin-bottom:9px; }
-.mc-track { position:relative; height:8px; border-radius:4px; background:linear-gradient(to right,#16a34a 0%,#22c55e 18%,#555 45%,#f97316 75%,#ef4444 100%); margin-bottom:4px; }
-.mc-pin   { position:absolute; top:50%; transform:translate(-50%,-50%); width:14px; height:14px; border-radius:50%; background:#141414; border:2.5px solid #e5e5e5; box-shadow:0 1px 4px rgba(0,0,0,.7); pointer-events:none; }
+.mc-track { position:relative; height:4px; border-radius:2px; background:linear-gradient(to right,#16a34a 0%,#22c55e 18%,#555 45%,#f97316 75%,#ef4444 100%); margin-bottom:4px; }
+.mc-pin   { position:absolute; top:50%; transform:translate(-50%,-50%); width:10px; height:10px; border-radius:50%; background:#141414; border:2px solid #e5e5e5; box-shadow:0 1px 4px rgba(0,0,0,.7); pointer-events:none; }
 .mc-ends  { display:flex; justify-content:space-between; font-size:9px; font-weight:600; }
 /* QUAL CARDS */
 .qual-card { background:#141414; border-radius:10px; padding:12px 14px; border:1px solid #222; border-left:3px solid #333; }
@@ -702,7 +702,7 @@ function meterCard(label, displayVal, numVal, min, max, zoneKey, live=false, id=
     <div class="mc-value" style="color:${zone.color}">${displayVal || 'N/C'}</div>
     <div class="mc-zone"  style="color:${zone.color}">${zone.label}</div>
     <div class="mc-track"><div class="mc-pin" style="left:${pct}%"></div></div>
-    <div class="mc-ends"><span style="color:#16a34a">Max Opportunity</span><span style="color:#ef4444">Avoid</span></div>
+    <div class="mc-ends"><span style="color:#fff">Max Opportunity</span><span style="color:#fff">Avoid</span></div>
   </div>`;
 }
 function qualCard(label, value, color, sub='') {
@@ -728,7 +728,7 @@ async function fetchLiveFG() {
       <div class="mc-value" style="color:${zone.color}">${val}</div>
       <div class="mc-zone"  style="color:${zone.color}">${zone.label}</div>
       <div class="mc-track"><div class="mc-pin" style="left:${pct}%"></div></div>
-      <div class="mc-ends"><span style="color:#16a34a">Max Opportunity</span><span style="color:#ef4444">Avoid</span></div>
+      <div class="mc-ends"><span style="color:#fff">Max Opportunity</span><span style="color:#fff">Avoid</span></div>
     </div>`;
   } catch(e) { /* keep Slack value */ }
 }
