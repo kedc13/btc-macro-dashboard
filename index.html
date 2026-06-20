@@ -734,29 +734,47 @@ async function fetchLiveFG() {
 }
 
 // Live BTC Price fetch — Binance ticker, fallback Bybit, refresh every 60s
-async function fetchLivePrice() {
-  try {
-    let price = null;
-    // Try Binance
+// Real-time BTC price via Binance WebSocket — falls back to 10s REST poll
+function updatePriceDisplay(price) {
+  if (!price || isNaN(price)) return;
+  livePrice = price;
+  const el = document.getElementById('hdr-price');
+  if (el) el.innerHTML = '$' + Math.round(price).toLocaleString() + ' <span class="live-badge" style="font-size:8px;vertical-align:middle">LIVE</span>';
+}
+
+function startLivePriceWS() {
+  let ws, fallbackInterval, wsAlive = false;
+
+  function connectWS() {
+    try {
+      ws = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@miniTicker');
+      ws.onmessage = e => {
+        const d = JSON.parse(e.data);
+        if (d.c) { wsAlive = true; updatePriceDisplay(parseFloat(d.c)); }
+      };
+      ws.onerror = () => { wsAlive = false; };
+      ws.onclose = () => { wsAlive = false; setTimeout(connectWS, 5000); };
+    } catch(_) { wsAlive = false; }
+  }
+
+  async function restFallback() {
+    if (wsAlive) return; // WS is working — skip REST
     try {
       const r = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT');
       const d = await r.json();
-      price = Math.round(parseFloat(d.price));
-    } catch(_) {}
-    // Fallback: Bybit
-    if (!price) {
-      const r = await fetch('https://api.bybit.com/v5/market/tickers?category=spot&symbol=BTCUSDT');
-      const d = await r.json();
-      price = Math.round(parseFloat(d?.result?.list?.[0]?.lastPrice));
+      updatePriceDisplay(parseFloat(d.price));
+    } catch(_) {
+      try {
+        const r = await fetch('https://api.bybit.com/v5/market/tickers?category=spot&symbol=BTCUSDT');
+        const d = await r.json();
+        updatePriceDisplay(parseFloat(d?.result?.list?.[0]?.lastPrice));
+      } catch(_) {}
     }
-    if (!price || isNaN(price)) return;
-    livePrice = price;
-    const el = document.getElementById('hdr-price');
-    if (el) {
-      el.innerHTML = '$' + price.toLocaleString() + ' <span class="live-badge" style="font-size:8px;vertical-align:middle">LIVE</span>';
-    }
-    if (mainChart) mainChart.update('none');
-  } catch(e) { /* silent fail — keep last value */ }
+  }
+
+  connectWS();
+  restFallback(); // immediate first fetch
+  fallbackInterval = setInterval(restFallback, 10000);
 }
 
 // =====================================================================
@@ -2131,8 +2149,7 @@ function histToTodayData(h) {
   var latest = HISTORY_DATA[HISTORY_DATA.length - 1];
   if (latest) renderToday(histToTodayData(latest));
   fetchLiveFG();
-  fetchLivePrice();
-  setInterval(fetchLivePrice, 60000);
+  startLivePriceWS();
 })();
 switchTab('today');
 </script>
