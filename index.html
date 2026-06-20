@@ -2142,14 +2142,40 @@ function histToTodayData(h) {
   };
 }
 
-// Today tab always renders from latest HISTORY_DATA entry.
-// Daily task writes fresh data here → persists on GitHub Pages.
-// F&G refreshed live from alternative.me API.
-(function() {
+// Today tab: fetch latest Slack message (Cowork) or fall back to HISTORY_DATA (GitHub Pages).
+(async function() {
+  // Always render from history first so UI shows instantly
   var latest = HISTORY_DATA[HISTORY_DATA.length - 1];
   if (latest) renderToday(histToTodayData(latest));
   fetchLiveFG();
   startLivePriceWS();
+
+  // Attempt live Slack fetch (only works inside Cowork artifact context)
+  try {
+    const cowork = window.cowork;
+    if (!cowork || typeof cowork.callMcpTool !== 'function') throw new Error('no cowork');
+    const result = await cowork.callMcpTool(
+      'mcp__0e2465af-5649-4cda-a8a5-59aaf35be070__slack_read_channel',
+      { channel_id: 'D08E39X6TEU', limit: 5 }
+    );
+    // Extract text from response
+    let raw = '';
+    if (result && result.structuredContent) {
+      raw = JSON.stringify(result.structuredContent);
+    } else if (result && result.content) {
+      const c = result.content;
+      raw = Array.isArray(c) ? c.map(x => x.text || '').join('
+') : String(c);
+    }
+    if (!raw || raw.length < 50) throw new Error('empty response');
+    const parsed = parseSlack(raw);
+    if (parsed && parsed.price && parsed.price !== 'N/C') {
+      renderToday(parsed);
+      fetchLiveFG(); // re-apply live F&G over Slack value
+    }
+  } catch(e) {
+    // Cowork not available or fetch failed — history snapshot already rendered above
+  }
 })();
 switchTab('today');
 </script>
