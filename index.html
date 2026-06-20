@@ -2158,16 +2158,30 @@ function histToTodayData(h) {
       'mcp__0e2465af-5649-4cda-a8a5-59aaf35be070__slack_read_channel',
       { channel_id: 'D08E39X6TEU', limit: 5 }
     );
-    // Extract text from response
-    let raw = '';
-    if (result && result.structuredContent) {
-      raw = JSON.stringify(result.structuredContent);
-    } else if (result && result.content) {
-      const c = result.content;
-      raw = Array.isArray(c) ? c.map(x => x.text || '').join('\n') : String(c);
+    if (result && result.isError) throw new Error('Slack error');
+
+    // Extract message text strings from structured response
+    let msgTexts = [];
+    const sc = result && (result.structuredContent ?? (result.content && result.content[0] && JSON.parse(result.content[0].text)));
+    if (sc) {
+      // structuredContent may be { messages: [...] } or an array
+      const msgs = Array.isArray(sc) ? sc : (sc.messages || sc.data || []);
+      msgs.forEach(m => {
+        const t = m.text || m.message || '';
+        if (t && t.length > 20) msgTexts.push(t);
+      });
     }
-    if (!raw || raw.length < 50) throw new Error('empty response');
-    const parsed = parseSlack(raw);
+    // Fallback: pull raw text blocks from content array
+    if (!msgTexts.length && result && Array.isArray(result.content)) {
+      const joined = result.content.map(x => x.text || '').join('\n');
+      msgTexts = [joined];
+    }
+
+    // Find the most recent message containing BTC price data
+    const btcMsg = msgTexts.find(t => t.includes('BTC $') || t.includes('MVRV') || t.includes('BOTTOM CONF'));
+    if (!btcMsg) throw new Error('no BTC message found');
+
+    const parsed = parseSlack(btcMsg);
     if (parsed && parsed.price && parsed.price !== 'N/C') {
       renderToday(parsed);
       fetchLiveFG(); // re-apply live F&G over Slack value
