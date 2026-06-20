@@ -733,6 +733,32 @@ async function fetchLiveFG() {
   } catch(e) { /* keep Slack value */ }
 }
 
+// Live BTC Price fetch — Binance ticker, fallback Bybit, refresh every 60s
+async function fetchLivePrice() {
+  try {
+    let price = null;
+    // Try Binance
+    try {
+      const r = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT');
+      const d = await r.json();
+      price = Math.round(parseFloat(d.price));
+    } catch(_) {}
+    // Fallback: Bybit
+    if (!price) {
+      const r = await fetch('https://api.bybit.com/v5/market/tickers?category=spot&symbol=BTCUSDT');
+      const d = await r.json();
+      price = Math.round(parseFloat(d?.result?.list?.[0]?.lastPrice));
+    }
+    if (!price || isNaN(price)) return;
+    livePrice = price;
+    const el = document.getElementById('hdr-price');
+    if (el) {
+      el.innerHTML = '$' + price.toLocaleString() + ' <span class="live-badge" style="font-size:8px;vertical-align:middle">LIVE</span>';
+    }
+    if (mainChart) mainChart.update('none');
+  } catch(e) { /* silent fail — keep last value */ }
+}
+
 // =====================================================================
 // SLACK PARSER (unchanged from v2)
 // =====================================================================
@@ -2105,6 +2131,8 @@ function histToTodayData(h) {
   var latest = HISTORY_DATA[HISTORY_DATA.length - 1];
   if (latest) renderToday(histToTodayData(latest));
   fetchLiveFG();
+  fetchLivePrice();
+  setInterval(fetchLivePrice, 60000);
 })();
 switchTab('today');
 </script>
