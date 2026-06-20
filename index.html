@@ -2164,8 +2164,7 @@ function histToTodayData(h) {
       raw = JSON.stringify(result.structuredContent);
     } else if (result && result.content) {
       const c = result.content;
-      raw = Array.isArray(c) ? c.map(x => x.text || '').join('
-') : String(c);
+      raw = Array.isArray(c) ? c.map(x => x.text || '').join('\n') : String(c);
     }
     if (!raw || raw.length < 50) throw new Error('empty response');
     const parsed = parseSlack(raw);
