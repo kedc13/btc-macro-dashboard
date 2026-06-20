@@ -432,7 +432,7 @@ const HISTORY_DATA = [
   {"date":"2026-06-16","price":66340,"mvrv":0.36,"puell":0.75,"fearGreed":27,"bottomConf":2,"signal":"STRONG_ACCUM","big3":0,"week":34,"phase":"EARLY_BEAR"},
   {"date":"2026-06-17","price":67200,"mvrv":0.36,"puell":0.75,"fearGreed":22,"bottomConf":2,"signal":"STRONG_ACCUM","big3":0,"week":34,"phase":"EARLY_BEAR"},
   {"date":"2026-06-18","price":64350,"mvrv":0.30,"puell":0.75,"fearGreed":15,"bottomConf":3,"signal":"STRONG_ACCUM","big3":0,"week":34,"phase":"EARLY_BEAR"},
-  {"date":"2026-06-19","price":62328,"mvrv":0.38,"puell":0.74,"fearGreed":19,"bottomConf":3,"signal":"STRONG_ACCUM","big3":0,"week":34,"phase":"EARLY_BEAR"}
+  {"date":"2026-06-19","price":62328,"mvrv":0.38,"puell":0.74,"fearGreed":19,"bottomConf":3,"signal":"STRONG_ACCUM","big3":0,"week":34,"phase":"EARLY_BEAR","etf":"Recovering — 13-day outflow streak ended, inflows returning","etfColor":"yellow","dxy":"~99 declining from 109","dxyColor":"green","m2":"Modestly expanding +1.44% global","m2Color":"yellow","fed":"On hold 3.5–3.75%, hawkish","fedColor":"yellow","macd":"Bearish","macdColor":"orange","ma200":"~$61K — tested & bounced ($59.1K low)","ma200Color":"green","monthlyRsi":"~40","weeklyRsi":"~42","realizedPrice":"~$54K est","realizedDiff":"+15% vs spot","piCycle":"Clear"}
 ];
 
 // =====================================================================
@@ -2130,65 +2130,24 @@ function histToTodayData(h) {
     mvrv:       h.mvrv  != null ? String(h.mvrv)      : null,
     puell:      h.puell != null ? String(h.puell)     : null,
     fearGreed:  h.fearGreed != null ? String(h.fearGreed) : null,
-    reserveRisk:  null, realizedPrice: null, realizedDiff: null, piCycle: null,
-    monthlyRsi: null, weeklyRsi: null,
-    macd: null, macdColor: 'gray',
-    ma200: null, ma200Color: 'gray',
-    etf: null, etfColor: 'gray',
-    dxy: null, dxyColor: 'gray',
-    m2: null, m2Color: 'gray',
-    fed: null, fedColor: 'gray',
+    reserveRisk: null, realizedPrice: h.realizedPrice||null, realizedDiff: h.realizedDiff||null, piCycle: h.piCycle||null,
+    monthlyRsi: h.monthlyRsi ? '~'+h.monthlyRsi : null, weeklyRsi: h.weeklyRsi ? '~'+h.weeklyRsi : null,
+    macd: h.macd||null, macdColor: h.macdColor||'gray',
+    ma200: h.ma200||null, ma200Color: h.ma200Color||'gray',
+    etf: h.etf||null, etfColor: h.etfColor||'gray',
+    dxy: h.dxy||null, dxyColor: h.dxyColor||'gray',
+    m2: h.m2||null, m2Color: h.m2Color||'gray',
+    fed: h.fed||null, fedColor: h.fedColor||'gray',
     timestamp: h.date
   };
 }
 
-// Today tab: fetch latest Slack message (Cowork) or fall back to HISTORY_DATA (GitHub Pages).
-(async function() {
-  // Always render from history first so UI shows instantly
+// Today tab renders from latest HISTORY_DATA entry (qualitative fields stored inline).
+(function() {
   var latest = HISTORY_DATA[HISTORY_DATA.length - 1];
   if (latest) renderToday(histToTodayData(latest));
   fetchLiveFG();
   startLivePriceWS();
-
-  // Attempt live Slack fetch (only works inside Cowork artifact context)
-  try {
-    const cowork = window.cowork;
-    if (!cowork || typeof cowork.callMcpTool !== 'function') throw new Error('no cowork');
-    const result = await cowork.callMcpTool(
-      'mcp__0e2465af-5649-4cda-a8a5-59aaf35be070__slack_read_channel',
-      { channel_id: 'D08E39X6TEU', limit: 5 }
-    );
-    if (result && result.isError) throw new Error('Slack error');
-
-    // Extract message text strings from structured response
-    let msgTexts = [];
-    const sc = result && (result.structuredContent ?? (result.content && result.content[0] && JSON.parse(result.content[0].text)));
-    if (sc) {
-      // structuredContent may be { messages: [...] } or an array
-      const msgs = Array.isArray(sc) ? sc : (sc.messages || sc.data || []);
-      msgs.forEach(m => {
-        const t = m.text || m.message || '';
-        if (t && t.length > 20) msgTexts.push(t);
-      });
-    }
-    // Fallback: pull raw text blocks from content array
-    if (!msgTexts.length && result && Array.isArray(result.content)) {
-      const joined = result.content.map(x => x.text || '').join('\n');
-      msgTexts = [joined];
-    }
-
-    // Find the most recent message containing BTC price data
-    const btcMsg = msgTexts.find(t => t.includes('BTC $') || t.includes('MVRV') || t.includes('BOTTOM CONF'));
-    if (!btcMsg) throw new Error('no BTC message found');
-
-    const parsed = parseSlack(btcMsg);
-    if (parsed && parsed.price && parsed.price !== 'N/C') {
-      renderToday(parsed);
-      fetchLiveFG(); // re-apply live F&G over Slack value
-    }
-  } catch(e) {
-    // Cowork not available or fetch failed — history snapshot already rendered above
-  }
 })();
 switchTab('today');
 </script>
