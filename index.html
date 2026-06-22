@@ -433,7 +433,9 @@ const HISTORY_DATA = [
   {"date":"2026-06-16","price":66340,"mvrv":0.36,"puell":0.75,"fearGreed":27,"bottomConf":2,"signal":"STRONG_ACCUM","big3":0,"week":34,"phase":"EARLY_BEAR"},
   {"date":"2026-06-17","price":67200,"mvrv":0.36,"puell":0.75,"fearGreed":22,"bottomConf":2,"signal":"STRONG_ACCUM","big3":0,"week":34,"phase":"EARLY_BEAR"},
   {"date":"2026-06-18","price":64350,"mvrv":0.30,"puell":0.75,"fearGreed":15,"bottomConf":3,"signal":"STRONG_ACCUM","big3":0,"week":34,"phase":"EARLY_BEAR"},
-  {"date":"2026-06-19","price":62328,"mvrv":0.38,"puell":0.74,"fearGreed":19,"bottomConf":3,"signal":"STRONG_ACCUM","big3":0,"week":34,"phase":"EARLY_BEAR","etf":"Recovering — 13-day outflow streak ended, inflows returning","etfColor":"yellow","dxy":"~99 declining from 109","dxyColor":"green","m2":"Modestly expanding +1.44% global","m2Color":"yellow","fed":"On hold 3.5–3.75%, hawkish","fedColor":"yellow","macd":"Bearish","macdColor":"orange","ma200":"~$61K — tested & bounced ($59.1K low)","ma200Color":"green","monthlyRsi":"~40","weeklyRsi":"~42","realizedPrice":"~$54K est","realizedDiff":"+15% vs spot","piCycle":"Clear"}
+  {"date":"2026-06-19","price":62328,"mvrv":0.38,"puell":0.74,"fearGreed":19,"bottomConf":3,"signal":"STRONG_ACCUM","big3":0,"week":34,"phase":"EARLY_BEAR","etf":"Recovering — 13-day outflow streak ended, inflows returning","etfColor":"yellow","dxy":"~99 declining from 109","dxyColor":"green","m2":"Modestly expanding +1.44% global","m2Color":"yellow","fed":"On hold 3.5–3.75%, hawkish","fedColor":"yellow","macd":"Bearish","macdColor":"orange","ma200":"~$61K — tested & bounced ($59.1K low)","ma200Color":"green","monthlyRsi":"~40","weeklyRsi":"~42","realizedPrice":"~$54K est","realizedDiff":"+15% vs spot","piCycle":"Clear"},
+  {"date":"2026-06-20","price":63609,"mvrv":0.40,"puell":0.75,"fearGreed":20,"bottomConf":3,"signal":"STRONG_ACCUM","big3":0,"week":35,"phase":"ENTERING_WINDOW","etf":"Recovery ongoing — IBIT led $86M inflow, 13-day streak fully reversed","etfColor":"green","dxy":"~100.8, declining from ~109 high","dxyColor":"green","m2":"US M2 contracting; global modest +2% 3-month","m2Color":"yellow","fed":"On hold 3.5–3.75%, dot plot flipped hawkish — hike likely 2026","fedColor":"orange","macd":"Bearish","macdColor":"orange","ma200":"~$62.4K — BTC holding above after $59.1K bounce","ma200Color":"green","monthlyRsi":"~42","weeklyRsi":"~45","realizedPrice":"~$55K est","realizedDiff":"+15% vs spot","piCycle":"Clear"},
+  {"date":"2026-06-22","price":65034,"mvrv":0.36,"puell":0.75,"fearGreed":22,"bottomConf":3,"signal":"STRONG_ACCUM","big3":1,"week":35,"phase":"ENTERING_WINDOW","etf":"Recovering — $4.4B outflow streak ended, small inflows returning ($86M Fri)","etfColor":"yellow","dxy":"~100.7, rising post-Fed hold (highest since May 2025)","dxyColor":"red","m2":"Contracting — Iran shock pushed CPI 4.2%, hawkish environment","m2Color":"red","fed":"3.50–3.75%, hawkish posture, possible hike priced Oct 2026","fedColor":"red","macd":"Bearish","macdColor":"orange","ma200":"~$61,500 — tested June 6 ($60.8K low), holding above","ma200Color":"green","monthlyRsi":"~50","weeklyRsi":"~34","realizedPrice":"~$52K est","realizedDiff":"+25% vs spot","piCycle":"Clear"}
 ];
 
 // =====================================================================
@@ -1677,8 +1679,12 @@ async function renderHistory() {
             label: item => {
               if (item.dataset.label === '__buys__')
                 return item.raw != null ? '  ▲ Buy  $' + Math.round(item.raw / 1.02).toLocaleString() + '  · ' + (buyLabelsMap[allDates[item.dataIndex]] || '') : null;
-              if (item.dataset.label === '__price__')
-                return item.raw != null ? '  BTC  $' + Math.round(item.raw).toLocaleString() : null;
+              if (item.dataset.label === '__price__') {
+                const dKey = allDates[item.dataIndex];
+                const h2 = histMap[dKey];
+                const p2 = (h2 && h2.price) ? h2.price : item.raw;
+                return p2 != null ? '  BTC  $' + Math.round(p2).toLocaleString() : null;
+              }
               return null;
             },
             afterBody: items => {
@@ -1952,7 +1958,7 @@ function renderPlan() {
         </div>
         <div style="display:flex;justify-content:space-between;margin-top:5px;font-size:10px">
           <span style="color:${statusColor};font-weight:600">${statusText}</span>
-          <span style="color:#444">Target: <strong style="color:#888">${depTarget}%</strong> · ${depPhaseLabel}${scoreAdj !== 0 ? ' · Score adj: '+(scoreAdj>0?'+':'')+scoreAdj+'%' : ''}</span>
+          <span style="color:#444">Target: <strong style="color:#888">${depTarget}%</strong> <span style="color:#555">($${Math.round(depTarget/100*PLAN.totalBudget).toLocaleString()})</span> · ${depPhaseLabel}${scoreAdj !== 0 ? ' · Score adj: '+(scoreAdj>0?'+':'')+scoreAdj+'%' : ''}</span>
         </div>
       </div>`;
     })()}
