@@ -760,16 +760,14 @@ function startLivePriceWS() {
 
   async function restFallback() {
     if (wsAlive) return; // WS is working — skip REST
-    try {
-      const r = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT');
-      const d = await r.json();
-      updatePriceDisplay(parseFloat(d.price));
-    } catch(_) {
-      try {
-        const r = await fetch('https://api.bybit.com/v5/market/tickers?category=spot&symbol=BTCUSDT');
-        const d = await r.json();
-        updatePriceDisplay(parseFloat(d?.result?.list?.[0]?.lastPrice));
-      } catch(_) {}
+    const sources = [
+      async () => { const r = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT'); const d = await r.json(); return parseFloat(d.price); },
+      async () => { const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd'); const d = await r.json(); return d.bitcoin.usd; },
+      async () => { const r = await fetch('https://api.kraken.com/0/public/Ticker?pair=XBTUSD'); const d = await r.json(); return parseFloat(d.result.XXBTZUSD.c[0]); },
+      async () => { const r = await fetch('https://api.bybit.com/v5/market/tickers?category=spot&symbol=BTCUSDT'); const d = await r.json(); return parseFloat(d?.result?.list?.[0]?.lastPrice); },
+    ];
+    for (const fn of sources) {
+      try { const p = await fn(); if (p && !isNaN(p)) { updatePriceDisplay(p); return; } } catch(_) {}
     }
   }
 
@@ -1031,7 +1029,8 @@ async function fetchBig3Live(big3arr) {
 function renderToday(d) {
   document.getElementById('sig-dot').style.background = CLR[d.signalDotColor]||CLR.gray;
   document.getElementById('sig-text').textContent = d.signal||'—';
-  document.getElementById('hdr-price').textContent = d.price||'—';
+  // hdr-price set by startLivePriceWS(); only set here as initial fallback if no live feed yet
+  if (!livePrice) document.getElementById('hdr-price').textContent = d.price||'—';
   document.getElementById('hdr-week').textContent  = d.week||'—';
   const pb=document.getElementById('hdr-phase'); pb.textContent=d.phase||'—'; pb.className='phase-badge '+phaseClass(d.phase);
   document.getElementById('action-text').textContent = d.action||'—';
@@ -2081,7 +2080,7 @@ function switchTab(tab) {
   var el;
   el = document.getElementById('sig-dot');   if (el) el.style.background = sigColor(latest.signal);
   el = document.getElementById('sig-text');  if (el) el.textContent = sigLabel(latest.signal) + ' — Week ' + latest.week;
-  el = document.getElementById('hdr-price'); if (el) el.textContent = '$' + latest.price.toLocaleString();
+  el = document.getElementById('hdr-price'); if (el && !livePrice) el.textContent = '$' + latest.price.toLocaleString();
   el = document.getElementById('hdr-week');  if (el) el.textContent = latest.week;
   el = document.getElementById('hdr-phase'); if (el) {
     var phMap = { EARLY_BEAR:'EARLY BEAR', ENTERING_WINDOW:'ENTERING WINDOW', BOTTOM_WINDOW:'BOTTOM WINDOW', EXTENDED:'EXTENDED' };
@@ -2146,7 +2145,12 @@ function histToTodayData(h) {
 // Today tab renders from latest HISTORY_DATA entry (qualitative fields stored inline).
 (function() {
   var latest = HISTORY_DATA[HISTORY_DATA.length - 1];
-  if (latest) renderToday(histToTodayData(latest));
+  if (latest) {
+    renderToday(histToTodayData(latest));
+    // Set last-updated date
+    var lu = document.getElementById('last-updated');
+    if (lu) lu.textContent = latest.date;
+  }
   fetchLiveFG();
   startLivePriceWS();
 })();
