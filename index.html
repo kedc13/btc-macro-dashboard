@@ -1732,22 +1732,78 @@ async function renderHistory() {
       },
       layout: { padding: { right: 8 } }
     },
-    plugins: [{
-      id: 'crosshair',
-      afterDraw(chart) {
-        if (chart._crosshairX == null) return;
-        const { ctx, chartArea: { top, bottom } } = chart;
-        ctx.save();
-        ctx.setLineDash([4, 4]);
-        ctx.strokeStyle = 'rgba(148,163,184,0.5)';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(chart._crosshairX, top);
-        ctx.lineTo(chart._crosshairX, bottom);
-        ctx.stroke();
-        ctx.restore();
+    plugins: [
+      {
+        id: 'crosshair',
+        afterDraw(chart) {
+          if (chart._crosshairX == null) return;
+          const { ctx, chartArea: { top, bottom } } = chart;
+          ctx.save();
+          ctx.setLineDash([4, 4]);
+          ctx.strokeStyle = 'rgba(148,163,184,0.5)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(chart._crosshairX, top);
+          ctx.lineTo(chart._crosshairX, bottom);
+          ctx.stroke();
+          ctx.restore();
+        }
+      },
+      {
+        id: 'livePriceLabel',
+        afterDraw(chart) {
+          const price = livePrice;
+          if (!price) return;
+          const { ctx, chartArea, scales } = chart;
+          const y = scales.y.getPixelForValue(price);
+          if (y < chartArea.top || y > chartArea.bottom) return;
+
+          // Dashed horizontal line from right edge of chart area across y-axis zone
+          ctx.save();
+          ctx.setLineDash([3, 3]);
+          ctx.strokeStyle = 'rgba(239,68,68,0.45)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(chartArea.right, y);
+          ctx.lineTo(chart.width, y);
+          ctx.stroke();
+
+          // Badge
+          const label = price >= 1000
+            ? '$' + (price / 1000).toFixed(price >= 10000 ? 1 : 2) + 'K'
+            : '$' + Math.round(price).toLocaleString();
+          ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, sans-serif';
+          const tw = ctx.measureText(label).width;
+          const ph = 5, pw = 8;
+          const bw = tw + pw * 2, bh = 20;
+          const bx = chartArea.right + 6;
+          const by = y - bh / 2;
+
+          // Rounded rect fill
+          const r = 4;
+          ctx.fillStyle = '#dc2626';
+          ctx.beginPath();
+          ctx.moveTo(bx + r, by);
+          ctx.lineTo(bx + bw - r, by);
+          ctx.quadraticCurveTo(bx + bw, by, bx + bw, by + r);
+          ctx.lineTo(bx + bw, by + bh - r);
+          ctx.quadraticCurveTo(bx + bw, by + bh, bx + bw - r, by + bh);
+          ctx.lineTo(bx + r, by + bh);
+          ctx.quadraticCurveTo(bx, by + bh, bx, by + bh - r);
+          ctx.lineTo(bx, by + r);
+          ctx.quadraticCurveTo(bx, by, bx + r, by);
+          ctx.closePath();
+          ctx.fill();
+
+          // Label text
+          ctx.fillStyle = '#ffffff';
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(label, bx + pw, y);
+          ctx.restore();
+        }
       }
-    }]
+    ]
   });
 
   // Crosshair — track mouse position on canvas
