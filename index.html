@@ -453,24 +453,26 @@ const CHART_END  = '2027-04-01';  // Chart horizon
 // =====================================================================
 const PLAN = {
   totalBudget:    150000,
-  deployed:        14750,   // total deployed Jun 18 2026
-  dcaDeployed:      3750,   // DCA only: Jun 2 $2K + Jun 5 $750 + Jun 16 $500 + Jun 18 $500
-  trancheDeployed: 11000,   // tranche fills: $8K @$63K (Jun 3) + $3K @$60K (Jun 5)
+  deployed:        15750,   // total deployed Jun 23 2026
+  dcaDeployed:      2750,   // DCA only (<$1K): Jun 5 $750 + Jun 16 $500 + Jun 18 $500 + Jun 22 $500 + Jun 23 $500
+  trancheDeployed: 13000,   // tranche fills (>$1K): Jun 2 $2K + Jun 3 $8K + Jun 5 $3K
   dcaBudget:       64000,   // allocated to weekly DCA
   trancheBudget:   86000,   // allocated to limit-order tranches
   dcaWeekly:        1500,   // standard: 3 × $500/wk Sun / Tue / Thu
   dcaDouble:        3000,   // aggressive: 3 × $1,000/wk on big drops
   dcaStartDate: '2026-06-09',
   doubleDropPct:     0.08,
-  btcQty:       0.2343,    // total BTC acquired — update with each buy
-  avgPrice:    62952,      // weighted avg cost basis — update with each buy
+  btcQty:       0.2502,    // total BTC acquired — update with each buy
+  avgPrice:    62950,      // weighted avg cost basis — update with each buy
   buys: [
-    { date: '2026-06-02', price: 67358, qty: 0.02969, label: 'DCA $2K' },
-    { date: '2026-06-03', price: 63201, qty: 0.12658, label: 'T1 $8K' },
-    { date: '2026-06-05', price: 61214, qty: 0.01225, label: 'DCA $750' },
-    { date: '2026-06-05', price: 59800, qty: 0.05017, label: 'T2 $3K' },
-    { date: '2026-06-16', price: 65557, qty: 0.00763, label: 'DCA $500' },
-    { date: '2026-06-18', price: 62578, qty: 0.00799, label: 'DCA $500' },
+    { date: '2026-06-02', price: 67358, qty: 0.02969,  label: 'Tranche $2K', type: 'tranche' },
+    { date: '2026-06-03', price: 63201, qty: 0.12658,  label: 'T1 $8K',      type: 'tranche' },
+    { date: '2026-06-05', price: 61214, qty: 0.01225,  label: 'DCA $750',    type: 'dca'     },
+    { date: '2026-06-05', price: 59800, qty: 0.05017,  label: 'T2 $3K',      type: 'tranche' },
+    { date: '2026-06-16', price: 65557, qty: 0.007627, label: 'DCA $500',    type: 'dca'     },
+    { date: '2026-06-18', price: 62578, qty: 0.00799,  label: 'DCA $500',    type: 'dca'     },
+    { date: '2026-06-22', price: 63691, qty: 0.00785,  label: 'DCA $500',    type: 'dca'     },
+    { date: '2026-06-23', price: 62315, qty: 0.008024, label: 'DCA $500',    type: 'dca'     },
   ],
   tranches: [
     { price: 63201, label: 'T1', size:  8000, filled: true,  note: 'Filled Jun 3 @ $63,201' },
@@ -2027,6 +2029,49 @@ function renderPlan() {
         </div>`).join('')}
     </div>
     <div style="margin-top:10px;font-size:11px;color:#94a3b8">Tranche lines are drawn on the History chart. Mark filled=true in PLAN.tranches when a level executes.</div>
+  </div>
+
+  <!-- BUY HISTORY -->
+  <div class="chart-card" style="margin-bottom:10px">
+    <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Buy History</div>
+    ${(()=>{
+      const buys = [...(PLAN.buys || [])].reverse();
+      const rows = buys.map(b => {
+        const usd = Math.round(b.price * b.qty);
+        const isTranche = (b.type === 'tranche') || (usd >= 1000);
+        const typeColor = isTranche ? '#f97316' : '#3b82f6';
+        const typeLabel = isTranche ? 'Tranche' : 'DCA';
+        const d = new Date(b.date + 'T12:00:00');
+        const dateStr = d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+        return `<tr style="border-bottom:1px solid #161616">
+          <td style="padding:7px 8px;color:#94a3b8;white-space:nowrap">${dateStr}</td>
+          <td style="padding:7px 8px"><span style="font-size:10px;font-weight:700;color:${typeColor};background:${typeColor}20;padding:2px 7px;border-radius:4px;white-space:nowrap">${typeLabel}</span></td>
+          <td style="padding:7px 8px;text-align:right;color:#64748b;font-variant-numeric:tabular-nums">$${b.price.toLocaleString()}</td>
+          <td style="padding:7px 8px;text-align:right;color:#cbd5e1;font-weight:600;font-variant-numeric:tabular-nums">${b.qty.toFixed(5)}</td>
+          <td style="padding:7px 8px;text-align:right;font-weight:700;color:${typeColor};font-variant-numeric:tabular-nums">$${usd.toLocaleString()}</td>
+        </tr>`;
+      }).join('');
+      const totalBtc = (PLAN.btcQty || 0).toFixed(4);
+      return `
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead>
+          <tr style="color:#475569;font-size:10px;text-transform:uppercase;letter-spacing:.06em">
+            <th style="text-align:left;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Date</th>
+            <th style="text-align:left;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Type</th>
+            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Price</th>
+            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">BTC</th>
+            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">USD</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div style="margin-top:10px;display:flex;gap:20px;flex-wrap:wrap;font-size:11px;padding:8px 4px;border-top:1px solid #1e1e1e">
+        <span style="color:#64748b">Tranches: <strong style="color:#f97316">$${(PLAN.trancheDeployed||0).toLocaleString()}</strong></span>
+        <span style="color:#64748b">DCA: <strong style="color:#3b82f6">$${(PLAN.dcaDeployed||0).toLocaleString()}</strong></span>
+        <span style="color:#64748b">BTC held: <strong style="color:#e5e5e5">${totalBtc} BTC</strong></span>
+        <span style="color:#64748b">Avg cost: <strong style="color:#e5e5e5">$${(PLAN.avgPrice||0).toLocaleString()}</strong></span>
+      </div>`;
+    })()}
   </div>
 
   <!-- MILESTONE COUNTDOWN -->
