@@ -1851,7 +1851,8 @@ async function renderHistory() {
   if (latest) updateIndicatorPanel(latest, false);
 
   buildHistoryTable();
-  setRange('1M');
+  // Defer one frame so the chart canvas finishes layout before we set x-axis bounds
+  requestAnimationFrame(() => setRange('1M'));
 
   // Fetch hourly data from Binance for 24h/1W intraday views (fire-and-forget)
   (async () => {
@@ -2018,8 +2019,13 @@ function setRange(range) {
       const pds = mainChart.data.datasets.find(d => d.label === '__price__');
       if (pds) pds.data = slicedPrices;
 
-      // Hide non-price datasets
-      mainChart.data.datasets.forEach(ds => { if (ds.label !== '__price__') ds.hidden = true; });
+      // Hide non-price datasets (both config and meta — meta is what Chart.js actually checks at render time)
+      mainChart.data.datasets.forEach((ds, idx) => {
+        if (ds.label !== '__price__') {
+          ds.hidden = true;
+          mainChart.getDatasetMeta(idx).hidden = true;
+        }
+      });;
 
       // Update x-axis
       mainChart.options.scales.x.ticks.callback = intraTickCb;
@@ -2041,7 +2047,10 @@ function setRange(range) {
       mainChart.data.labels = saved.labels;
       const pds = mainChart.data.datasets.find(d => d.label === '__price__');
       if (pds) pds.data = saved.priceData;
-      mainChart.data.datasets.forEach((ds, i) => { ds.hidden = saved.hiddenFlags[i]; });
+      mainChart.data.datasets.forEach((ds, i) => {
+        ds.hidden = saved.hiddenFlags[i];
+        mainChart.getDatasetMeta(i).hidden = saved.hiddenFlags[i] || false;
+      });
       mainChart.options.scales.x.ticks.callback = saved.tickCb;
       mainChart._dailyState = null;
     }
