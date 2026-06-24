@@ -292,7 +292,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <button class="hnav-btn" id="tab-btn-today"   onclick="switchTab('today')">Today</button>
       <button class="hnav-btn active" id="tab-btn-history" onclick="switchTab('history')">Signals</button>
       <button class="hnav-btn"        id="tab-btn-plan"    onclick="switchTab('plan')">My Plan</button>
-      <button class="hnav-btn" id="sync-btn" onclick="syncToGitHub()" style="margin-left:8px;opacity:0.7;font-size:10px" title="Push dashboard to GitHub Pages">⬆ Sync</button>
     </div>
   </div>
 
@@ -1890,74 +1889,6 @@ function toggleInd(id) {
   mainChart.update();
 }
 
-// =====================================================================
-// GITHUB SYNC
-// =====================================================================
-function syncToGitHub() {
-  const TOKEN_KEY = 'gh_pat_btc_dash';
-  const REPO = 'KEDC13/btc-macro-dashboard';
-  let token = localStorage.getItem(TOKEN_KEY);
-
-  if (!token) {
-    token = prompt('Enter your GitHub Personal Access Token\n(saved to localStorage — never leaves your browser):');
-    if (!token) return;
-    localStorage.setItem(TOKEN_KEY, token.trim());
-    token = token.trim();
-  }
-
-  // File picker — user selects btc-macro-dashboard.html
-  const inp = document.createElement('input');
-  inp.type = 'file';
-  inp.accept = '.html';
-  inp.onchange = async () => {
-    const file = inp.files[0];
-    if (!file) return;
-    const btn = document.getElementById('sync-btn');
-    btn.textContent = '⏳';
-    btn.disabled = true;
-
-    try {
-      // Read and base64-encode (UTF-8 safe)
-      const text = await file.text();
-      const bytes = new TextEncoder().encode(text);
-      const binStr = Array.from(bytes, b => String.fromCodePoint(b)).join('');
-      const content = btoa(binStr);
-
-      // Get current SHA from GitHub
-      const shaRes = await fetch(`https://api.github.com/repos/${REPO}/contents/index.html`, {
-        headers: { Authorization: `token ${token}`, 'User-Agent': 'btc-dash' }
-      });
-      if (shaRes.status === 401) {
-        localStorage.removeItem(TOKEN_KEY);
-        throw new Error('Invalid token — cleared, try again');
-      }
-      const { sha } = await shaRes.json();
-
-      // Push
-      const putRes = await fetch(`https://api.github.com/repos/${REPO}/contents/index.html`, {
-        method: 'PUT',
-        headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json', 'User-Agent': 'btc-dash' },
-        body: JSON.stringify({ message: 'Dashboard update via Sync button', content, sha })
-      });
-      const result = await putRes.json();
-
-      if (result.commit) {
-        btn.textContent = '✅ Synced';
-        btn.style.color = '#22c55e';
-        setTimeout(() => { btn.textContent = '⬆ Sync'; btn.style.color = ''; btn.disabled = false; }, 3000);
-      } else {
-        throw new Error(result.message || 'Push failed');
-      }
-    } catch(e) {
-      alert('Sync failed: ' + e.message);
-      const btn = document.getElementById('sync-btn');
-      btn.textContent = '⬆ Sync';
-      btn.style.color = '';
-      btn.disabled = false;
-    }
-  };
-  inp.click();
-}
 
 function toggleLog() {
   if (!mainChart) return;
