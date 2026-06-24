@@ -291,6 +291,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <button class="hnav-btn" id="tab-btn-today"   onclick="switchTab('today')">Today</button>
       <button class="hnav-btn active" id="tab-btn-history" onclick="switchTab('history')">Signals</button>
       <button class="hnav-btn"        id="tab-btn-plan"    onclick="switchTab('plan')">My Plan</button>
+      <button class="hnav-btn" id="sync-btn" onclick="syncToGitHub()" style="margin-left:8px;opacity:0.7;font-size:10px" title="Push dashboard to GitHub Pages">⬆ Sync</button>
     </div>
   </div>
 
@@ -1091,6 +1092,8 @@ let isLogScale = false;
 let allDates = [];
 let histMap  = {};
 let livePrice = null; // set after API fetch, used by renderPlan()
+let intraDates = [];   // hourly datetime strings "YYYY-MM-DDTHH" for 24h/1W views
+let intraPrices = [];  // matching hourly close prices
 
 const IND_CFG = {
   mvrv:  { key:'mvrv',       norm:10,  color:'#8b5cf6', label:'MVRV Z-Score',   fmt: v=>'MVRV Z: '+(v*10).toFixed(2) },
@@ -1435,11 +1438,22 @@ async function renderHistory() {
   histMap = {};
   HISTORY_DATA.forEach(h => { histMap[h.date] = h; });
 
-  // Fetch BTC price history — try CoinGecko, then Binance, then signal-only mode
+  // Fetch BTC price history — Binance primary (matches CMC aggregate), fallbacks for resilience
   let cgMap = {};
   const priceStatus = document.getElementById('price-status');
 
-  // Source 1: Kraken — public CORS, no key, ~720 daily bars
+  // Source 1: Binance — most accurate daily OHLC, matches CMC aggregate closely
+  const tryBinance = async () => {
+    const res = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=730');
+    if (!res.ok) throw new Error('Binance '+res.status);
+    const rows = await res.json();
+    if (!Array.isArray(rows) || rows.length < 10) throw new Error('Binance empty');
+    const m = {};
+    rows.forEach(([ts,,,, close]) => { m[new Date(parseInt(ts)).toISOString().slice(0,10)] = Math.round(parseFloat(close)); });
+    return m;
+  };
+
+  // Source 2: Kraken — public CORS, no key, ~720 daily bars
   const tryKraken = async () => {
     const res = await fetch('https://api.kraken.com/0/public/OHLC?pair=XBTUSD&interval=1440');
     if (!res.ok) throw new Error('Kraken '+res.status);
@@ -1452,7 +1466,7 @@ async function renderHistory() {
     return m;
   };
 
-  // Source 2: Bitstamp — public CORS, daily OHLC, up to 1000 bars
+  // Source 3: Bitstamp — public CORS, daily OHLC, up to 1000 bars
   const tryBitstamp = async () => {
     const res = await fetch('https://www.bitstamp.net/api/v2/ohlc/btcusd/?step=86400&limit=1000');
     if (!res.ok) throw new Error('Bitstamp '+res.status);
@@ -1464,7 +1478,7 @@ async function renderHistory() {
     return m;
   };
 
-  // Source 3: Bybit — public CORS, 365 daily bars
+  // Source 4: Bybit — public CORS, 365 daily bars
   const tryBybit = async () => {
     const res = await fetch('https://api.bybit.com/v5/market/kline?category=spot&symbol=BTCUSDT&interval=D&limit=365');
     if (!res.ok) throw new Error('Bybit '+res.status);
@@ -1477,7 +1491,8 @@ async function renderHistory() {
   };
 
   const sources = [
-    { fn: tryKraken,   name: '' },
+    { fn: tryBinance,  name: '' },
+    { fn: tryKraken,   name: '(Kraken)' },
     { fn: tryBitstamp, name: '(Bitstamp)' },
     { fn: tryBybit,    name: '(Bybit)' },
   ];
@@ -1836,6 +1851,20 @@ async function renderHistory() {
 
   buildHistoryTable();
   setRange('1M');
+
+  // Fetch hourly data from Binance for 24h/1W intraday views (fire-and-forget)
+  (async () => {
+    try {
+      const res = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=336');
+      if (!res.ok) return;
+      const rows = await res.json();
+      if (!Array.isArray(rows) || rows.length < 10) return;
+      intraDates = rows.map(([ts]) => new Date(parseInt(ts)).toISOString().slice(0,13));
+      intraPrices = rows.map(([,,,, c]) => Math.round(parseFloat(c)));
+      // If user already selected 24h/1W, refresh now that hourly data is ready
+      if (activeRange === '24h' || activeRange === '1W') setRange(activeRange);
+    } catch(e) { /* silent — daily data still works */ }
+  })();
 }
 
 // =====================================================================
@@ -1858,6 +1887,75 @@ function toggleInd(id) {
   mainChart.update();
 }
 
+// =====================================================================
+// GITHUB SYNC
+// =====================================================================
+function syncToGitHub() {
+  const TOKEN_KEY = 'gh_pat_btc_dash';
+  const REPO = 'KEDC13/btc-macro-dashboard';
+  let token = localStorage.getItem(TOKEN_KEY);
+
+  if (!token) {
+    token = prompt('Enter your GitHub Personal Access Token\n(saved to localStorage — never leaves your browser):');
+    if (!token) return;
+    localStorage.setItem(TOKEN_KEY, token.trim());
+    token = token.trim();
+  }
+
+  // File picker — user selects btc-macro-dashboard.html
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = '.html';
+  inp.onchange = async () => {
+    const file = inp.files[0];
+    if (!file) return;
+    const btn = document.getElementById('sync-btn');
+    btn.textContent = '⏳';
+    btn.disabled = true;
+
+    try {
+      // Read and base64-encode (UTF-8 safe)
+      const text = await file.text();
+      const bytes = new TextEncoder().encode(text);
+      const binStr = Array.from(bytes, b => String.fromCodePoint(b)).join('');
+      const content = btoa(binStr);
+
+      // Get current SHA from GitHub
+      const shaRes = await fetch(`https://api.github.com/repos/${REPO}/contents/index.html`, {
+        headers: { Authorization: `token ${token}`, 'User-Agent': 'btc-dash' }
+      });
+      if (shaRes.status === 401) {
+        localStorage.removeItem(TOKEN_KEY);
+        throw new Error('Invalid token — cleared, try again');
+      }
+      const { sha } = await shaRes.json();
+
+      // Push
+      const putRes = await fetch(`https://api.github.com/repos/${REPO}/contents/index.html`, {
+        method: 'PUT',
+        headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json', 'User-Agent': 'btc-dash' },
+        body: JSON.stringify({ message: 'Dashboard update via Sync button', content, sha })
+      });
+      const result = await putRes.json();
+
+      if (result.commit) {
+        btn.textContent = '✅ Synced';
+        btn.style.color = '#22c55e';
+        setTimeout(() => { btn.textContent = '⬆ Sync'; btn.style.color = ''; btn.disabled = false; }, 3000);
+      } else {
+        throw new Error(result.message || 'Push failed');
+      }
+    } catch(e) {
+      alert('Sync failed: ' + e.message);
+      const btn = document.getElementById('sync-btn');
+      btn.textContent = '⬆ Sync';
+      btn.style.color = '';
+      btn.disabled = false;
+    }
+  };
+  inp.click();
+}
+
 function toggleLog() {
   if (!mainChart) return;
   isLogScale = !isLogScale;
@@ -1874,9 +1972,82 @@ function setRange(range) {
     const b = document.getElementById('rb-'+r);
     if (b) b.classList.toggle('active', r === range);
   });
+
+  const needIntra = (range === '24h' || range === '1W') && intraDates.length > 0;
+
+  if (needIntra) {
+    // ── INTRADAY MODE (hourly Binance data) ─────────────────────────────
+    const hours = range === '24h' ? 25 : 7 * 24 + 1;
+    const cutoff = new Date(Date.now() - hours * 3600000).toISOString().slice(0, 13);
+    const startIdx = intraDates.findIndex(d => d >= cutoff);
+    if (startIdx < 0) { /* no data in range — fall through to daily */ }
+    else {
+      const slicedDates  = intraDates.slice(startIdx);
+      const slicedPrices = intraPrices.slice(startIdx);
+
+      // Save daily state on first intra switch
+      if (!mainChart._dailyState) {
+        const pds = mainChart.data.datasets.find(d => d.label === '__price__');
+        mainChart._dailyState = {
+          labels:      mainChart.data.labels ? [...mainChart.data.labels] : undefined,
+          priceData:   pds ? [...pds.data] : [],
+          tickCb:      mainChart.options.scales.x.ticks.callback,
+          hiddenFlags: mainChart.data.datasets.map(ds => ds.hidden),
+          xMin:        mainChart.options.scales.x.min,
+          xMax:        mainChart.options.scales.x.max,
+        };
+      }
+
+      // Build tick labels: midnight → "Jun 24", every 6h → "14:00", else null
+      const intraTickCb = (val) => {
+        // val is the label string "2026-06-24T14"
+        const parts = val.split('T');
+        const h = parseInt(parts[1] || '0', 10);
+        if (h === 0) {
+          const dt = new Date(val + ':00:00Z');
+          return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+        }
+        const step = range === '24h' ? 6 : 12;
+        if (h % step === 0) return h + ':00';
+        return null;
+      };
+
+      // Swap in hourly data
+      mainChart.data.labels = slicedDates;
+      const pds = mainChart.data.datasets.find(d => d.label === '__price__');
+      if (pds) pds.data = slicedPrices;
+
+      // Hide non-price datasets
+      mainChart.data.datasets.forEach(ds => { if (ds.label !== '__price__') ds.hidden = true; });
+
+      // Update x-axis
+      mainChart.options.scales.x.ticks.callback = intraTickCb;
+      mainChart.options.scales.x.min = undefined;
+      mainChart.options.scales.x.max = undefined;
+
+      mainChart._intraMode = true;
+      mainChart.update('none');
+      return;
+    }
+  }
+
+  // ── DAILY MODE ─────────────────────────────────────────────────────────
+  // Restore daily state if coming from intraday
+  if (mainChart._intraMode) {
+    mainChart._intraMode = false;
+    const saved = mainChart._dailyState;
+    if (saved) {
+      mainChart.data.labels = saved.labels;
+      const pds = mainChart.data.datasets.find(d => d.label === '__price__');
+      if (pds) pds.data = saved.priceData;
+      mainChart.data.datasets.forEach((ds, i) => { ds.hidden = saved.hiddenFlags[i]; });
+      mainChart.options.scales.x.ticks.callback = saved.tickCb;
+      mainChart._dailyState = null;
+    }
+  }
+
   let minDate = null;
   const now = new Date();
-  // tomorrow gives the last data point breathing room on the right
   const tomorrow = new Date(now); tomorrow.setDate(tomorrow.getDate()+1);
   const tomorrowStr = tomorrow.toISOString().slice(0,10);
   if (range === '24h') { const d = new Date(now); d.setDate(d.getDate()-2);   minDate = d.toISOString().slice(0,10); }
@@ -1888,7 +2059,6 @@ function setRange(range) {
     mainChart.options.scales.x.min = start;
     mainChart.options.scales.x.max = tomorrowStr;
   } else {
-    // ALL: full range including future phase zones
     mainChart.options.scales.x.min = allDates[0];
     mainChart.options.scales.x.max = CHART_END;
   }
