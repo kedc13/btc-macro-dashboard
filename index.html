@@ -456,8 +456,8 @@ const CHART_END  = '2027-04-01';  // Chart horizon
 // =====================================================================
 const PLAN = {
   totalBudget:    150000,
-  deployed:        15750,   // total deployed Jun 23 2026
-  dcaDeployed:      2750,   // DCA only (<$1K): Jun 5 $750 + Jun 16 $500 + Jun 18 $500 + Jun 22 $500 + Jun 23 $500
+  deployed:        16250,   // total deployed Jun 24 2026
+  dcaDeployed:      3250,   // DCA only (<$1K): Jun 5 $750 + Jun 16 $500 + Jun 18 $500 + Jun 22 $500 + Jun 23 $500 + Jun 24 $500
   trancheDeployed: 13000,   // tranche fills (>$1K): Jun 2 $2K + Jun 3 $8K + Jun 5 $3K
   dcaBudget:       64000,   // allocated to weekly DCA
   trancheBudget:   86000,   // allocated to limit-order tranches
@@ -465,17 +465,18 @@ const PLAN = {
   dcaDouble:        3000,   // aggressive: 3 × $1,000/wk on big drops
   dcaStartDate: '2026-06-09',
   doubleDropPct:     0.08,
-  btcQty:       0.2502,    // total BTC acquired — update with each buy
-  avgPrice:    62950,      // weighted avg cost basis — update with each buy
+  btcQty:       0.2584,    // total BTC acquired — update with each buy
+  avgPrice:    62895,      // weighted avg cost basis — update with each buy
   buys: [
-    { date: '2026-06-02', price: 67358, qty: 0.02969,  label: 'Tranche $2K', type: 'tranche' },
-    { date: '2026-06-03', price: 63201, qty: 0.12658,  label: 'T1 $8K',      type: 'tranche' },
-    { date: '2026-06-05', price: 61214, qty: 0.01225,  label: 'DCA $750',    type: 'dca'     },
-    { date: '2026-06-05', price: 59800, qty: 0.05017,  label: 'T2 $3K',      type: 'tranche' },
-    { date: '2026-06-16', price: 65557, qty: 0.007627, label: 'DCA $500',    type: 'dca'     },
-    { date: '2026-06-18', price: 62578, qty: 0.00799,  label: 'DCA $500',    type: 'dca'     },
-    { date: '2026-06-22', price: 63691, qty: 0.00785,  label: 'DCA $500',    type: 'dca'     },
-    { date: '2026-06-23', price: 62315, qty: 0.008024, label: 'DCA $500',    type: 'dca'     },
+    { date: '2026-06-02', price: 67358,   qty: 0.02969,  label: 'Tranche $2K', type: 'tranche' },
+    { date: '2026-06-03', price: 63201,   qty: 0.12658,  label: 'T1 $8K',      type: 'tranche' },
+    { date: '2026-06-05', price: 61214,   qty: 0.01225,  label: 'DCA $750',    type: 'dca'     },
+    { date: '2026-06-05', price: 59800,   qty: 0.05017,  label: 'T2 $3K',      type: 'tranche' },
+    { date: '2026-06-16', price: 65557,   qty: 0.007627, label: 'DCA $500',    type: 'dca'     },
+    { date: '2026-06-18', price: 62578,   qty: 0.00799,  label: 'DCA $500',    type: 'dca'     },
+    { date: '2026-06-22', price: 63691,   qty: 0.00785,  label: 'DCA $500',    type: 'dca'     },
+    { date: '2026-06-23', price: 62315,   qty: 0.008024, label: 'DCA $500',    type: 'dca'     },
+    { date: '2026-06-24', price: 61215,   qty: 0.008168, label: 'DCA $500',    type: 'dca'     },
   ],
   tranches: [
     { price: 63201, label: 'T1', size:  8000, filled: true,  note: 'Filled Jun 3 @ $63,201' },
