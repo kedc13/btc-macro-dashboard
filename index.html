@@ -456,17 +456,17 @@ const CHART_END  = '2027-04-01';  // Chart horizon
 // =====================================================================
 const PLAN = {
   totalBudget:    150000,
-  deployed:        16250,   // total deployed Jun 24 2026
-  dcaDeployed:      3250,   // DCA only (<$1K): Jun 5 $750 + Jun 16 $500 + Jun 18 $500 + Jun 22 $500 + Jun 23 $500 + Jun 24 $500
-  trancheDeployed: 13000,   // tranche fills (>$1K): Jun 2 $2K + Jun 3 $8K + Jun 5 $3K
+  deployed:        21750,   // total deployed Jun 25 2026
+  dcaDeployed:      4750,   // DCA only: Jun 5 $750 + Jun 16–24 5×$500 + Jun 25 $1K DCA + $500 DCA
+  trancheDeployed: 17000,   // tranche fills: Jun 2 $2K + Jun 3 $8K + Jun 5 $3K + Jun 25 T3 $4K
   dcaBudget:       64000,   // allocated to weekly DCA
   trancheBudget:   86000,   // allocated to limit-order tranches
   dcaWeekly:        1500,   // standard: 3 × $500/wk Sun / Tue / Thu
   dcaDouble:        3000,   // aggressive: 3 × $1,000/wk on big drops
   dcaStartDate: '2026-06-09',
   doubleDropPct:     0.08,
-  btcQty:       0.2584,    // total BTC acquired — update with each buy
-  avgPrice:    62895,      // weighted avg cost basis — update with each buy
+  btcQty:       0.3524,    // total BTC acquired — update with each buy
+  avgPrice:    61716,      // weighted avg cost basis — update with each buy
   buys: [
     { date: '2026-06-02', price: 67358,   qty: 0.02969,  label: 'Tranche $2K', type: 'tranche' },
     { date: '2026-06-03', price: 63201,   qty: 0.12658,  label: 'T1 $8K',      type: 'tranche' },
@@ -477,11 +477,14 @@ const PLAN = {
     { date: '2026-06-22', price: 63691,   qty: 0.00785,  label: 'DCA $500',    type: 'dca'     },
     { date: '2026-06-23', price: 62315,   qty: 0.008024, label: 'DCA $500',    type: 'dca'     },
     { date: '2026-06-24', price: 61215,   qty: 0.008168, label: 'DCA $500',    type: 'dca'     },
+    { date: '2026-06-25', price: 59622,   qty: 0.01677,  label: 'DCA $1K',     type: 'dca'     },
+    { date: '2026-06-25', price: 58168,   qty: 0.06877,  label: 'T3 $4K',      type: 'tranche' },
+    { date: '2026-06-25', price: 58886,   qty: 0.008491, label: 'DCA $500',    type: 'dca'     },
   ],
   tranches: [
     { price: 63201, label: 'T1', size:  8000, filled: true,  note: 'Filled Jun 3 @ $63,201' },
     { price: 59800, label: 'T2', size:  3000, filled: true,  note: 'Filled Jun 5 @ $59,800' },
-    { price: 58168, label: 'T3', size:  4000, filled: false, note: 'Order set @ $58,168' },
+    { price: 58168, label: 'T3', size:  4000, filled: true,  note: 'Filled Jun 25 @ $58,168' },
     { price: 53696, label: 'T4', size:  7252, filled: false, note: 'Order set @ $53,696' },
     { price: 49000, label: 'T5', size:  null, filled: false, note: '' },
     { price: 43000, label: 'T6', size:  null, filled: false, note: '' },
