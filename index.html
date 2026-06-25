@@ -464,6 +464,12 @@ const PLAN = {
   dcaWeekly:        1500,   // standard: 3 × $500/wk Sun / Tue / Thu
   dcaDouble:        3000,   // aggressive: 3 × $1,000/wk on big drops
   dcaStartDate: '2026-06-09',
+  dcaZones: [
+    { minPrice: 53697, label: 'Standard',   color: '#64748b', amount: 500,  perBuy: '$500/buy',   action: 'Standard cadence — 3× per week',                                         big3Req: 0 },
+    { minPrice: 47000, label: 'Aggressive', color: '#f97316', amount: 1000, perBuy: '$1K/buy',    action: 'T4–T5 zone — double up, keep limit orders set',                          big3Req: 0 },
+    { minPrice: 41000, label: 'Heavy',      color: '#ef4444', amount: 1500, perBuy: '$1,500/buy', action: 'T6 zone — increase cadence, flag remaining DCA budget for lump sum',     big3Req: 1 },
+    { minPrice: 0,     label: 'Lump Sum',   color: '#22c55e', amount: null, perBuy: 'Lump sum',   action: 'HALT weekly DCA — redeploy remaining DCA budget as T7 tranche if Big 3 confirmed', big3Req: 2 },
+  ],
   doubleDropPct:     0.08,
   btcQty:       0.3524,    // total BTC acquired — update with each buy
   avgPrice:    61716,      // weighted avg cost basis — update with each buy
@@ -485,10 +491,14 @@ const PLAN = {
     { price: 63201, label: 'T1', size:  8000, filled: true,  note: 'Filled Jun 3 @ $63,201' },
     { price: 59800, label: 'T2', size:  3000, filled: true,  note: 'Filled Jun 5 @ $59,800' },
     { price: 58168, label: 'T3', size:  4000, filled: true,  note: 'Filled Jun 25 @ $58,168' },
-    { price: 53696, label: 'T4', size:  7252, filled: false, note: 'Order set @ $53,696' },
-    { price: 49000, label: 'T5', size:  null, filled: false, note: '' },
-    { price: 43000, label: 'T6', size:  null, filled: false, note: '' },
-    { price: 38000, label: 'T7', size:  null, filled: false, note: '' },
+    { price: 53696, label: 'T4', size:  7252,  filled: false, note: 'Order set @ $53,696' },
+    { price: 51000, label: 'T5a', size: 5000,  filled: false, note: '$51K · split 2 exchanges' },
+    { price: 49000, label: 'T5b', size: 5000,  filled: false, note: '$49K · split 2 exchanges' },
+    { price: 47000, label: 'T5c', size: 5000,  filled: false, note: '$47K · split 2 exchanges' },
+    { price: 45000, label: 'T6a', size: 6667,  filled: false, note: '$45K · split 2 exchanges' },
+    { price: 43000, label: 'T6b', size: 6667,  filled: false, note: '$43K · split 2 exchanges' },
+    { price: 41000, label: 'T6c', size: 6666,  filled: false, note: '$41K · split 2 exchanges' },
+    { price: 38000, label: 'T7',  size: null,   filled: false, note: 'Reserve — size at Week 44+' },
   ]
 };
 
@@ -2115,12 +2125,19 @@ function renderPlan() {
   });
 
   // ── Double DCA trigger ───────────────────────────────────────────
-  // Suggest doubling if current price is ≥ 8% below the most recent tracked price
-  const prevPrice   = HISTORY_DATA.length > 1 ? HISTORY_DATA[HISTORY_DATA.length-2].price : null;
-  const weeklyDrop  = price && prevPrice ? (prevPrice - price) / prevPrice : 0;
+  const prevPrice    = HISTORY_DATA.length > 1 ? HISTORY_DATA[HISTORY_DATA.length-2].price : null;
+  const weeklyDrop   = price && prevPrice ? (prevPrice - price) / prevPrice : 0;
   const shouldDouble = weeklyDrop >= PLAN.doubleDropPct;
-  const dcaAmount   = shouldDouble ? PLAN.dcaDouble : PLAN.dcaWeekly;
-  const dcaLabel    = shouldDouble ? '$1,000/buy · AGGRESSIVE MODE' : '$500/buy · standard';
+  const dcaAmount    = shouldDouble ? PLAN.dcaDouble : PLAN.dcaWeekly;
+  const dcaLabel     = shouldDouble ? '$1,000/buy · AGGRESSIVE MODE' : '$500/buy · standard';
+
+  // ── DCA Zone escalation ──────────────────────────────────────────
+  const latestBig3  = HISTORY_DATA.length ? (HISTORY_DATA[HISTORY_DATA.length-1].big3 || 0) : 0;
+  const dcaZones    = PLAN.dcaZones || [];
+  const activeDcaZone = price
+    ? dcaZones.slice().reverse().find(z => price >= z.minPrice) || dcaZones[dcaZones.length-1]
+    : dcaZones[0];
+  const dcaZoneIndex = dcaZones.indexOf(activeDcaZone);
 
   // ── Next key milestone ───────────────────────────────────────────
   const w35Ms   = new Date(W35_DATE).getTime();
@@ -2186,7 +2203,7 @@ function renderPlan() {
       <div class="card"><div class="card-label">Remaining</div><div class="card-value" style="color:#22c55e">$${remaining.toLocaleString()}</div></div>
       <div class="card"><div class="card-label">Total Budget</div><div class="card-value">$${PLAN.totalBudget.toLocaleString()}</div></div>
       <div class="card"><div class="card-label">DCA Deployed</div><div class="card-value">$${dcaSpent.toLocaleString()}</div><div class="card-sub">of $${PLAN.dcaBudget.toLocaleString()} · ${weeksLeft}wk left</div></div>
-      <div class="card"><div class="card-label">Tranches Filled</div><div class="card-value">$${trancheSp.toLocaleString()}</div><div class="card-sub">of $${PLAN.trancheBudget.toLocaleString()} · 2 of 7 hit</div></div>
+      <div class="card"><div class="card-label">Tranches Filled</div><div class="card-value">$${trancheSp.toLocaleString()}</div><div class="card-sub">of $${PLAN.trancheBudget.toLocaleString()} · ${PLAN.tranches.filter(t=>t.filled).length} of ${PLAN.tranches.length} hit</div></div>
       <div class="card"><div class="card-label">DCA Week</div><div class="card-value">Week ${weekNum}</div><div class="card-sub">of ~${totalDcaWeeks}</div></div>
       ${(()=>{
         const qty = PLAN.btcQty || 0;
@@ -2234,17 +2251,60 @@ function renderPlan() {
   <div class="chart-card" style="margin-bottom:10px">
     <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Tranche Targets ${price?'· Live $'+Math.round(price).toLocaleString():''}</div>
     <div style="display:flex;flex-direction:column;gap:6px">
-      ${trancheRows.map(t => `
+      ${trancheRows.map(t => {
+        const isSplit = t.note && t.note.includes('split 2 exchanges') && t.size;
+        const perEx   = isSplit ? Math.round(t.size / 2).toLocaleString() : null;
+        return `
         <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;border:1.5px solid ${t.border};background:${t.bg}">
           <div style="font-size:13px;font-weight:800;color:${t.color};min-width:52px">${t.label}</div>
           <div style="font-size:14px;font-weight:700;color:#e5e5e5;min-width:72px">$${t.price.toLocaleString()}</div>
-          ${t.size?`<div style="font-size:11px;color:#64748b;min-width:60px">$${t.size.toLocaleString()} set</div>`:'<div style="min-width:60px"></div>'}
+          <div style="min-width:120px">
+            ${t.size ? `<div style="font-size:11px;color:#64748b">$${t.size.toLocaleString()} total</div>` : ''}
+            ${perEx   ? `<div style="font-size:11px;color:#f97316;font-weight:600">$${perEx} × 2 exchanges</div>` : ''}
+            ${!t.size && !perEx ? '' : ''}
+          </div>
           <div style="flex:1"></div>
           ${t.dist && !t.filled?`<div style="font-size:11px;color:${t.color};font-weight:600">${t.hit?'AT LEVEL':'↓ '+t.dist+'% away'}</div>`:''}
           <div style="font-size:11px;font-weight:700;color:${t.color};min-width:80px;text-align:right">${t.status}</div>
-        </div>`).join('')}
+        </div>`;
+      }).join('')}
     </div>
     <div style="margin-top:10px;font-size:11px;color:#94a3b8">Tranche lines are drawn on the History chart. Mark filled=true in PLAN.tranches when a level executes.</div>
+  </div>
+
+  <!-- DCA ESCALATION MODE -->
+  <div class="chart-card" style="margin-bottom:10px">
+    <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">DCA Escalation Mode</div>
+    <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px">
+      ${(PLAN.dcaZones||[]).map((z,i) => {
+        const isActive = i === dcaZoneIndex;
+        const big3Met  = latestBig3 >= z.big3Req;
+        const locked   = isActive && z.big3Req > 0 && !big3Met;
+        const bg       = isActive ? (locked ? '#1a1000' : '#0d1a0d') : '#111';
+        const border   = isActive ? (locked ? '#92400e' : z.color) : '#222';
+        const labelCol = isActive ? (locked ? '#fbbf24' : z.color) : '#334155';
+        const priceLabel = i === 0
+          ? `Above $${(PLAN.dcaZones[1]?.minPrice||0).toLocaleString()}`
+          : i === (PLAN.dcaZones.length-1)
+            ? `Below $${z.minPrice.toLocaleString() === '0' ? (PLAN.dcaZones[i-1]?.minPrice||0).toLocaleString() : z.minPrice.toLocaleString()}`
+            : `$${z.minPrice.toLocaleString()} – $${((PLAN.dcaZones[i-1]?.minPrice||0)-1).toLocaleString()}`;
+        return `<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;border:1.5px solid ${border};background:${bg}">
+          <div style="width:8px;height:8px;border-radius:50%;background:${isActive?z.color:'#333'};flex-shrink:0"></div>
+          <div style="font-size:12px;font-weight:700;color:${labelCol};min-width:80px">${z.label}</div>
+          <div style="font-size:11px;color:#64748b;min-width:120px">${priceLabel}</div>
+          <div style="font-size:11px;font-weight:${isActive?'700':'400'};color:${isActive?(locked?'#fbbf24':z.color):'#475569'};flex:1">${z.perBuy}</div>
+          ${isActive && locked ? `<div style="font-size:10px;color:#fbbf24;font-weight:600">⚠ Awaiting Big 3 (${latestBig3}/${z.big3Req})</div>` : ''}
+          ${isActive && !locked ? `<div style="font-size:10px;color:${z.color};font-weight:700">● ACTIVE</div>` : ''}
+        </div>`;
+      }).join('')}
+    </div>
+    ${activeDcaZone ? `
+    <div style="background:#0f1a0f;border:1px solid #1a3a1a;border-radius:8px;padding:10px 12px">
+      <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Current Instruction</div>
+      <div style="font-size:12px;color:${activeDcaZone.color};font-weight:600">${activeDcaZone.action}</div>
+      ${activeDcaZone.big3Req > 0 && latestBig3 < activeDcaZone.big3Req ? `<div style="font-size:11px;color:#fbbf24;margin-top:4px">⚠ Big 3 confirmation required (${latestBig3}/${activeDcaZone.big3Req}) before switching to this mode</div>` : ''}
+    </div>` : ''}
+    <div style="margin-top:8px;font-size:11px;color:#475569">Remaining DCA budget: <strong style="color:#e5e5e5">$${((PLAN.dcaBudget||0)-(PLAN.dcaDeployed||0)).toLocaleString()}</strong> · Escalation triggers automatically on price zone entry</div>
   </div>
 
   <!-- BUY HISTORY -->
