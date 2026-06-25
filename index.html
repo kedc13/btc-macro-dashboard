@@ -2251,23 +2251,80 @@ function renderPlan() {
   <div class="chart-card" style="margin-bottom:10px">
     <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Tranche Targets ${price?'· Live $'+Math.round(price).toLocaleString():''}</div>
     <div style="display:flex;flex-direction:column;gap:6px">
-      ${trancheRows.map(t => {
-        const isSplit = t.note && t.note.includes('split 2 exchanges') && t.size;
-        const perEx   = isSplit ? Math.round(t.size / 2).toLocaleString() : null;
-        return `
-        <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;border:1.5px solid ${t.border};background:${t.bg}">
-          <div style="font-size:13px;font-weight:800;color:${t.color};min-width:52px">${t.label}</div>
-          <div style="font-size:14px;font-weight:700;color:#e5e5e5;min-width:72px">$${t.price.toLocaleString()}</div>
-          <div style="min-width:120px">
-            ${t.size ? `<div style="font-size:11px;color:#64748b">$${t.size.toLocaleString()} total</div>` : ''}
-            ${perEx   ? `<div style="font-size:11px;color:#f97316;font-weight:600">$${perEx} × 2 exchanges</div>` : ''}
-            ${!t.size && !perEx ? '' : ''}
-          </div>
-          <div style="flex:1"></div>
-          ${t.dist && !t.filled?`<div style="font-size:11px;color:${t.color};font-weight:600">${t.hit?'AT LEVEL':'↓ '+t.dist+'% away'}</div>`:''}
-          <div style="font-size:11px;font-weight:700;color:${t.color};min-width:80px;text-align:right">${t.status}</div>
-        </div>`;
-      }).join('')}
+      ${(() => {
+        // Group sub-levels (T5a/b/c, T6a/b/c) into zone blocks
+        const groups = [];
+        let g = null;
+        trancheRows.forEach(t => {
+          const isSubLevel = /[abc]$/i.test(t.label);
+          const zoneKey = t.label.replace(/[abc]$/i, '');
+          if (isSubLevel) {
+            if (!g || g.key !== zoneKey) {
+              g = { key: zoneKey, rows: [], total: 0, isSingle: false };
+              groups.push(g);
+            }
+            g.rows.push(t);
+            g.total += (t.size || 0);
+          } else {
+            g = null;
+            groups.push({ key: t.label, rows: [t], total: t.size || 0, isSingle: true });
+          }
+        });
+
+        return groups.map(grp => {
+          if (grp.isSingle) {
+            const t = grp.rows[0];
+            const isSplit = t.note && t.note.includes('split 2 exchanges') && t.size;
+            const perEx = isSplit ? Math.round(t.size / 2).toLocaleString() : null;
+            return `
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;border:1.5px solid ${t.border};background:${t.bg}">
+              <div style="font-size:13px;font-weight:800;color:${t.color};min-width:52px">${t.label}</div>
+              <div style="font-size:14px;font-weight:700;color:#e5e5e5;min-width:72px">$${t.price.toLocaleString()}</div>
+              <div style="min-width:130px">
+                ${t.size ? `<div style="font-size:11px;color:#64748b">$${t.size.toLocaleString()} total</div>` : ''}
+                ${perEx ? `<div style="font-size:11px;color:#f97316;font-weight:600">$${perEx} × 2 exch</div>` : ''}
+              </div>
+              <div style="flex:1"></div>
+              ${t.dist && !t.filled ? `<div style="font-size:11px;color:${t.color};font-weight:600">${t.hit ? 'AT LEVEL' : '↓ '+t.dist+'% away'}</div>` : ''}
+              <div style="font-size:11px;font-weight:700;color:${t.color};min-width:80px;text-align:right">${t.status}</div>
+            </div>`;
+          } else {
+            const allFilled = grp.rows.every(r => r.filled);
+            const anyFilled = grp.rows.some(r => r.filled);
+            const gc = allFilled ? '#22c55e' : anyFilled ? '#f97316' : grp.rows[0].color;
+            const priceHigh = grp.rows[0].price.toLocaleString();
+            const priceLow  = grp.rows[grp.rows.length-1].price.toLocaleString();
+            const perLevel  = grp.rows[0].size ? '$'+grp.rows[0].size.toLocaleString()+'/level' : '';
+            return `
+            <div style="border:1.5px solid ${gc}33;border-radius:10px;overflow:hidden;background:#0d0d0d">
+              <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:${gc}12;border-bottom:1px solid ${gc}22">
+                <div style="font-size:12px;font-weight:800;color:${gc};min-width:52px">${grp.key} ZONE</div>
+                <div style="font-size:11px;color:#94a3b8">$${priceLow} – $${priceHigh} · ${grp.rows.length} levels · ${perLevel}</div>
+                <div style="flex:1"></div>
+                <div style="font-size:12px;font-weight:800;color:${gc}">$${grp.total.toLocaleString()} zone total</div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:3px;padding:5px 6px">
+                ${grp.rows.map(t => {
+                  const isSplit = t.note && t.note.includes('split 2 exchanges') && t.size;
+                  const perEx = isSplit ? Math.round(t.size / 2).toLocaleString() : null;
+                  return `
+                  <div style="display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:6px;border:1px solid ${t.border};background:${t.bg}">
+                    <div style="font-size:12px;font-weight:700;color:${t.color};min-width:52px">${t.label}</div>
+                    <div style="font-size:13px;font-weight:700;color:#e5e5e5;min-width:72px">$${t.price.toLocaleString()}</div>
+                    <div style="min-width:130px">
+                      ${t.size ? `<div style="font-size:11px;color:#64748b">$${t.size.toLocaleString()} total</div>` : ''}
+                      ${perEx ? `<div style="font-size:11px;color:#f97316;font-weight:600">$${perEx} × 2 exch</div>` : ''}
+                    </div>
+                    <div style="flex:1"></div>
+                    ${t.dist && !t.filled ? `<div style="font-size:11px;color:${t.color};font-weight:600">${t.hit ? 'AT LEVEL' : '↓ '+t.dist+'%'}</div>` : ''}
+                    <div style="font-size:11px;font-weight:700;color:${t.color};min-width:80px;text-align:right">${t.status}</div>
+                  </div>`;
+                }).join('')}
+              </div>
+            </div>`;
+          }
+        }).join('');
+      })()}
     </div>
     <div style="margin-top:10px;font-size:11px;color:#94a3b8">Tranche lines are drawn on the History chart. Mark filled=true in PLAN.tranches when a level executes.</div>
   </div>
