@@ -2142,7 +2142,7 @@ function renderPlan() {
   const latestBig3  = HISTORY_DATA.length ? (HISTORY_DATA[HISTORY_DATA.length-1].big3 || 0) : 0;
   const dcaZones    = PLAN.dcaZones || [];
   const activeDcaZone = price
-    ? dcaZones.slice().reverse().find(z => price >= z.minPrice) || dcaZones[dcaZones.length-1]
+    ? dcaZones.find(z => price >= z.minPrice) || dcaZones[dcaZones.length-1]
     : dcaZones[0];
   const dcaZoneIndex = dcaZones.indexOf(activeDcaZone);
 
@@ -2348,7 +2348,7 @@ function renderPlan() {
         const border   = isActive ? (locked ? '#92400e' : z.color) : '#222';
         const labelCol = isActive ? (locked ? '#fbbf24' : z.color) : '#334155';
         const priceLabel = i === 0
-          ? `Above $${(PLAN.dcaZones[1]?.minPrice||0).toLocaleString()}`
+          ? `Above $${(z.minPrice - 1).toLocaleString()}`
           : i === (PLAN.dcaZones.length-1)
             ? `Below $${z.minPrice.toLocaleString() === '0' ? (PLAN.dcaZones[i-1]?.minPrice||0).toLocaleString() : z.minPrice.toLocaleString()}`
             : `$${z.minPrice.toLocaleString()} – $${((PLAN.dcaZones[i-1]?.minPrice||0)-1).toLocaleString()}`;
