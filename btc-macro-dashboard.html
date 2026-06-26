@@ -874,13 +874,16 @@ function parseSlack(raw) {
 const BIG3_META = [
   { name:'Hash Ribbons',
     tip:'Fires when the 30-day hashrate MA crosses back above the 60-day MA after miner capitulation. Historically one of the highest-conviction BTC buy signals — price often doubles within 6 months after trigger.',
-    proxySrc:'mvrv' },
+    proxySrc:'mvrv',
+    triggerPct: 75, triggerLabel: '30d MA crosses above 60d MA' },
   { name:'SOPR Recovery',
     tip:'Spent Output Profit Ratio sustained above 1.0 signals that coins are being moved at a profit — a bear-to-recovery trend shift. Watch for it to hold above 1 for multiple weeks.',
-    proxySrc:'fg' },
+    proxySrc:'fg',
+    triggerPct: 70, triggerLabel: 'Fear & Greed drops below 15 (extreme fear)' },
   { name:'Monthly Stoch RSI',
     tip:'Stochastic RSI on the monthly chart. Lines compressing below 20 = oversold. Pre-cross (K tightening) is the strongest signal. The actual cross lags but confirms direction.',
-    proxySrc:'live' },
+    proxySrc:'live',
+    triggerPct: 85, triggerLabel: 'Stoch K-line crosses below 20' },
 ];
 
 function calcRSI(closes, period) {
@@ -957,6 +960,8 @@ function renderBig3Cards(big3arr, liveData) {
       pctLabel = Math.round(pct) + '%';
     }
 
+    const tp = meta.triggerPct;
+    const pastTrigger = pct >= tp;
     return `<div class="big3-card" data-b3tip="${meta.tip}">
       <div class="big3-card-top">
         <div class="big3-dot" style="background:${dotColor}"></div>
@@ -964,8 +969,15 @@ function renderBig3Cards(big3arr, liveData) {
         <div class="big3-status" style="color:${statusClr}">${status}</div>
       </div>
       <div class="big3-meter-row">
-        <div class="big3-meter"><div class="big3-meter-fill" style="width:${pct}%;background:${meterColor}"></div></div>
+        <div class="big3-meter" style="position:relative;overflow:visible">
+          <div class="big3-meter-fill" style="width:${pct}%;background:${meterColor};border-radius:2px"></div>
+          <div style="position:absolute;top:-3px;bottom:-3px;left:${tp}%;width:2px;background:#fbbf24;border-radius:1px;z-index:2"></div>
+        </div>
         <span class="big3-pct" style="color:${meterColor}">${pctLabel}</span>
+      </div>
+      <div style="font-size:9px;color:#475569;margin-top:1px;display:flex;align-items:center;gap:4px">
+        <span style="color:#fbbf24;font-size:8px">▲ TRIGGER:</span>
+        <span style="color:${pastTrigger?'#fbbf24':'#475569'}">${meta.triggerLabel}</span>
       </div>
       ${sparkSvg || `<div style="height:28px;background:#0d0d0d;border-radius:4px;display:flex;align-items:center;justify-content:center"><span style="font-size:9px;color:#333">loading…</span></div>`}
     </div>`;
