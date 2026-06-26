@@ -2607,11 +2607,11 @@ function renderApathyMonitor() {
   const mvrv7p = mvrvArr.length >= 14 ? mvrvArr.slice(-14,-7).reduce((a,b)=>a+b,0)/7 : null;
   const mvrvUp = mvrv7 && mvrv7p && mvrv7 > mvrv7p;
 
-  // 4. Floor Tested 3+ Times: price revisited cycle low zone without breaking it
+  // 4. Floor Tested 3+ Times: price revisited cycle low zone multiple times — still holding
   const cycleLow  = Math.min(...prices);
   const floorZone = cycleLow * 1.07;
   const floorTests= prices.filter(p => p <= floorZone).length;
-  const floorHeld = floorTests >= 3 && (latest?.price||0) > cycleLow;
+  const floorHeld = floorTests >= 3; // 3+ bounces off the floor = confirmation regardless of current position
 
   // 5. Time Signal: Week 44+ = inside historical bottom window
   const timeSignal = bearWeek >= 44;
@@ -2639,10 +2639,12 @@ function renderApathyMonitor() {
   const combined    = classicScore + apathyScore;
 
   // ── Action line ─────────────────────────────────────────────────
+  // Auto score = signals that fire without human input (can't be gamed)
+  const autoScore = signals.filter(s => s.auto && s.active).length;
   let action, ac, ab, ae;
-  if (classicScore >= 6 || apathyScore >= 6) {
+  if (classicScore >= 6 || (apathyScore >= 6 && autoScore >= 4)) {
     action='PILE IN — Cancel orders below current price. Redeploy into spot or compress ladder to $52–56K.'; ac='#4ade80'; ab='#16a34a'; ae='🟢';
-  } else if (apathyScore >= 5 || classicScore >= 5) {
+  } else if (classicScore >= 5 || (apathyScore >= 5 && autoScore >= 3)) {
     action='WATCH — Review orders below $47K. Consider canceling T6c/T7. Bottom may form without full capitulation.'; ac='#fb923c'; ab='#ea580c'; ae='🟠';
   } else if (combined >= 7) {
     action='BUILDING — Both tracks advancing. Hold full ladder. DCA at current pace.'; ac='#fbbf24'; ab='#d97706'; ae='🟡';
