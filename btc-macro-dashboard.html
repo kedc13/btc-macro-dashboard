@@ -297,6 +297,29 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <button class="hnav-btn active" id="tab-btn-history" onclick="switchTab('history')">Signals</button>
       <button class="hnav-btn"        id="tab-btn-plan"    onclick="switchTab('plan')">My Plan</button>
     </div>
+    <!-- Bell icon -->
+    <div style="position:relative;flex-shrink:0;margin-left:6px">
+      <button id="alert-bell-btn" onclick="toggleAlertSidebar()" title="Alert history" style="width:36px;height:36px;border-radius:50%;border:1px solid #2a2a2a;background:#111;color:#94a3b8;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s" onmouseover="this.style.borderColor='#444';this.style.color='#e5e5e5'" onmouseout="this.style.borderColor='#2a2a2a';this.style.color='#94a3b8'">🔔</button>
+      <div id="alert-badge" style="display:none;position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;background:#ef4444;border-radius:9px;font-size:10px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid #0a0a0a;pointer-events:none">0</div>
+    </div>
+  </div>
+
+  <!-- Alert sidebar backdrop -->
+  <div id="alert-backdrop" onclick="toggleAlertSidebar()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:4998"></div>
+
+  <!-- Alert sidebar -->
+  <div id="alert-sidebar" style="position:fixed;top:0;right:-380px;bottom:0;width:380px;background:#0d0d0d;border-left:1px solid #222;z-index:4999;transition:right .22s ease;display:flex;flex-direction:column;overflow:hidden">
+    <div style="padding:18px 18px 14px;border-bottom:1px solid #1a1a1a;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:#e5e5e5">⚡ Alert History</div>
+        <div style="font-size:10px;color:#475569;margin-top:2px">Alerts are saved as they fire. Click any to expand.</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button onclick="clearAlertHistory()" style="font-size:10px;color:#475569;background:none;border:1px solid #222;border-radius:5px;padding:4px 8px;cursor:pointer">Clear all</button>
+        <button onclick="toggleAlertSidebar()" style="background:none;border:none;color:#555;font-size:22px;cursor:pointer;line-height:1;padding:0">&times;</button>
+      </div>
+    </div>
+    <div id="alert-sidebar-body" style="flex:1;overflow-y:auto;padding:12px"></div>
   </div>
 
   <div id="big3-section" style="display:none;margin-bottom:20px">
@@ -2773,6 +2796,99 @@ setInterval(fetchApathyLiveSignals, 30 * 60 * 1000);
 // =====================================================================
 // ALERT SYSTEM — Mid-cycle rally + strategy change notifications
 // =====================================================================
+
+// ── Sidebar / bell ──────────────────────────────────────────────────
+const ALERT_HISTORY_KEY = 'btc_alert_history_v2';
+const ALERT_READ_KEY    = 'btc_alert_read_ts';
+
+function loadAlertHistory() {
+  try { return JSON.parse(localStorage.getItem(ALERT_HISTORY_KEY) || '[]'); } catch(e) { return []; }
+}
+function saveAlertHistory(arr) {
+  localStorage.setItem(ALERT_HISTORY_KEY, JSON.stringify(arr.slice(-30))); // keep last 30
+}
+
+function addAlertToHistory(alerts, curr) {
+  if (!alerts.length) return;
+  const history = loadAlertHistory();
+  const ts = Date.now();
+  alerts.forEach(a => {
+    history.push({ id: ts + Math.random(), ts, level: a.level, icon: a.icon,
+      title: a.title, body: a.body, action: a.action,
+      price: curr.currentPrice, week: curr.bearWeek,
+      classicScore: curr.classicScore, apathyScore: curr.apathyScore });
+  });
+  saveAlertHistory(history);
+  updateBellBadge();
+}
+
+function updateBellBadge() {
+  const history  = loadAlertHistory();
+  const lastRead = parseInt(localStorage.getItem(ALERT_READ_KEY) || '0');
+  const unread   = history.filter(a => a.ts > lastRead).length;
+  const badge    = document.getElementById('alert-badge');
+  const bell     = document.getElementById('alert-bell-btn');
+  if (!badge) return;
+  if (unread > 0) {
+    badge.style.display = 'flex';
+    badge.textContent   = unread > 9 ? '9+' : unread;
+    if (bell) bell.style.color = '#fbbf24';
+  } else {
+    badge.style.display = 'none';
+    if (bell) bell.style.color = '#94a3b8';
+  }
+}
+
+function renderAlertSidebar() {
+  const body    = document.getElementById('alert-sidebar-body');
+  if (!body) return;
+  const history = loadAlertHistory().slice().reverse(); // newest first
+  if (!history.length) {
+    body.innerHTML = `<div style="text-align:center;color:#333;font-size:13px;margin-top:60px">No alerts yet.<br><span style="font-size:11px;color:#222">Alerts appear here as signals change.</span></div>`;
+    return;
+  }
+  const lastRead = parseInt(localStorage.getItem(ALERT_READ_KEY) || '0');
+  const borderColors = { warn:'#d97706', orange:'#ea580c', green:'#16a34a', yellow:'#ca8a04', info:'#1d4ed8' };
+  const textColors   = { warn:'#fbbf24', orange:'#fb923c', green:'#4ade80', yellow:'#fde047', info:'#60a5fa' };
+  body.innerHTML = history.map(a => {
+    const unread = a.ts > lastRead;
+    const dt = new Date(a.ts);
+    const dateStr = dt.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+    const timeStr = dt.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
+    return `
+    <div style="border:1px solid ${unread?borderColors[a.level]+'66':'#1a1a1a'};border-left:3px solid ${borderColors[a.level]||'#334155'};border-radius:8px;padding:12px 13px;margin-bottom:8px;background:${unread?'#111':'#0d0d0d'}">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+        <span style="font-size:12px;font-weight:700;color:${textColors[a.level]||'#94a3b8'}">${a.icon} ${a.title}</span>
+        ${unread?'<span style="font-size:8px;font-weight:700;color:#ef4444;letter-spacing:.04em">NEW</span>':''}
+      </div>
+      <div style="font-size:10px;color:#475569;margin-bottom:7px">${dateStr} · ${timeStr} &nbsp;·&nbsp; BTC $${(a.price||0).toLocaleString()} &nbsp;·&nbsp; Wk ${a.week} &nbsp;·&nbsp; C${a.classicScore}/A${a.apathyScore}</div>
+      <div style="font-size:11px;color:#64748b;line-height:1.5;margin-bottom:6px">${a.body}</div>
+      <div style="font-size:10px;font-weight:600;color:#475569;border-top:1px solid #1a1a1a;padding-top:6px">→ ${a.action}</div>
+    </div>`;
+  }).join('');
+}
+
+window.toggleAlertSidebar = function() {
+  const sidebar   = document.getElementById('alert-sidebar');
+  const backdrop  = document.getElementById('alert-backdrop');
+  const isOpen    = sidebar.style.right === '0px';
+  sidebar.style.right  = isOpen ? '-380px' : '0px';
+  backdrop.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) {
+    // Mark all read
+    localStorage.setItem(ALERT_READ_KEY, Date.now().toString());
+    renderAlertSidebar();
+    updateBellBadge();
+  }
+};
+
+window.clearAlertHistory = function() {
+  localStorage.removeItem(ALERT_HISTORY_KEY);
+  localStorage.setItem(ALERT_READ_KEY, Date.now().toString());
+  renderAlertSidebar();
+  updateBellBadge();
+};
+
 const _sdUtil = arr => { if(arr.length<2) return 0; const m=arr.reduce((a,b)=>a+b,0)/arr.length; return Math.sqrt(arr.map(x=>(x-m)**2).reduce((a,b)=>a+b,0)/arr.length); };
 
 function computeAlertState() {
@@ -2891,9 +3007,16 @@ function checkAndShowAlerts() {
   localStorage.setItem('btc_alert_state', JSON.stringify(curr));
 
   const alerts = buildAlerts(curr, prev);
+
+  // Always update bell badge on load
+  updateBellBadge();
+
   if (!alerts.length) return;
 
-  // Suppress if already dismissed for same state
+  // Save new alerts to history
+  addAlertToHistory(alerts, curr);
+
+  // Suppress modal if already dismissed for same state
   const alreadySeen = dismissed &&
     dismissed.actionLevel  === curr.actionLevel &&
     dismissed.midRally     === curr.midRally &&
