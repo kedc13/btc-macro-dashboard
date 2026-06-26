@@ -225,6 +225,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .mc-track { position:relative; height:4px; border-radius:2px; background:linear-gradient(to right,#16a34a 0%,#22c55e 18%,#555 45%,#f97316 75%,#ef4444 100%); margin-bottom:4px; }
 .mc-pin   { position:absolute; top:50%; transform:translate(-50%,-50%); width:10px; height:10px; border-radius:50%; background:#141414; border:2px solid #e5e5e5; box-shadow:0 1px 4px rgba(0,0,0,.7); pointer-events:none; }
 .mc-ends  { display:flex; justify-content:space-between; font-size:9px; font-weight:600; }
+/* INSTANT TOOLTIP */
+.tip { position:relative; display:inline-block; }
+.tip .tiptext { visibility:hidden; opacity:0; width:260px; background:#1e293b; color:#e2e8f0; font-size:11px; line-height:1.5; border-radius:7px; padding:9px 11px; position:absolute; z-index:999; bottom:130%; left:50%; transform:translateX(-50%); border:1px solid #334155; pointer-events:none; transition:opacity .05s; white-space:normal; }
+.tip:hover .tiptext { visibility:visible; opacity:1; }
 /* QUAL CARDS */
 .qual-card { background:#141414; border-radius:10px; padding:12px 14px; border:1px solid #222; border-left:3px solid #333; }
 .qual-val  { font-size:12px; font-weight:600; color:#e5e5e5; margin-top:5px; line-height:1.35; display:flex; align-items:center; gap:5px; }
@@ -2196,7 +2200,7 @@ function renderPlan() {
               { pct: 75, color: '#22c55e', label: 'Bottom Window (peak)' },
               { pct: 88, color: '#f87171', label: 'Extended Bear' },
             ].map(m => `<div style="position:absolute;top:-2px;left:${m.pct}%;transform:translateX(-0.5px);z-index:10" onmouseenter="this.querySelector('.pm-tip').style.display='block'" onmouseleave="this.querySelector('.pm-tip').style.display='none'"><div style="width:1px;height:14px;background:${m.color};opacity:0.6"></div><div class="pm-tip" style="display:none;position:absolute;bottom:18px;left:50%;transform:translateX(-50%);white-space:nowrap;background:#111;border:1px solid ${m.color};border-radius:4px;padding:3px 8px;font-size:10px;font-weight:600;color:${m.color};pointer-events:none;z-index:99">${m.label} · ${m.pct}% · $${Math.round(m.pct/100*PLAN.totalBudget).toLocaleString()}</div></div>`).join('')}
-            <div style="position:absolute;top:-3px;left:${depTarget}%;width:4px;height:16px;background:#e5e5e5;border-radius:1px;transform:translateX(-2px)" title="📍 Deployment Target: ${depTarget}% ($${Math.round(depTarget/100*PLAN.totalBudget).toLocaleString()})&#10;&#10;This is where your capital deployment should be right now based on:&#10;• Bear cycle phase: ${depPhaseLabel} (base ${depPhase.base}%)&#10;• Indicator score adjustment: ${scoreAdj >= 0 ? '+' : ''}${scoreAdj}%&#10;&#10;If the bar is left of this line you are behind target — consider deploying more. If right of it you are ahead of schedule."></div>
+            <div class="tip" style="position:absolute;top:-3px;left:${depTarget}%;transform:translateX(-2px);width:4px;height:16px"><div style="width:4px;height:16px;background:#e5e5e5;border-radius:1px"></div><span class="tiptext">📍 <strong>Deployment Target: ${depTarget}%</strong> ($${Math.round(depTarget/100*PLAN.totalBudget).toLocaleString()})<br><br>Where your capital deployment should be right now:<br>• Phase: ${depPhaseLabel} (base ${depPhase.base}%)<br>• Score adj: ${scoreAdj >= 0 ? '+' : ''}${scoreAdj}%<br><br>Bar left of line = behind target. Right = ahead.</span></div>
           </div>
           <span style="font-size:14px;font-weight:800;color:${tier.color};white-space:nowrap">${pct}%</span>
         </div>
