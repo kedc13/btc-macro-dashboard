@@ -969,15 +969,17 @@ function renderBig3Cards(big3arr, liveData) {
         <div class="big3-status" style="color:${statusClr}">${status}</div>
       </div>
       <div class="big3-meter-row">
-        <div class="big3-meter" style="position:relative;overflow:visible">
-          <div class="big3-meter-fill" style="width:${pct}%;background:${meterColor};border-radius:2px"></div>
-          <div style="position:absolute;top:-3px;bottom:-3px;left:${tp}%;width:2px;background:#fbbf24;border-radius:1px;z-index:2"></div>
+        <div style="flex:1;position:relative;padding:4px 0">
+          <div class="big3-meter">
+            <div class="big3-meter-fill" style="width:${pct}%;background:${meterColor};border-radius:2px"></div>
+          </div>
+          <div style="position:absolute;top:0;bottom:0;left:${tp}%;width:2px;background:#fbbf24;border-radius:1px;z-index:2;transform:translateX(-50%)"></div>
         </div>
         <span class="big3-pct" style="color:${meterColor}">${pctLabel}</span>
       </div>
-      <div style="font-size:9px;color:#475569;margin-top:1px;display:flex;align-items:center;gap:4px">
-        <span style="color:#fbbf24;font-size:8px">▲ TRIGGER:</span>
-        <span style="color:${pastTrigger?'#fbbf24':'#475569'}">${meta.triggerLabel}</span>
+      <div style="font-size:9px;margin-top:2px;display:flex;align-items:center;gap:4px">
+        <span style="color:#fbbf24;font-weight:700;font-size:8px;letter-spacing:.04em">▲ FIRES WHEN:</span>
+        <span style="color:${pastTrigger?'#fbbf24':'#94a3b8'}">${meta.triggerLabel}</span>
       </div>
       ${sparkSvg || `<div style="height:28px;background:#0d0d0d;border-radius:4px;display:flex;align-items:center;justify-content:center"><span style="font-size:9px;color:#333">loading…</span></div>`}
     </div>`;
