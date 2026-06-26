@@ -2103,6 +2103,10 @@ function renderPlan() {
   const pct        = (deployed / PLAN.totalBudget * 100).toFixed(1);
   const dcaSpent   = PLAN.dcaDeployed   || 0;
   const trancheSp  = PLAN.trancheDeployed || 0;
+  // Committed = unfilled tranches with active exchange orders
+  const committed    = (PLAN.tranches || []).filter(t => !t.filled && t.size && t.note && t.note.includes('Order set')).reduce((s,t) => s + t.size, 0);
+  const committedPct = (committed / PLAN.totalBudget * 100).toFixed(1);
+  const combinedPct  = Math.min(100, parseFloat(pct) + parseFloat(committedPct)).toFixed(1);
 
   // ── DCA week + this-week schedule ───────────────────────────────
   const startMs  = new Date(PLAN.dcaStartDate).getTime();
@@ -2183,16 +2187,19 @@ function renderPlan() {
   <div class="chart-card" style="margin-bottom:10px">
     <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">💰 Capital Deployment</div>
     ${(()=>{
-      const gap = parseFloat(pct) - depTarget;
+      const gap = parseFloat(combinedPct) - depTarget;
       const onTrack = Math.abs(gap) <= 5;
       const behind  = gap < -5;
       const statusColor = onTrack ? '#22c55e' : behind ? (gap < -15 ? '#ef4444' : '#f97316') : '#60a5fa';
-      const statusText  = onTrack ? 'On pace' : behind ? (gap < -15 ? `${Math.abs(gap.toFixed(1))}% behind — consider deploying more` : `${Math.abs(gap).toFixed(1)}% behind target`) : `${gap.toFixed(1)}% ahead of schedule`;
+      const statusText  = onTrack ? 'On pace (deployed + committed)' : behind ? (gap < -15 ? `${Math.abs(gap).toFixed(1)}% behind target — load more orders` : `${Math.abs(gap).toFixed(1)}% behind target`) : `${gap.toFixed(1)}% ahead of target`;
       return `
       <div style="position:relative;margin-bottom:4px">
         <div style="display:flex;align-items:center;gap:12px">
           <div style="flex:1;height:10px;background:#1a1a1a;border-radius:5px;overflow:visible;position:relative">
-            <div style="height:100%;width:${pct}%;background:${tier.color};border-radius:5px;transition:width .4s"></div>
+            <!-- Committed orders bar (teal, behind deployed) -->
+            <div style="position:absolute;left:0;top:0;height:100%;width:${combinedPct}%;background:#0e7490;border-radius:5px;transition:width .4s;opacity:0.55"></div>
+            <!-- Deployed bar (solid blue) -->
+            <div style="position:absolute;left:0;top:0;height:100%;width:${pct}%;background:${tier.color};border-radius:5px;transition:width .4s"></div>
             ${[
               { pct: 12, color: '#7c3aed', label: 'Early Bear' },
               { pct: 30, color: '#f97316', label: 'Entering Window' },
@@ -2200,13 +2207,17 @@ function renderPlan() {
               { pct: 75, color: '#22c55e', label: 'Bottom Window (peak)' },
               { pct: 88, color: '#f87171', label: 'Extended Bear' },
             ].map(m => `<div style="position:absolute;top:-2px;left:${m.pct}%;transform:translateX(-0.5px);z-index:10" onmouseenter="this.querySelector('.pm-tip').style.display='block'" onmouseleave="this.querySelector('.pm-tip').style.display='none'"><div style="width:1px;height:14px;background:${m.color};opacity:0.6"></div><div class="pm-tip" style="display:none;position:absolute;bottom:18px;left:50%;transform:translateX(-50%);white-space:nowrap;background:#111;border:1px solid ${m.color};border-radius:4px;padding:3px 8px;font-size:10px;font-weight:600;color:${m.color};pointer-events:none;z-index:99">${m.label} · ${m.pct}% · $${Math.round(m.pct/100*PLAN.totalBudget).toLocaleString()}</div></div>`).join('')}
-            <div class="tip" style="position:absolute;top:-3px;left:${depTarget}%;transform:translateX(-2px);width:4px;height:16px"><div style="width:4px;height:16px;background:#e5e5e5;border-radius:1px"></div><span class="tiptext">📍 <strong>Deployment Target: ${depTarget}%</strong> ($${Math.round(depTarget/100*PLAN.totalBudget).toLocaleString()})<br><br>Where your capital deployment should be right now:<br>• Phase: ${depPhaseLabel} (base ${depPhase.base}%)<br>• Score adj: ${scoreAdj >= 0 ? '+' : ''}${scoreAdj}%<br><br>Bar left of line = behind target. Right = ahead.</span></div>
+            <div class="tip" style="position:absolute;top:-3px;left:${depTarget}%;transform:translateX(-2px);width:4px;height:16px;z-index:20"><div style="width:4px;height:16px;background:#e5e5e5;border-radius:1px"></div><span class="tiptext">📍 <strong>Deployment Target: ${depTarget}%</strong> ($${Math.round(depTarget/100*PLAN.totalBudget).toLocaleString()})<br><br>Where your capital deployment should be right now:<br>• Phase: ${depPhaseLabel} (base ${depPhase.base}%)<br>• Score adj: ${scoreAdj >= 0 ? '+' : ''}${scoreAdj}%<br><br>Blue = filled/deployed. Teal = active limit orders waiting to fill.<br>Bar left of line = behind target. Right = ahead.</span></div>
           </div>
-          <span style="font-size:14px;font-weight:800;color:${tier.color};white-space:nowrap">${pct}%</span>
+          <span style="font-size:14px;font-weight:800;color:${tier.color};white-space:nowrap">${combinedPct}% <span style="font-size:10px;font-weight:500;color:#64748b">(${pct}% filled)</span></span>
         </div>
-        <div style="display:flex;justify-content:space-between;margin-top:5px;font-size:10px">
-          <span style="color:${statusColor};font-weight:600">${statusText}</span>
-          <span style="color:#444">Target: <strong style="color:#888">${depTarget}%</strong> <span style="color:#555">($${Math.round(depTarget/100*PLAN.totalBudget).toLocaleString()})</span> · ${depPhaseLabel}${scoreAdj !== 0 ? ' · Score adj: '+(scoreAdj>0?'+':'')+scoreAdj+'%' : ''}</span>
+        <div style="display:flex;gap:12px;margin-top:5px;align-items:center;flex-wrap:wrap">
+          <span style="color:${statusColor};font-weight:600;font-size:10px">${statusText}</span>
+          <span style="display:flex;gap:8px;align-items:center;font-size:10px">
+            <span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:2px;background:${tier.color};display:inline-block"></span><span style="color:#64748b">Deployed $${deployed.toLocaleString()}</span></span>
+            <span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:2px;background:#0e7490;display:inline-block;opacity:0.7"></span><span style="color:#64748b">Committed $${committed.toLocaleString()}</span></span>
+          </span>
+          <span style="color:#333;font-size:10px;margin-left:auto">Target: <strong style="color:#666">${depTarget}%</strong> · ${depPhaseLabel}${scoreAdj !== 0 ? ' · Score adj: '+(scoreAdj>0?'+':'')+scoreAdj+'%' : ''}</span>
         </div>
       </div>`;
     })()}
