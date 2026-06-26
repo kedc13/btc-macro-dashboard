@@ -320,6 +320,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       </div>
       <div class="conf-tags" id="conf-tags"></div>
     </div>
+    <div class="section-title">🔍 Bottom Path Monitor</div>
+    <div id="apathy-monitor" style="margin-bottom:8px"></div>
     <div class="section-title">📊 Valuation</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:10px" id="val-grid"></div>
     <div class="section-title">🌡️ Momentum &amp; Sentiment</div>
@@ -1073,6 +1075,7 @@ function renderToday(d) {
   const gtags=(d.bottomGreen||[]).map(s=>`<span class="conf-tag conf-tag-green">${s}</span>`).join('');
   const ytags=(d.bottomYellow||[]).map(s=>`<span class="conf-tag conf-tag-yellow">${s}</span>`).join('');
   document.getElementById('conf-tags').innerHTML=gtags+ytags||'<span style="color:#94a3b8;font-size:12px">No indicators firing</span>';
+  renderApathyMonitor();
   // Parse numerics for meters
   const mvrvN = parseFloat(d.mvrv);
   const puellN = parseFloat(d.puell);
@@ -2570,6 +2573,124 @@ function histToTodayData(h) {
   startLivePriceWS();
 })();
 switchTab('today');
+
+// =====================================================================
+// BOTTOM PATH MONITOR — Classic track vs Apathy track
+// =====================================================================
+function renderApathyMonitor() {
+  const el = document.getElementById('apathy-monitor');
+  if (!el || !HISTORY_DATA.length) return;
+
+  const prices  = HISTORY_DATA.map(d => d.price).filter(Boolean);
+  const mvrvArr = HISTORY_DATA.map(d => parseFloat(d.mvrv)).filter(n => !isNaN(n));
+  const latest  = HISTORY_DATA[HISTORY_DATA.length - 1];
+  const bearWeek = Math.max(1, Math.floor((Date.now() - new Date(ATH_DATE).getTime()) / (7*86400000)) + 1);
+  const classicScore = latest ? (parseInt(latest.bottomConf) || 0) : 0;
+
+  const tog = k => localStorage.getItem('apath_' + k) === '1';
+  const sd  = arr => { if(arr.length<2) return 0; const m=arr.reduce((a,b)=>a+b,0)/arr.length; return Math.sqrt(arr.map(x=>(x-m)**2).reduce((a,b)=>a+b,0)/arr.length); };
+
+  // ── Auto signals ────────────────────────────────────────────────
+  // 1. Range Hold: no new cycle low in last ~3 weeks of data points
+  const recentPx = prices.slice(-21), priorPx = prices.slice(0,-21);
+  const recentMin = Math.min(...recentPx);
+  const priorMin  = priorPx.length ? Math.min(...priorPx) : recentMin + 1;
+  const rangeHeld = prices.length >= 14 && recentMin >= priorMin * 0.98;
+
+  // 2. Vol Compression: std dev of last 14 entries < prior 14
+  const vol14 = sd(prices.slice(-14));
+  const vol28 = prices.length >= 28 ? sd(prices.slice(-28,-14)) : vol14 * 2;
+  const volComp = vol14 > 0 && vol14 < vol28 * 0.80;
+
+  // 3. MVRV Recovering: 7-day avg rising vs prior 7-day avg
+  const mvrv7  = mvrvArr.length >= 7  ? mvrvArr.slice(-7).reduce((a,b)=>a+b,0)/7 : null;
+  const mvrv7p = mvrvArr.length >= 14 ? mvrvArr.slice(-14,-7).reduce((a,b)=>a+b,0)/7 : null;
+  const mvrvUp = mvrv7 && mvrv7p && mvrv7 > mvrv7p;
+
+  // 4. Floor Tested 3+ Times: price revisited cycle low zone without breaking it
+  const cycleLow  = Math.min(...prices);
+  const floorZone = cycleLow * 1.07;
+  const floorTests= prices.filter(p => p <= floorZone).length;
+  const floorHeld = floorTests >= 3 && (latest?.price||0) > cycleLow;
+
+  // 5. Time Signal: Week 44+ = inside historical bottom window
+  const timeSignal = bearWeek >= 44;
+
+  const signals = [
+    { key:'range',   label:'Range Hold',          auto:true,  active:rangeHeld,
+      desc: rangeHeld   ? 'No new cycle low in 3+ weeks — floor forming'                              : 'Price still making new lows — floor not confirmed' },
+    { key:'vol',     label:'Vol Compression',      auto:true,  active:volComp,
+      desc: volComp     ? `Price range tightening (σ ${Math.round(vol14/1000)}K vs ${Math.round(vol28/1000)}K)` : 'Volatility still elevated — no compression yet' },
+    { key:'mvrv',    label:'MVRV Recovering',      auto:true,  active:!!mvrvUp,
+      desc: mvrvUp      ? `MVRV 7-day avg rising: ${mvrv7?.toFixed(2)} vs ${mvrv7p?.toFixed(2)} prior` : `MVRV trend still declining (${mvrv7?.toFixed(2)||'N/A'})` },
+    { key:'floor',   label:'Floor Tests ×3+',      auto:true,  active:floorHeld,
+      desc: floorHeld   ? `${floorTests} visits to $${Math.round(cycleLow).toLocaleString()} low — held each time` : `${floorTests}/3 floor tests · low $${Math.round(cycleLow).toLocaleString()}` },
+    { key:'time',    label:'Week 44+ Window',       auto:true,  active:timeSignal,
+      desc: timeSignal  ? `Week ${bearWeek} — inside historical bottom zone`                           : `Week ${bearWeek} — bottom window opens W44 (${44-bearWeek} wks away)` },
+    { key:'funding', label:'Funding Neutral/−',     auto:false, active:tog('funding'),
+      desc:'Perp funding rate neutral or negative sustained 2+ weeks' },
+    { key:'flows',   label:'Exchange Outflows',     auto:false, active:tog('flows'),
+      desc:'Sustained BTC net outflows from exchanges = conviction accumulation' },
+    { key:'volume',  label:'Volume Character',      auto:false, active:tog('volume'),
+      desc:'Red candles declining volume · green candles rising volume' },
+  ];
+
+  const apathyScore = signals.filter(s => s.active).length;
+  const combined    = classicScore + apathyScore;
+
+  // ── Action line ─────────────────────────────────────────────────
+  let action, ac, ab, ae;
+  if (classicScore >= 6 || apathyScore >= 6) {
+    action='PILE IN — Cancel orders below current price. Redeploy into spot or compress ladder to $52–56K.'; ac='#4ade80'; ab='#16a34a'; ae='🟢';
+  } else if (apathyScore >= 5 || classicScore >= 5) {
+    action='WATCH — Review orders below $47K. Consider canceling T6c/T7. Bottom may form without full capitulation.'; ac='#fb923c'; ab='#ea580c'; ae='🟠';
+  } else if (combined >= 7) {
+    action='BUILDING — Both tracks advancing. Hold full ladder. DCA at current pace.'; ac='#fbbf24'; ab='#d97706'; ae='🟡';
+  } else {
+    action='HOLD LADDER — Signals early. Keep all orders set. DCA $500/buy. Patience is the edge.'; ac='#64748b'; ab='#334155'; ae='⚪';
+  }
+
+  el.innerHTML = `
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+    <div style="background:#141414;border:1px solid #1e293b;border-radius:10px;padding:13px">
+      <div style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Classic Track</div>
+      <div style="font-size:26px;font-weight:800;color:${classicScore>=6?'#22c55e':classicScore>=4?'#f97316':'#64748b'}">${classicScore}<span style="font-size:12px;color:#334155">/8</span></div>
+      <div style="display:flex;gap:2px;margin:7px 0 5px">${Array.from({length:8},(_,i)=>`<div style="flex:1;height:4px;border-radius:2px;background:${i<classicScore?'#22c55e':'#1e293b'}"></div>`).join('')}</div>
+      <div style="font-size:10px;color:#334155">MVRV · Puell · F&G · Big 3 · Timing</div>
+      <div style="font-size:9px;color:#1e293b;margin-top:3px">Requires deep capitulation signals</div>
+    </div>
+    <div style="background:#141414;border:1px solid #1e293b;border-radius:10px;padding:13px">
+      <div style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Apathy Track</div>
+      <div style="font-size:26px;font-weight:800;color:${apathyScore>=5?'#22c55e':apathyScore>=3?'#06b6d4':'#64748b'}">${apathyScore}<span style="font-size:12px;color:#334155">/8</span></div>
+      <div style="display:flex;gap:2px;margin:7px 0 5px">${Array.from({length:8},(_,i)=>`<div style="flex:1;height:4px;border-radius:2px;background:${i<apathyScore?'#06b6d4':'#1e293b'}"></div>`).join('')}</div>
+      <div style="font-size:10px;color:#334155">Range · Vol · MVRV · Floor · Time</div>
+      <div style="font-size:9px;color:#1e293b;margin-top:3px">Bottom without blow-off top pattern</div>
+    </div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:3px;margin-bottom:8px">
+    ${signals.map(s=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:7px 11px;background:#0d0d0d;border-radius:6px;border:1px solid ${s.active?(s.auto?'#164e63':'#14532d'):'#111'}">
+      <div style="width:7px;height:7px;border-radius:50%;flex-shrink:0;background:${s.active?(s.auto?'#06b6d4':'#22c55e'):'#1e293b'}"></div>
+      <div style="flex:1;min-width:0">
+        <span style="font-size:11px;font-weight:600;color:${s.active?'#e2e8f0':'#334155'}">${s.label}</span>
+        <span style="font-size:9px;color:#1e293b;margin-left:5px">${s.auto?'AUTO':'MANUAL'}</span>
+        <div style="font-size:10px;color:${s.active?'#475569':'#1e293b'};margin-top:1px">${s.desc}</div>
+      </div>
+      ${!s.auto?`<div onclick="apathyToggle('${s.key}')" style="width:34px;height:19px;border-radius:10px;background:${s.active?'#0e7490':'#1e293b'};position:relative;cursor:pointer;flex-shrink:0;transition:background .15s;border:1px solid ${s.active?'#0891b2':'#334155'}"><div style="position:absolute;top:2px;left:${s.active?'14px':'2px'};width:13px;height:13px;border-radius:50%;background:#fff;transition:left .15s"></div></div>`:''}
+    </div>`).join('')}
+  </div>
+  <div style="background:#0d0d0d;border-left:3px solid ${ab};border-radius:0 8px 8px 0;padding:11px 14px">
+    <div style="font-size:9px;font-weight:700;color:#334155;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">Order Strategy</div>
+    <div style="font-size:12px;font-weight:700;color:${ac}">${ae} ${action}</div>
+  </div>`;
+}
+
+window.apathyToggle = function(key) {
+  localStorage.setItem('apath_' + key, localStorage.getItem('apath_' + key) === '1' ? '0' : '1');
+  renderApathyMonitor();
+};
+
+renderApathyMonitor();
 </script>
 </body>
 </html>
