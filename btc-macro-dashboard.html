@@ -1,0 +1,2751 @@
+<!DOCTYPE html>
+<script type="application/json" id="cowork-artifact-meta">
+{
+  "name": "Btc Macro Dashboard",
+  "schemaVersion": 1,
+  "description": "BTC macro cycle dashboard — live daily indicators + ITV-style history chart with toggleable indicator overlays on price, phase zone backgrounds, and future cycle window projections.",
+  "mcpTools": ["mcp__0e2465af-5649-4cda-a8a5-59aaf35be070__slack_read_channel"],
+  "mcpServerNames": ["Slack"]
+}
+</script>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BTC Macro Dashboard</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 16'><circle cx='8' cy='8' r='7' fill='%2322c55e'/><circle cx='24' cy='8' r='7' fill='%23eab308'/><circle cx='40' cy='8' r='7' fill='%23ef4444'/></svg>">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<style>
+:root { color-scheme: dark; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a0a; color: #e5e5e5; padding: 16px; min-height: 100vh; }
+
+/* HEADER */
+.header { background: #111111; border-radius: 12px; padding: 12px 18px; margin-bottom: 8px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; border: 1px solid #222; }
+.signal-banner { font-size: 16px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; flex-shrink: 0; order: 1; }
+.signal-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.header-meta { color: #555; font-size: 12px; flex: 1; text-align: center; order: 2; min-width: 0; }
+.header-nav { order: 3; }
+.header-meta strong { color: #ccc; }
+.phase-badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 600; margin-top: 3px; }
+.phase-early    { background: #7c3aed18; color: #a78bfa; border: 1px solid #7c3aed33; }
+.phase-entering { background: #d9770618; color: #fb923c; border: 1px solid #d9770633; }
+.phase-bottom   { background: #16a34a18; color: #4ade80; border: 1px solid #16a34a33; }
+.phase-extended { background: #dc262618; color: #f87171; border: 1px solid #dc262633; }
+/* Header nav tabs */
+.header-nav { display: flex; gap: 4px; flex-shrink: 0; }
+@media (max-width: 600px) {
+  .header-meta { order: 3; flex: 0 0 100%; text-align: left; }
+  .header-nav  { order: 2; }
+}
+.hnav-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid #2a2a2a; background: transparent; font-size: 12px; font-weight: 600; color: #555; cursor: pointer; transition: all .15s; white-space: nowrap; }
+.hnav-btn:hover { border-color: #444; color: #aaa; }
+.hnav-btn.active { background: #222; border-color: #3a3a3a; color: #fff; }
+.action-text { color: #555; font-size: 11px; margin-bottom: 6px; }
+
+/* TABS */
+.tabs { display: flex; background: #111; border-radius: 10px; padding: 3px; margin-bottom: 12px; }
+.tab-btn { flex: 1; padding: 8px 0; border: none; background: transparent; border-radius: 8px; font-size: 13px; font-weight: 600; color: #555; cursor: pointer; transition: all .15s; }
+.tab-btn.active { background: #222; color: #f0f0f0; box-shadow: 0 1px 3px rgba(0,0,0,.6); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* TODAY TAB COMPONENTS */
+.section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #555; margin-bottom: 8px; margin-top: 14px; }
+.grid-3   { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+.grid-4   { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
+.grid-auto{ display: grid; grid-template-columns: repeat(auto-fit,minmax(155px,1fr)); gap: 10px; }
+.card { background: #141414; border-radius: 10px; padding: 12px 14px; border: 1px solid #222; }
+.card-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: #555; margin-bottom: 5px; }
+.card-value { font-size: 15px; font-weight: 700; color: #e5e5e5; display: flex; align-items: center; gap: 6px; }
+.card-sub   { font-size: 11px; color: #555; margin-top: 3px; }
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+.big3-card { background: #141414; border-radius: 10px; padding: 12px 14px; border: 1px solid #222; display: flex; flex-direction: column; gap: 8px; position: relative; cursor: default; }
+.big3-card-top { display: flex; align-items: center; gap: 8px; }
+.big3-dot  { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.big3-name { font-size: 12px; font-weight: 700; color: #e5e5e5; flex: 1; }
+.big3-status { font-size: 10px; font-weight: 700; color: #555; white-space: nowrap; }
+.big3-meter-row { display: flex; align-items: center; gap: 6px; }
+.big3-meter { flex: 1; height: 4px; background: #222; border-radius: 2px; overflow: hidden; }
+.big3-meter-fill { height: 100%; border-radius: 2px; transition: width .4s; }
+.big3-pct { font-size: 9px; color: #555; min-width: 28px; text-align: right; }
+.big3-spark { display: block; width: 100%; height: 90px; }
+/* Tooltip on big3 cards */
+.big3-card[data-b3tip]:hover::after {
+  content: attr(data-b3tip);
+  position: absolute; bottom: calc(100% + 8px); left: 0; right: 0;
+  background: #1a1a1a; border: 1px solid #333; color: #ccc;
+  font-size: 10px; line-height: 1.5; white-space: normal;
+  padding: 8px 10px; border-radius: 7px; pointer-events: none;
+  z-index: 99; box-shadow: 0 4px 16px rgba(0,0,0,.5);
+}
+.conf-bar { background: #141414; border-radius: 10px; padding: 14px; border: 1px solid #222; margin-bottom: 10px; }
+.conf-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.conf-count { font-size: 22px; font-weight: 800; }
+.conf-track { display: flex; gap: 4px; }
+.conf-pip { width: 18px; height: 6px; border-radius: 3px; background: #2a2a2a; }
+.conf-pip.active { background: #22c55e; }
+.conf-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.conf-tag { padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+.conf-tag-green  { background: #14532d44; color: #4ade80; }
+.conf-tag-yellow { background: #78350f44; color: #fbbf24; }
+.tranche-guide { background: #111; border: 1px solid #222; border-radius: 8px; padding: 10px 14px; margin-top: 14px; font-size: 11px; color: #555; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.tg-item { display: flex; align-items: center; gap: 4px; }
+.timestamp { font-size: 11px; color: #444; text-align: right; margin-top: 14px; }
+
+/* HISTORY TAB CHART */
+.chart-card { background: #111; border-radius: 12px; border: 1px solid #222; padding: 18px; margin-bottom: 12px; }
+.chart-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; gap: 12px; flex-wrap: wrap; }
+.chart-title-block { }
+.chart-title { font-size: 14px; font-weight: 700; color: #e5e5e5; }
+.chart-subtitle { font-size: 11px; color: #555; margin-top: 3px; }
+.chart-controls { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+
+/* INDICATOR TOGGLE BUTTONS */
+.ind-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.ind-label { font-size: 11px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: .05em; white-space: nowrap; }
+.ind-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 11px; border-radius: 20px;
+  border: 1px solid #2a2a2a; background: #0d0d0d;
+  font-size: 11px; font-weight: 600; color: #555;
+  cursor: pointer; transition: all .15s; user-select: none;
+}
+.ind-btn:hover { border-color: var(--c, #555); }
+.ind-btn.active {
+  background: color-mix(in srgb, var(--c, #555) 12%, #0d0d0d);
+  border-color: var(--c, #555); color: var(--c, #888);
+}
+.ind-swatch { width: 8px; height: 8px; border-radius: 50%; background: var(--c, #555); flex-shrink: 0; }
+.ctrl-btn {
+  padding: 5px 11px; border-radius: 20px;
+  border: 1px solid #2a2a2a; background: #0d0d0d;
+  font-size: 11px; font-weight: 600; color: #555; cursor: pointer; transition: all .15s;
+}
+.ctrl-btn.active { background: #e5e5e5; border-color: #e5e5e5; color: #0a0a0a; }
+.ctrl-sep { width: 1px; height: 18px; background: #2a2a2a; margin: 0 2px; }
+.range-btn {
+  padding: 5px 10px; border-radius: 20px;
+  border: 1px solid #2a2a2a; background: #0d0d0d;
+  font-size: 11px; font-weight: 700; color: #555; cursor: pointer; transition: all .15s; letter-spacing: .03em;
+}
+.range-btn:hover { border-color: #888; color: #ccc; }
+.range-btn.active { background: #e5e5e5; border-color: #e5e5e5; color: #0a0a0a; }
+
+/* CHART WRAP */
+.chart-wrap { position: relative; }
+
+/* INDICATOR PANEL */
+.ind-panel { background: #0d0d0d; border: 1px solid #222; border-radius: 12px; padding: 16px 18px; margin-top: 16px; }
+.ind-panel-hdr { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; }
+.ind-panel-date { font-size: 12px; font-weight: 700; color: #e5e5e5; }
+.ind-panel-hint { font-size: 11px; color: #555; }
+.ind-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; }
+.ind-card { background: #141414; border: 1px solid #222; border-radius: 8px; overflow: hidden; transition: box-shadow .15s; }
+.ind-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,.6); }
+.ind-card-bar { height: 4px; }
+.ind-card-body { padding: 10px 12px; }
+.ind-card-lbl { font-size: 10px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 5px; }
+.ind-card-val { font-size: 20px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+.ind-card-zone { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+
+/* PHASE LEGEND */
+.phase-legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; padding-top: 12px; border-top: 1px solid #222; }
+.pl-group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.pl-divider { width: 1px; height: 16px; background: #2a2a2a; flex-shrink: 0; }
+.pl-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #555; }
+.pl-bar { width: 12px; height: 10px; border-radius: 2px; flex-shrink: 0; opacity: 0.6; }
+.pl-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; border: 1.5px solid #111; box-shadow: 0 0 0 1px currentColor; }
+.pl-date { color: #444; font-size: 10px; }
+
+/* DOT KEY — compact horizontal strip below chart */
+.dot-key {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0;
+  margin-top: 10px; padding: 9px 0 0;
+  border-top: 1px solid #222;
+}
+.dk-title { font-size: 9px; font-weight: 700; color: #444; text-transform: uppercase; letter-spacing: .08em; margin-right: 12px; white-space: nowrap; }
+.dk-item {
+  display: flex; align-items: center; gap: 5px;
+  padding: 3px 10px 3px 0; font-size: 10px; color: #555;
+  cursor: default; position: relative;
+}
+.dk-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; cursor: default; position: relative; }
+.dk-label { font-weight: 600; letter-spacing: .02em; }
+/* Hover tooltip — fires only on the dot, not the label */
+.dk-dot::after {
+  content: attr(data-tip);
+  position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+  background: #1a1a1a; border: 1px solid #333; color: #ccc;
+  font-size: 10px; font-weight: 400; white-space: nowrap;
+  padding: 5px 9px; border-radius: 6px; pointer-events: none;
+  opacity: 0; transition: opacity .15s; z-index: 99;
+  box-shadow: 0 4px 12px rgba(0,0,0,.6);
+}
+.dk-dot:hover::after { opacity: 1; }
+
+/* HISTORY TABLE */
+.hist-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.hist-table th { text-align: left; padding: 6px 8px; color: #444; font-weight: 600; font-size: 10px; border-bottom: 1px solid #222; text-transform: uppercase; letter-spacing: .05em; }
+.hist-table td { padding: 7px 8px; border-bottom: 1px solid #141414; vertical-align: middle; color: #777; }
+.hist-table tr:last-child td { border-bottom: none; }
+.sig-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; }
+
+/* COMPOSITE SCORE */
+.score-row { display:flex; align-items:center; gap:10px; margin-top:6px; }
+.score-track { flex:1; height:8px; background:#2a2a2a; border-radius:4px; overflow:hidden; }
+.score-fill  { height:100%; border-radius:4px; transition:width .3s; }
+.score-num   { font-size:24px; font-weight:800; min-width:44px; text-align:right; line-height:1; }
+.score-tier  { font-size:11px; font-weight:700; min-width:110px; }
+
+/* CYCLE BAR */
+.cycle-track { position:relative; height:16px; border-radius:8px; overflow:hidden; background:#2a2a2a; }
+.cycle-needle{ position:absolute; top:0; height:100%; width:2px; background:#e5e5e5; }
+
+/* UPGRADE BOX — matches levels-box style */
+.upgrade-box { padding:8px 12px; background:#0d0d0d; border-radius:8px; border:1px solid #2a2a2a; }
+.upgrade-lbl { font-size:10px; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:.07em; margin-bottom:4px; }
+.upgrade-tip { font-size:11px; color:#555; margin-bottom:3px; }
+
+/* PRICE LEVELS BOX */
+.levels-box { padding:8px 12px; background:#0d0d0d; border-radius:8px; border:1px solid #2a2a2a; }
+.levels-lbl { font-size:10px; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:.07em; margin-bottom:4px; }
+.levels-row { display:flex; flex-direction:column; gap:5px; }
+.levels-item { font-size:11px; color:#aaa; }
+
+/* BIG 3 SECTION */
+.big3-section-hdr { font-size:10px; font-weight:700; color:#444; text-transform:uppercase; letter-spacing:.07em; margin:10px 0 6px; }
+
+/* METER CARDS */
+.meter-card { background:#141414; border-radius:10px; padding:14px 16px; border:1px solid #222; }
+.mc-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:#555; margin-bottom:5px; display:flex; align-items:center; gap:5px; }
+.live-badge { background:#16a34a; color:#fff; font-size:8px; font-weight:700; padding:1px 5px; border-radius:20px; letter-spacing:.04em; }
+.mc-value { font-size:22px; font-weight:800; line-height:1; margin-bottom:3px; }
+.mc-zone  { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; margin-bottom:9px; }
+.mc-track { position:relative; height:4px; border-radius:2px; background:linear-gradient(to right,#16a34a 0%,#22c55e 18%,#555 45%,#f97316 75%,#ef4444 100%); margin-bottom:4px; }
+.mc-pin   { position:absolute; top:50%; transform:translate(-50%,-50%); width:10px; height:10px; border-radius:50%; background:#141414; border:2px solid #e5e5e5; box-shadow:0 1px 4px rgba(0,0,0,.7); pointer-events:none; }
+.mc-ends  { display:flex; justify-content:space-between; font-size:9px; font-weight:600; }
+/* INSTANT TOOLTIP */
+.tip { position:relative; display:inline-block; }
+.tip .tiptext { visibility:hidden; opacity:0; width:260px; background:#1e293b; color:#e2e8f0; font-size:11px; line-height:1.5; border-radius:7px; padding:9px 11px; position:absolute; z-index:999; bottom:130%; left:50%; transform:translateX(-50%); border:1px solid #334155; pointer-events:none; transition:opacity .05s; white-space:normal; }
+.tip:hover .tiptext { visibility:visible; opacity:1; }
+/* QUAL CARDS */
+.qual-card { background:#141414; border-radius:10px; padding:12px 14px; border:1px solid #222; border-left:3px solid #333; }
+.qual-val  { font-size:12px; font-weight:600; color:#e5e5e5; margin-top:5px; line-height:1.35; display:flex; align-items:center; gap:5px; }
+.qual-sub  { font-size:10px; color:#555; margin-top:3px; }
+.q-dot     { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+/* MISC */
+.loading { display: flex; align-items: center; justify-content: center; height: 200px; color: #555; font-size: 14px; }
+.error-msg { background: #1a0000; border: 1px solid #440000; border-radius: 10px; padding: 14px; color: #f87171; font-size: 13px; }
+.chart-note { font-size: 10px; color: #444; font-style: italic; margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<!-- ── GATE ── change PASS to whatever you want ── -->
+<script>
+(function(){
+  const PASS = 'btc2026';
+  if (sessionStorage.getItem('_auth') === PASS) return;
+  document.addEventListener('DOMContentLoaded', function() {
+    var gate = document.getElementById('_gate');
+    if (gate) gate.style.display = 'flex';
+    document.getElementById('app').style.visibility = 'hidden';
+  });
+  window._checkPass = function() {
+    var v = document.getElementById('_pin').value;
+    if (v === PASS) {
+      sessionStorage.setItem('_auth', PASS);
+      document.getElementById('_gate').style.display = 'none';
+      document.getElementById('app').style.visibility = 'visible';
+    } else {
+      document.getElementById('_err').textContent = 'Wrong password.';
+      document.getElementById('_pin').value = '';
+      document.getElementById('_pin').focus();
+    }
+  };
+})();
+</script>
+
+<div id="_gate" style="display:none;position:fixed;inset:0;z-index:9999;background:#0a0a0a;align-items:center;justify-content:center;flex-direction:column;gap:16px">
+  <div style="font-size:20px;font-weight:800;color:#e5e5e5;letter-spacing:.05em">BTC Dashboard</div>
+  <div style="display:flex;flex-direction:column;gap:8px;align-items:center">
+    <input id="_pin" type="password" placeholder="Password" autofocus
+      onkeydown="if(event.key==='Enter')_checkPass()"
+      style="background:#111;border:1px solid #333;border-radius:8px;color:#e5e5e5;font-size:15px;padding:10px 16px;width:220px;outline:none;text-align:center">
+    <button onclick="_checkPass()"
+      style="background:#1d4ed8;border:none;border-radius:8px;color:#fff;font-size:14px;font-weight:700;padding:9px 32px;cursor:pointer;width:220px">
+      Enter
+    </button>
+    <div id="_err" style="color:#ef4444;font-size:12px;min-height:16px"></div>
+  </div>
+</div>
+
+<div id="app">
+
+  <div class="header">
+    <div class="signal-banner">
+      <div class="signal-dot" id="sig-dot" style="background:#94a3b8"></div>
+      <span id="sig-text">—</span>
+    </div>
+    <div class="header-meta">
+      <strong id="hdr-price">—</strong> &nbsp;·&nbsp; Wk <span id="hdr-week">—</span> &nbsp;·&nbsp; <span class="phase-badge phase-early" id="hdr-phase">—</span>
+      <div style="font-size:10px;color:#64748b;margin-top:3px;letter-spacing:.02em">Updated <span id="last-updated">—</span></div>
+    </div>
+    <div class="header-nav">
+      <button class="hnav-btn" id="tab-btn-today"   onclick="switchTab('today')">Today</button>
+      <button class="hnav-btn active" id="tab-btn-history" onclick="switchTab('history')">Signals</button>
+      <button class="hnav-btn"        id="tab-btn-plan"    onclick="switchTab('plan')">My Plan</button>
+    </div>
+  </div>
+
+  <div id="big3-section" style="display:none;margin-bottom:20px">
+    <div class="section-title">🎯 Big 3 Primary Triggers</div>
+    <div class="grid-3" id="big3-grid"></div>
+  </div>
+
+  <!-- hidden action-text anchor kept for renderToday() compat -->
+  <div id="action-text" style="display:none"></div>
+
+  <!-- ===== TODAY TAB ===== -->
+  <div class="tab-panel active" id="tab-today">
+    <div class="section-title">⚡ Bottom Confirmation</div>
+    <div class="conf-bar">
+      <div class="conf-header">
+        <div>
+          <div class="conf-count" id="conf-count">0/8</div>
+          <div style="font-size:11px;color:#64748b;margin-top:2px">indicators confirmed</div>
+        </div>
+        <div class="conf-track" id="conf-pips"></div>
+      </div>
+      <div class="conf-tags" id="conf-tags"></div>
+    </div>
+    <div class="section-title">🔍 Bottom Path Monitor</div>
+    <div id="apathy-monitor" style="margin-bottom:8px"></div>
+    <div class="section-title">📊 Valuation</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:10px" id="val-grid"></div>
+    <div class="section-title">🌡️ Momentum &amp; Sentiment</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:10px" id="mom-grid"></div>
+    <div class="section-title">💧 Macro</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px" id="macro-grid"></div>
+    <div class="tranche-guide">
+      <span style="font-weight:600;color:#475569">Tranche guide:</span>
+      <span class="tg-item"><span class="dot" style="background:#eab308"></span> BUY = first tranche</span>
+      <span class="tg-item">🔔 ACCUMULATE = add</span>
+      <span class="tg-item"><span class="dot" style="background:#22c55e"></span> BUY = heavy</span>
+      <span class="tg-item"><span class="dot" style="background:#22c55e"></span><span class="dot" style="background:#22c55e"></span><span class="dot" style="background:#22c55e"></span> Big 3 all green = max allocation</span>
+    </div>
+    <div class="timestamp" id="ts"></div>
+  </div>
+
+  <!-- ===== MY PLAN TAB ===== -->
+  <div class="tab-panel" id="tab-plan">
+    <div id="plan-content"><div class="loading">Loading plan...</div></div>
+  </div>
+
+  <!-- ===== HISTORY TAB ===== -->
+  <div class="tab-panel" id="tab-history">
+
+    <div class="chart-card">
+      <div class="chart-head">
+        <div class="chart-title-block">
+          <div class="chart-title">BTC Price + Indicator Overlays</div>
+          <div class="chart-subtitle">Full bear market · phase zones · click indicators below to overlay against price <span id="price-status" style="color:#f97316;font-size:10px"></span></div>
+        </div>
+        <div class="chart-controls">
+          <button class="range-btn" id="rb-24h" onclick="setRange('24h')">24h</button>
+          <button class="range-btn" id="rb-1W"  onclick="setRange('1W')">1W</button>
+          <button class="range-btn active" id="rb-1M"  onclick="setRange('1M')">1M</button>
+          <button class="range-btn" id="rb-1Y"  onclick="setRange('1Y')">1Y</button>
+          <button class="range-btn" id="rb-ALL" onclick="setRange('ALL')">ALL</button>
+          <div class="ctrl-sep"></div>
+          <button class="ctrl-btn" id="log-btn" onclick="toggleLog()">Log Scale</button>
+        </div>
+      </div>
+
+      <div class="chart-wrap" style="height:360px">
+        <canvas id="chart-main"></canvas>
+      </div>
+
+      <div class="ind-panel" id="ind-panel">
+        <div class="ind-panel-hdr">
+          <span class="ind-panel-date" id="ind-panel-date">Latest signal</span>
+          <span class="ind-panel-hint">Hover chart to inspect any date</span>
+        </div>
+        <div id="ind-grid"></div>
+      </div>
+
+      <div class="phase-legend">
+        <div class="pl-group">
+          <div class="pl-item"><div class="pl-bar" style="background:#7c3aed"></div>Early Bear</div>
+          <div class="pl-item"><div class="pl-bar" style="background:#f97316"></div>Entering Window <span class="pl-date">(W35 ~Jun 22)</span></div>
+          <div class="pl-item"><div class="pl-bar" style="background:#22c55e"></div>Bottom Window <span class="pl-date">(W44–58 ~Aug–Dec)</span></div>
+          <div class="pl-item"><div class="pl-bar" style="background:#ef4444"></div>Extended Bear</div>
+        </div>
+      </div>
+      <div class="dot-key">
+        <span class="dk-title">Dot signal</span>
+        <div class="dk-item"><div class="dk-dot" style="background:#16a34a" data-tip="MVRV deeply undervalued + extreme fear. Max conviction buy."></div><span class="dk-label" style="color:#4ade80">Extreme Accum</span></div>
+        <div class="dk-item"><div class="dk-dot" style="background:#22c55e" data-tip="Cheap on-chain + fear confirmed. Load up."></div><span class="dk-label" style="color:#86efac">Strong Accum</span></div>
+        <div class="dk-item"><div class="dk-dot" style="background:#3b82f6" data-tip="MVRV cheap but fear not yet extreme. Good DCA, hold tranches."></div><span class="dk-label" style="color:#93c5fd">Accumulate</span></div>
+        <div class="dk-item"><div class="dk-dot" style="background:#777" data-tip="Fair value range. Keep DCA, don't deploy tranches."></div><span class="dk-label" style="color:#888">Neutral</span></div>
+        <div class="dk-item"><div class="dk-dot" style="background:#f97316" data-tip="Overvalued or euphoric. Avoid new buys."></div><span class="dk-label" style="color:#fb923c">Elevated</span></div>
+      </div>
+      <div class="chart-note">Indicator overlays are normalized 0–1 on the right axis. Tooltip shows actual values. Vertical dashed lines = cycle phase transitions.</div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title" style="font-size:13px;font-weight:700;margin-bottom:12px">Signal Log <span style="font-size:11px;font-weight:400;color:#94a3b8">— most recent 14 tracked days</span></div>
+      <div id="history-table-wrap"><p style="color:#94a3b8;font-size:13px;padding:12px 0">No history yet — builds as the daily tracker runs.</p></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// =====================================================================
+// EMBEDDED HISTORY DATA — appended daily by scheduled task
+// {date, price, mvrv, puell, fearGreed, bottomConf, signal, big3, week, phase}
+// signal: EXTREME_ACCUM|STRONG_ACCUM|ACCUM_BOTTOM|WATCH|NEUTRAL|ELEVATED|EUPHORIC
+// phase:  EARLY_BEAR|ENTERING_WINDOW|BOTTOM_WINDOW|EXTENDED
+// =====================================================================
+const HISTORY_DATA = [
+  {"date":"2026-05-07","price":82000,"mvrv":0.82,"puell":0.69,"fearGreed":50,"bottomConf":1,"signal":"STRONG_ACCUM","big3":1,"week":28,"phase":"EARLY_BEAR"},
+  {"date":"2026-05-08","price":81000,"mvrv":0.91,"puell":0.80,"fearGreed":47,"bottomConf":2,"signal":"STRONG_ACCUM","big3":2,"week":29,"phase":"EARLY_BEAR"},
+  {"date":"2026-05-11","price":80865,"mvrv":0.91,"puell":0.80,"fearGreed":50,"bottomConf":2,"signal":"STRONG_ACCUM","big3":2,"week":29,"phase":"EARLY_BEAR"},
+  {"date":"2026-05-12","price":82500,"mvrv":0.91,"puell":0.80,"fearGreed":50,"bottomConf":2,"signal":"NEUTRAL","big3":2,"week":29,"phase":"EARLY_BEAR"},
+  {"date":"2026-05-13","price":80960,"mvrv":0.87,"puell":0.80,"fearGreed":50,"bottomConf":3,"signal":"ACCUM_BOTTOM","big3":2,"week":29,"phase":"EARLY_BEAR"},
+  {"date":"2026-05-14","price":81000,"mvrv":0.87,"puell":0.80,"fearGreed":50,"bottomConf":2,"signal":"WATCH","big3":2,"week":29,"phase":"EARLY_BEAR"},
+  {"date":"2026-05-15","price":81500,"mvrv":0.87,"puell":0.80,"fearGreed":49,"bottomConf":2,"signal":"WATCH","big3":2,"week":30,"phase":"EARLY_BEAR"},
+  {"date":"2026-05-17","price":78031,"mvrv":0.87,"puell":0.80,"fearGreed":43,"bottomConf":2,"signal":"WATCH","big3":2,"week":30,"phase":"EARLY_BEAR"},
+  {"date":"2026-05-20","price":79948,"mvrv":0.87,"puell":0.80,"fearGreed":40,"bottomConf":2,"signal":"WATCH","big3":2,"week":30,"phase":"EARLY_BEAR"},
+  {"date":"2026-05-27","price":75804,"mvrv":0.72,"puell":0.79,"fearGreed":37,"bottomConf":1,"signal":"WATCH","big3":1,"week":31,"phase":"EARLY_BEAR"},
+  {"date":"2026-05-28","price":73300,"mvrv":0.72,"puell":0.79,"fearGreed":30,"bottomConf":1,"signal":"WATCH","big3":1,"week":31,"phase":"EARLY_BEAR"},
+  {"date":"2026-05-29","price":78000,"mvrv":0.72,"puell":0.79,"fearGreed":28,"bottomConf":3,"signal":"STRONG_ACCUM","big3":1,"week":31,"phase":"EARLY_BEAR"},
+  {"date":"2026-05-30","price":77000,"mvrv":0.72,"puell":0.79,"fearGreed":33,"bottomConf":2,"signal":"WATCH","big3":1,"week":31,"phase":"EARLY_BEAR"},
+  {"date":"2026-05-31","price":78000,"mvrv":0.64,"puell":0.79,"fearGreed":35,"bottomConf":1,"signal":"STRONG_ACCUM","big3":1,"week":32,"phase":"EARLY_BEAR"},
+  {"date":"2026-06-01","price":71400,"mvrv":0.49,"puell":0.80,"fearGreed":27,"bottomConf":2,"signal":"WATCH","big3":0,"week":32,"phase":"EARLY_BEAR"},
+  {"date":"2026-06-02","price":69250,"mvrv":0.64,"puell":0.80,"fearGreed":23,"bottomConf":3,"signal":"STRONG_ACCUM","big3":1,"week":32,"phase":"EARLY_BEAR"},
+  {"date":"2026-06-03","price":67088,"mvrv":0.58,"puell":0.80,"fearGreed":26,"bottomConf":1,"signal":"WATCH","big3":0,"week":32,"phase":"EARLY_BEAR"},
+  {"date":"2026-06-04","price":65882,"mvrv":0.58,"puell":0.80,"fearGreed":26,"bottomConf":2,"signal":"WATCH","big3":0,"week":32,"phase":"EARLY_BEAR"},
+  {"date":"2026-06-05","price":62875,"mvrv":0.41,"puell":0.80,"fearGreed":12,"bottomConf":2,"signal":"WATCH","big3":0,"week":33,"phase":"EARLY_BEAR"},
+  {"date":"2026-06-06","price":59650,"mvrv":0.38,"puell":0.80,"fearGreed":18,"bottomConf":1,"signal":"WATCH","big3":0,"week":33,"phase":"EARLY_BEAR"},
+  {"date":"2026-06-08","price":63500,"mvrv":0.36,"puell":0.79,"fearGreed":15,"bottomConf":1,"signal":"STRONG_ACCUM","big3":0,"week":33,"phase":"EARLY_BEAR"},
+  {"date":"2026-06-09","price":63000,"mvrv":0.30,"puell":0.79,"fearGreed":26,"bottomConf":2,"signal":"STRONG_ACCUM","big3":0,"week":33,"phase":"EARLY_BEAR"},
+  {"date":"2026-06-10","price":61500,"mvrv":0.35,"puell":0.60,"fearGreed":26,"bottomConf":3,"signal":"STRONG_ACCUM","big3":0,"week":33,"phase":"EARLY_BEAR"},
+  {"date":"2026-06-11","price":62800,"mvrv":0.34,"puell":0.79,"fearGreed":26,"bottomConf":2,"signal":"STRONG_ACCUM","big3":0,"week":33,"phase":"EARLY_BEAR"},
+  {"date":"2026-06-12","price":61500,"mvrv":0.35,"puell":0.79,"fearGreed":26,"bottomConf":2,"signal":"STRONG_ACCUM","big3":0,"week":33,"phase":"EARLY_BEAR"},
+  {"date":"2026-06-13","price":63900,"mvrv":0.35,"puell":0.79,"fearGreed":26,"bottomConf":3,"signal":"STRONG_ACCUM","big3":0,"week":33,"phase":"EARLY_BEAR"},
+  {"date":"2026-06-14","price":64385,"mvrv":0.27,"puell":0.73,"fearGreed":21,"bottomConf":1,"signal":"STRONG_ACCUM","big3":0,"week":34,"phase":"EARLY_BEAR"},
+  {"date":"2026-06-15","price":65700,"mvrv":0.36,"puell":0.60,"fearGreed":27,"bottomConf":3,"signal":"STRONG_ACCUM","big3":1,"week":34,"phase":"EARLY_BEAR"},
+  {"date":"2026-06-16","price":66340,"mvrv":0.36,"puell":0.75,"fearGreed":27,"bottomConf":2,"signal":"STRONG_ACCUM","big3":0,"week":34,"phase":"EARLY_BEAR"},
+  {"date":"2026-06-17","price":67200,"mvrv":0.36,"puell":0.75,"fearGreed":22,"bottomConf":2,"signal":"STRONG_ACCUM","big3":0,"week":34,"phase":"EARLY_BEAR"},
+  {"date":"2026-06-18","price":64350,"mvrv":0.30,"puell":0.75,"fearGreed":15,"bottomConf":3,"signal":"STRONG_ACCUM","big3":0,"week":34,"phase":"EARLY_BEAR"},
+  {"date":"2026-06-19","price":62328,"mvrv":0.38,"puell":0.74,"fearGreed":19,"bottomConf":3,"signal":"STRONG_ACCUM","big3":0,"week":34,"phase":"EARLY_BEAR","etf":"Recovering — 13-day outflow streak ended, inflows returning","etfColor":"yellow","dxy":"~99 declining from 109","dxyColor":"green","m2":"Modestly expanding +1.44% global","m2Color":"yellow","fed":"On hold 3.5–3.75%, hawkish","fedColor":"yellow","macd":"Bearish","macdColor":"orange","ma200":"~$61K — tested & bounced ($59.1K low)","ma200Color":"green","monthlyRsi":"~40","weeklyRsi":"~42","realizedPrice":"~$54K est","realizedDiff":"+15% vs spot","piCycle":"Clear"},
+  {"date":"2026-06-20","price":63609,"mvrv":0.40,"puell":0.75,"fearGreed":20,"bottomConf":3,"signal":"STRONG_ACCUM","big3":0,"week":35,"phase":"ENTERING_WINDOW","etf":"Recovery ongoing — IBIT led $86M inflow, 13-day streak fully reversed","etfColor":"green","dxy":"~100.8, declining from ~109 high","dxyColor":"green","m2":"US M2 contracting; global modest +2% 3-month","m2Color":"yellow","fed":"On hold 3.5–3.75%, dot plot flipped hawkish — hike likely 2026","fedColor":"orange","macd":"Bearish","macdColor":"orange","ma200":"~$62.4K — BTC holding above after $59.1K bounce","ma200Color":"green","monthlyRsi":"~42","weeklyRsi":"~45","realizedPrice":"~$55K est","realizedDiff":"+15% vs spot","piCycle":"Clear"},
+  {"date":"2026-06-22","price":65034,"mvrv":0.36,"puell":0.75,"fearGreed":22,"bottomConf":3,"signal":"STRONG_ACCUM","big3":1,"week":35,"phase":"ENTERING_WINDOW","etf":"Recovering — $4.4B outflow streak ended, small inflows returning ($86M Fri)","etfColor":"yellow","dxy":"~100.7, rising post-Fed hold (highest since May 2025)","dxyColor":"red","m2":"Contracting — Iran shock pushed CPI 4.2%, hawkish environment","m2Color":"red","fed":"3.50–3.75%, hawkish posture, possible hike priced Oct 2026","fedColor":"red","macd":"Bearish","macdColor":"orange","ma200":"~$61,500 — tested June 6 ($60.8K low), holding above","ma200Color":"green","monthlyRsi":"~50","weeklyRsi":"~34","realizedPrice":"~$52K est","realizedDiff":"+25% vs spot","piCycle":"Clear"},
+  {"date":"2026-06-23","price":62250,"mvrv":0.36,"puell":0.75,"fearGreed":23,"bottomConf":3,"signal":"STRONG_ACCUM","big3":0,"week":36,"phase":"ENTERING_WINDOW","etf":"Recovering — MTD -$2.1B; IBIT inflows returning, outflow streak broken","etfColor":"yellow","dxy":"~100.7, strengthening post-FOMC hawkish surprise","dxyColor":"red","m2":"Expanding globally; near-term mixed on Fed hawkish reversal","m2Color":"yellow","fed":"3.50–3.75%, dot plot hawkish, possible hike Oct 2026","fedColor":"red","macd":"Bearish (histogram -11.86, curling toward zero)","macdColor":"yellow","ma200":"~$61,800 — holding above after $59.1K June low","ma200Color":"green","monthlyRsi":"~47","weeklyRsi":"~42","realizedPrice":"~$60–63K est","realizedDiff":"+0–4% vs spot","piCycle":"Clear"},
+  {"date":"2026-06-24","price":62650,"mvrv":0.36,"puell":0.75,"fearGreed":24,"bottomConf":2,"signal":"STRONG_ACCUM","big3":0,"week":36,"phase":"ENTERING_WINDOW","etf":"-$5.4B June total; late stabilization, $86M inflow Fri","etfColor":"yellow","dxy":"~100.7, rising — 2-yr high post-hawkish FOMC","dxyColor":"red","m2":"Contracting — Iran energy shock, CPI 4.2%, hawkish environment","m2Color":"red","fed":"3.50–3.75%, hawkish posture, possible hike Oct 2026","fedColor":"red","macd":"Bearish","macdColor":"orange","ma200":"~$62.5K — BTC testing / at 200WMA","ma200Color":"green","monthlyRsi":"~50","weeklyRsi":"~34","realizedPrice":"~$54K est","realizedDiff":"+16% vs spot","piCycle":"Clear"},
+  {"date":"2026-06-25","price":61274,"mvrv":0.36,"puell":0.75,"fearGreed":17,"bottomConf":2,"signal":"STRONG_ACCUM","big3":0,"week":36,"phase":"ENTERING_WINDOW","etf":"Stabilizing — $5.4B June outflows; small inflows just returning","etfColor":"yellow","dxy":"~100.7, new high since May 2025, hawkish FOMC surge","dxyColor":"red","m2":"Contracting — hawkish Fed, rising DXY environment","m2Color":"red","fed":"3.50–3.75%, hawkish dot plot, possible hike Oct 2026","fedColor":"red","macd":"Bearish","macdColor":"orange","ma200":"~$62,457 — BTC testing below 200WMA (intraday low $59,334)","ma200Color":"green","monthlyRsi":"~49.7","weeklyRsi":"~34","realizedPrice":"~$58K est","realizedDiff":"+5% vs spot","piCycle":"Clear"},
+  {"date":"2026-06-26","price":59400,"mvrv":0.25,"puell":0.75,"fearGreed":22,"bottomConf":3,"signal":"STRONG_ACCUM","big3":0,"week":36,"phase":"ENTERING_WINDOW","etf":"$5.4B June outflows; $86M Fri inflow — early recovery signal","etfColor":"red","dxy":"~100.58, rising — highest since May 2025","dxyColor":"red","m2":"Contracting — hawkish Fed, elevated DXY environment","m2Color":"red","fed":"3.50–3.75%, hawkish dot plot, possible hike Oct 2026","fedColor":"red","macd":"Bearish","macdColor":"orange","ma200":"~$62,457 — BTC broken below 200WMA for first time this cycle","ma200Color":"green","monthlyRsi":"~47","weeklyRsi":"~34","realizedPrice":"~$57,500 est","realizedDiff":"+3% vs spot","piCycle":"Clear"}
+];
+
+// =====================================================================
+// CYCLE PHASE BOUNDARIES (based on ATH Oct 20, 2025 + historical weeks)
+// =====================================================================
+const ATH_DATE   = '2025-10-20';
+const W35_DATE   = '2026-06-22';  // Week 35: entering bottom formation window
+const W44_DATE   = '2026-08-24';  // Week 44: bottom window start
+const W58_DATE   = '2026-12-01';  // Week 58: extended bear / end of historical window
+const CHART_END  = '2027-04-01';  // Chart horizon
+
+// =====================================================================
+// PERSONAL DCA PLAN — update PLAN.deployed as buys happen
+// =====================================================================
+const PLAN = {
+  totalBudget:    150000,
+  deployed:        22750,   // total deployed Jun 25 2026 (incl Jun 25 10:31pm DCA)
+  dcaDeployed:      5750,   // DCA only: Jun 5 $750 + Jun 16–25 DCA buys
+  trancheDeployed: 17000,   // tranche fills: Jun 2 $2K + Jun 3 $8K + Jun 5 $3K + Jun 25 T3 $4K
+  dcaBudget:       64000,   // allocated to weekly DCA
+  trancheBudget:   86000,   // allocated to limit-order tranches
+  dcaWeekly:        1500,   // standard: 3 × $500/wk Sun / Tue / Thu
+  dcaDouble:        3000,   // aggressive: 3 × $1,000/wk on big drops
+  dcaStartDate: '2026-06-09',
+  dcaZones: [
+    { minPrice: 53697, label: 'Standard',   color: '#64748b', amount: 500,  perBuy: '$500/buy',   action: 'Standard cadence — 3× per week',                                         big3Req: 0 },
+    { minPrice: 47000, label: 'Aggressive', color: '#f97316', amount: 1000, perBuy: '$1K/buy',    action: 'T4–T5 zone — double up, keep limit orders set',                          big3Req: 0 },
+    { minPrice: 41000, label: 'Heavy',      color: '#ef4444', amount: 1500, perBuy: '$1,500/buy', action: 'T6 zone — increase cadence, flag remaining DCA budget for lump sum',     big3Req: 1 },
+    { minPrice: 0,     label: 'Lump Sum',   color: '#22c55e', amount: null, perBuy: 'Lump sum',   action: 'HALT weekly DCA — redeploy remaining DCA budget as T7 tranche if Big 3 confirmed', big3Req: 2 },
+  ],
+  doubleDropPct:     0.09,
+  btcQty:       0.3684,    // total BTC acquired — updated Jun 25 2026 10:31pm
+  avgPrice:    61749,      // weighted avg cost basis — updated Jun 25 2026 10:31pm
+  buys: [
+    { date: '2026-06-02', price: 67358,   qty: 0.02969,  label: 'Tranche $2K', type: 'tranche' },
+    { date: '2026-06-03', price: 63201,   qty: 0.12658,  label: 'T1 $8K',      type: 'tranche' },
+    { date: '2026-06-05', price: 61214,   qty: 0.01225,  label: 'DCA $750',    type: 'dca'     },
+    { date: '2026-06-05', price: 59800,   qty: 0.05017,  label: 'T2 $3K',      type: 'tranche' },
+    { date: '2026-06-16', price: 65557,   qty: 0.007627,  label: 'DCA $500',    type: 'dca'     },
+    { date: '2026-06-17', price: 64952,   qty: 0.00769776, label: 'DCA $500',  type: 'dca'     },
+    { date: '2026-06-18', price: 62578,   qty: 0.00799,  label: 'DCA $500',    type: 'dca'     },
+    { date: '2026-06-22', price: 63691,   qty: 0.00785,  label: 'DCA $500',    type: 'dca'     },
+    { date: '2026-06-23', price: 62315,   qty: 0.008024, label: 'DCA $500',    type: 'dca'     },
+    { date: '2026-06-24', price: 61215,   qty: 0.008168, label: 'DCA $500',    type: 'dca'     },
+    { date: '2026-06-25', price: 59622,   qty: 0.01677,  label: 'DCA $1K',     type: 'dca'     },
+    { date: '2026-06-25', price: 58168,   qty: 0.06877,  label: 'T3 $4K',      type: 'tranche' },
+    { date: '2026-06-25', price: 58886,   qty: 0.008491, label: 'DCA $500',    type: 'dca'     },
+    { date: '2026-06-25', price: 59901,   qty: 0.008347, label: 'DCA $500',    type: 'dca'     },
+  ],
+  tranches: [
+    { price: 63201, label: 'T1', size:  8000, filled: true,  note: 'Filled Jun 3 @ $63,201' },
+    { price: 59800, label: 'T2', size:  3000, filled: true,  note: 'Filled Jun 5 @ $59,800' },
+    { price: 58168, label: 'T3', size:  4000, filled: true,  note: 'Filled Jun 25 @ $58,168' },
+    { price: 56512, label: 'T4a', size: 4085,  filled: false, note: 'Order set @ $56,512' },
+    { price: 53696, label: 'T4b', size: 4085,  filled: false, note: 'Order set @ $53,696' },
+    { price: 52252, label: 'T4c', size: 4085,  filled: false, note: 'Order set @ $52,252' },
+    { price: 51005, label: 'T5a', size: 5000,  filled: false, note: 'Order set @ $51,005' },
+    { price: 49005, label: 'T5b', size: 5000,  filled: false, note: 'Order set @ $49,005' },
+    { price: 47006, label: 'T5c', size: 5000,  filled: false, note: 'Order set @ $47,006' },
+    { price: 45002, label: 'T6a', size: 5000,  filled: false, note: 'Order set @ $45,002' },
+    { price: 43015, label: 'T6b', size: 5000,  filled: false, note: 'Order set @ $43,015' },
+    { price: 41000, label: 'T6c', size: 6666,  filled: false, note: '$41K · not yet loaded' },
+    { price: 38000, label: 'T7',  size: null,   filled: false, note: 'Reserve — size at Week 44+' },
+  ]
+};
+
+const PHASE_ZONES = [
+  { start: ATH_DATE, end: W35_DATE,  fill: 'rgba(124,58,237,0.05)',  label: 'Early Bear' },
+  { start: W35_DATE, end: W44_DATE,  fill: 'rgba(249,115,22,0.07)',  label: 'Entering Window' },
+  { start: W44_DATE, end: W58_DATE,  fill: 'rgba(34,197,94,0.08)',   label: 'Bottom Window' },
+  { start: W58_DATE, end: CHART_END, fill: 'rgba(239,68,68,0.05)',   label: 'Extended Bear' },
+];
+
+const V_MARKERS = [
+  { date: ATH_DATE,  color: '#ef4444', label: 'ATH ~$126K', dash: [4,2] },
+  { date: W35_DATE,  color: '#f97316', label: 'W35',        dash: [5,3] },
+  { date: W44_DATE,  color: '#22c55e', label: 'W44',        dash: [5,3] },
+  { date: W58_DATE,  color: '#8b5cf6', label: 'W58',        dash: [5,3] },
+];
+
+// =====================================================================
+// SIGNAL COLORS
+// =====================================================================
+const SIG_CLR = {
+  EXTREME_ACCUM: '#16a34a',
+  STRONG_ACCUM:  '#22c55e',
+  ACCUM_BOTTOM:  '#3b82f6',
+  WATCH:         '#94a3b8',
+  NEUTRAL:       '#cbd5e1',
+  ELEVATED:      '#f97316',
+  EUPHORIC:      '#ef4444',
+};
+const CLR = { green:'#22c55e', yellow:'#eab308', orange:'#f97316', red:'#ef4444', gray:'#94a3b8' };
+
+function sigColor(s) {
+  if (!s) return SIG_CLR.NEUTRAL;
+  const u = s.toUpperCase();
+  if (u.includes('EXTREME')) return SIG_CLR.EXTREME_ACCUM;
+  if (u.includes('STRONG'))  return SIG_CLR.STRONG_ACCUM;
+  if (u.includes('ACCUM'))   return SIG_CLR.ACCUM_BOTTOM;
+  if (u.includes('WATCH'))   return SIG_CLR.WATCH;
+  if (u.includes('ELEVATED'))return SIG_CLR.ELEVATED;
+  if (u.includes('EUPHORIC'))return SIG_CLR.EUPHORIC;
+  return SIG_CLR.NEUTRAL;
+}
+function sigLabel(s) {
+  if (!s) return '—';
+  const u = s.toUpperCase();
+  if (u.includes('EXTREME')) return 'Extreme Accum';
+  if (u.includes('STRONG'))  return 'Strong Accum';
+  if (u.includes('ACCUM'))   return 'Accumulate';
+  if (u.includes('WATCH'))   return 'Watch';
+  if (u.includes('ELEVATED'))return 'Elevated Risk';
+  if (u.includes('EUPHORIC'))return 'Euphoric Risk';
+  return 'Neutral';
+}
+function fmtDate(d) {
+  if (!d) return '';
+  const [,m,day] = d.split('-');
+  return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(m)-1]+' '+parseInt(day);
+}
+function fmtMonthYear(d) {
+  const [y,m] = d.split('-');
+  return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(m)-1]+' '+y;
+}
+function dot(c) { return `<span class="dot" style="background:${CLR[c]||CLR.gray}"></span>`; }
+
+// =====================================================================
+// VALUATION COLOR — phase-weighted dot color
+// KEY DESIGN DECISION: Early Bear (W1-34) requires MUCH more extreme
+// readings to show green. Mid-bear rallies look "cheap" on MVRV but
+// almost always go lower. Time + valuation + metrics must all align.
+// =====================================================================
+function valuationColor(h) {
+  const m     = parseFloat(h.mvrv)      || 999;
+  const fg    = parseFloat(h.fearGreed) || 50;
+  const phase = h.phase || 'EARLY_BEAR';
+  const week  = h.week  || 0;
+
+  if (phase === 'EARLY_BEAR' || week < 35) {
+    // Pre-W35: bear market typically has 2-3 relief rallies before true bottom.
+    // Only flag green if readings are TRULY extreme — not just "cheap vs ATH"
+    if (m < 0.3)               return '#16a34a'; // MVRV this low is extreme regardless
+    if (m < 0.42 && fg < 22)  return '#16a34a'; // cheap + extreme fear combined
+    if (m < 0.55 && fg < 18)  return '#22c55e'; // cheap + maximum fear
+    if (m < 0.55)              return '#3b82f6'; // cheap but timing risk — caution
+    if (m < 1.0)               return '#94a3b8'; // watch — likely more downside
+    if (m < 1.5)               return '#cbd5e1'; // neutral
+    return '#f97316';
+  }
+
+  if (phase === 'ENTERING_WINDOW' || (week >= 35 && week < 44)) {
+    // W35-43: timing aligning, thresholds loosen
+    if (m < 0.3 || (m < 0.5 && fg < 25)) return '#16a34a';
+    if (m < 0.65 || (m < 0.75 && fg < 30)) return '#22c55e';
+    if (m < 0.9 && fg < 50)               return '#3b82f6';
+    if (m < 1.2)                            return '#94a3b8';
+    if (m < 3.5)                            return '#cbd5e1';
+    return '#f97316';
+  }
+
+  // BOTTOM_WINDOW (W44-58) — full thresholds, timing confirmed historically
+  if (m < 0.3)              return '#16a34a';
+  if (m < 0.5 && fg < 30)  return '#16a34a';
+  if (m < 0.65)             return '#22c55e';
+  if (m < 0.9 && fg < 50)  return '#3b82f6';
+  if (m < 1.2)              return '#94a3b8';
+  if (m < 3.5)              return '#cbd5e1';
+  if (m < 7)                return '#f97316';
+  return '#ef4444';
+}
+
+// =====================================================================
+// COMPOSITE BUY SCORE 0–100
+// MVRV 35% | F&G 20% | Puell 15% | Bottom Conf 20% | Big3 10%
+// Phase multiplier: Early Bear = 0.62 (timing risk penalty)
+// =====================================================================
+function computeScore(h) {
+  const m     = parseFloat(h.mvrv)      || 999;
+  const fg    = parseFloat(h.fearGreed) || 50;
+  const p     = parseFloat(h.puell)     || 1;
+  const c     = h.bottomConf            || 0;
+  const b     = h.big3                  || 0;
+  const phase = h.phase                 || 'EARLY_BEAR';
+
+  const ms = m  < 0.3 ? 100 : m  < 0.5 ? 82 : m  < 0.8 ? 60 : m  < 1.2 ? 38 : m  < 3.5 ? 18 : 5;
+  const fs = fg < 10  ? 100 : fg < 20  ? 88 : fg < 35  ? 65 : fg < 55  ? 40 : fg < 75  ? 18 : 5;
+  const ps = p  < 0.5 ? 100 : p  < 0.8 ? 80 : p  < 1.5 ? 50 : p  < 2.5 ? 22 : 5;
+  const cs = [5,25,45,65,80,90,95,98,100][Math.min(c, 8)];
+  const bs = b  === 3 ? 100 : b === 2 ? 68 : b === 1 ? 32 : 5;
+  const raw = ms*0.35 + fs*0.20 + ps*0.15 + cs*0.20 + bs*0.10;
+
+  // Phase timing multiplier — early bear has high false-bottom risk
+  const mult = phase === 'BOTTOM_WINDOW'    ? 1.00
+             : phase === 'ENTERING_WINDOW'  ? 0.85
+             : phase === 'EXTENDED'         ? 0.78
+             : 0.62; // EARLY_BEAR: significant timing penalty
+
+  return Math.round(raw * mult);
+}
+
+function scoreTier(score) {
+  if (score >= 80) return { label:'MAX ALLOCATION', color:'#16a34a', desc:'All signals + timing aligned — accumulate heavily' };
+  if (score >= 65) return { label:'STRONG BUY',     color:'#22c55e', desc:'Multiple signals confirming — add aggressively' };
+  if (score >= 50) return { label:'ACCUMULATE',     color:'#3b82f6', desc:'Valuation favorable — deploy first tranches' };
+  if (score >= 35) return { label:'WATCH',          color:'#f59e0b', desc:'Approaching buy zone — wait for confirmation' };
+  if (score >= 20) return { label:'HOLD CASH',      color:'#94a3b8', desc:'Preserve capital — likely more downside' };
+  return               { label:'WAIT',              color:'#cbd5e1', desc:'Too early or overvalued' };
+}
+
+function whatWouldUpgrade(h) {
+  const tips  = [];
+  const m     = parseFloat(h.mvrv)      || 1;
+  const fg    = parseFloat(h.fearGreed) || 50;
+  const p     = parseFloat(h.puell)     || 1;
+  const c     = h.bottomConf            || 0;
+  const b     = h.big3                  || 0;
+  const phase = h.phase                 || 'EARLY_BEAR';
+
+  if (phase === 'EARLY_BEAR')
+    tips.push('Reach W35 entering window (~' + W35_DATE + ') — biggest score unlock');
+  if (b === 0)
+    tips.push('Any Big 3 fires: Hash Ribbons, SOPR Recovery, or Monthly Stoch RSI compressing below 20');
+  else if (b < 3)
+    tips.push((3-b) + ' more Big 3 trigger' + (3-b>1?'s':'') + ' → max allocation signal');
+  if (m  > 0.5)  tips.push('MVRV drops below 0.5 (now ' + m.toFixed(2) + ')');
+  if (fg > 20)   tips.push('F&G below 20 extreme fear (now ' + fg + ')');
+  if (c  < 4)    tips.push('Bottom conf 4+/8 (now ' + c + '/8)');
+  if (p  > 0.8)  tips.push('Puell drops below 0.8 (now ' + p.toFixed(2) + ')');
+  return { tips: tips.slice(0, 3) };
+}
+
+// =====================================================================
+// METER CARD HELPERS — zones, rendering
+// =====================================================================
+const ZONES = {
+  mvrv: [
+    { max:0.3,  label:'Extreme Accum', color:'#16a34a' },
+    { max:0.5,  label:'Strong Accum',  color:'#22c55e' },
+    { max:1.2,  label:'Accumulate',    color:'#3b82f6' },
+    { max:3.5,  label:'Neutral / Watch', color:'#94a3b8' },
+    { max:7,    label:'Elevated',      color:'#f97316' },
+    { max:999,  label:'Euphoric',      color:'#ef4444' },
+  ],
+  puell: [
+    { max:0.5,  label:'Extreme Accum', color:'#16a34a' },
+    { max:0.8,  label:'Accumulate',    color:'#22c55e' },
+    { max:2.0,  label:'Neutral',       color:'#94a3b8' },
+    { max:3.0,  label:'Caution',       color:'#f97316' },
+    { max:999,  label:'Danger',        color:'#ef4444' },
+  ],
+  fg: [
+    { max:20,   label:'Extreme Fear — Best Buy',   color:'#16a34a' },
+    { max:35,   label:'Fear — Accumulate',          color:'#22c55e' },
+    { max:65,   label:'Neutral',                    color:'#94a3b8' },
+    { max:80,   label:'Greed — Caution',            color:'#f97316' },
+    { max:100,  label:'Extreme Greed — Avoid',      color:'#ef4444' },
+  ],
+  rsi: [
+    { max:30,   label:'Oversold — Max Opportunity', color:'#16a34a' },
+    { max:50,   label:'Low — Favorable',            color:'#22c55e' },
+    { max:70,   label:'Neutral',                    color:'#94a3b8' },
+    { max:80,   label:'High — Caution',             color:'#f97316' },
+    { max:100,  label:'Overbought — Avoid',         color:'#ef4444' },
+  ],
+  rr: [
+    { max:0.002, label:'Extreme Accum', color:'#16a34a' },
+    { max:0.006, label:'Accumulate',    color:'#22c55e' },
+    { max:0.012, label:'Neutral',       color:'#94a3b8' },
+    { max:0.02,  label:'Caution',       color:'#f97316' },
+    { max:999,   label:'Avoid',         color:'#ef4444' },
+  ],
+};
+
+function getZone(val, zones) {
+  return zones.find(z => val <= z.max) || zones[zones.length - 1];
+}
+function meterPct(val, min, max) {
+  return Math.min(100, Math.max(0, (val - min) / (max - min) * 100)).toFixed(1);
+}
+function meterCard(label, displayVal, numVal, min, max, zoneKey, live=false, id='') {
+  const valid = numVal !== null && !isNaN(numVal);
+  const zone  = valid ? getZone(numVal, ZONES[zoneKey]) : { label:'N/C', color:'#94a3b8' };
+  const pct   = valid ? meterPct(numVal, min, max) : 50;
+  return `<div class="meter-card"${id ? ` id="${id}"` : ''}>
+    <div class="mc-label">${label}${live ? ' <span class="live-badge">LIVE</span>' : ''}</div>
+    <div class="mc-value" style="color:${zone.color}">${displayVal || 'N/C'}</div>
+    <div class="mc-zone"  style="color:${zone.color}">${zone.label}</div>
+    <div class="mc-track"><div class="mc-pin" style="left:${pct}%"></div></div>
+    <div class="mc-ends"><span style="color:#fff">Max Opportunity</span><span style="color:#fff">Avoid</span></div>
+  </div>`;
+}
+function qualCard(label, value, color, sub='') {
+  return `<div class="qual-card" style="border-left-color:${color}">
+    <div class="mc-label">${label}</div>
+    <div class="qual-val"><span class="q-dot" style="background:${color}"></span>${value || 'N/C'}</div>
+    ${sub ? `<div class="qual-sub">${sub}</div>` : ''}
+  </div>`;
+}
+
+// Live Fear & Greed fetch
+async function fetchLiveFG() {
+  try {
+    const r = await fetch('https://api.alternative.me/fng/?limit=1');
+    const d = await r.json();
+    const val = parseInt(d.data[0].value);
+    const card = document.getElementById('fg-live-card');
+    if (!card) return;
+    const zone = getZone(val, ZONES.fg);
+    const pct  = meterPct(val, 0, 100);
+    card.outerHTML = `<div class="meter-card" id="fg-live-card">
+      <div class="mc-label">Fear &amp; Greed <span class="live-badge">LIVE</span></div>
+      <div class="mc-value" style="color:${zone.color}">${val}</div>
+      <div class="mc-zone"  style="color:${zone.color}">${zone.label}</div>
+      <div class="mc-track"><div class="mc-pin" style="left:${pct}%"></div></div>
+      <div class="mc-ends"><span style="color:#fff">Max Opportunity</span><span style="color:#fff">Avoid</span></div>
+    </div>`;
+  } catch(e) { /* keep Slack value */ }
+}
+
+// Live BTC Price fetch — Binance ticker, fallback Bybit, refresh every 60s
+// Real-time BTC price via Binance WebSocket — falls back to 10s REST poll
+function updatePriceDisplay(price) {
+  if (!price || isNaN(price)) return;
+  livePrice = price;
+  const el = document.getElementById('hdr-price');
+  if (el) el.innerHTML = '$' + Math.round(price).toLocaleString() + ' <span class="live-badge" style="font-size:8px;vertical-align:middle">LIVE</span>';
+}
+
+function startLivePriceWS() {
+  let ws, fallbackInterval, wsAlive = false;
+
+  function connectWS() {
+    try {
+      ws = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@miniTicker');
+      ws.onmessage = e => {
+        const d = JSON.parse(e.data);
+        if (d.c) { wsAlive = true; updatePriceDisplay(parseFloat(d.c)); }
+      };
+      ws.onerror = () => { wsAlive = false; };
+      ws.onclose = () => { wsAlive = false; setTimeout(connectWS, 5000); };
+    } catch(_) { wsAlive = false; }
+  }
+
+  async function restFallback() {
+    if (wsAlive) return; // WS is working — skip REST
+    const sources = [
+      async () => { const r = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT'); const d = await r.json(); return parseFloat(d.price); },
+      async () => { const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd'); const d = await r.json(); return d.bitcoin.usd; },
+      async () => { const r = await fetch('https://api.kraken.com/0/public/Ticker?pair=XBTUSD'); const d = await r.json(); return parseFloat(d.result.XXBTZUSD.c[0]); },
+      async () => { const r = await fetch('https://api.bybit.com/v5/market/tickers?category=spot&symbol=BTCUSDT'); const d = await r.json(); return parseFloat(d?.result?.list?.[0]?.lastPrice); },
+    ];
+    for (const fn of sources) {
+      try { const p = await fn(); if (p && !isNaN(p)) { updatePriceDisplay(p); return; } } catch(_) {}
+    }
+  }
+
+  connectWS();
+  restFallback(); // immediate first fetch
+  fallbackInterval = setInterval(restFallback, 10000);
+}
+
+// =====================================================================
+// SLACK PARSER (unchanged from v2)
+// =====================================================================
+function colorBefore(text, label) {
+  const idx = text.indexOf(label);
+  if (idx===-1) return null;
+  const b = text.slice(Math.max(0,idx-50), idx);
+  if (b.includes('large_green_circle'))  return 'green';
+  if (b.includes('large_orange_circle')) return 'orange';
+  if (b.includes('large_yellow_circle')) return 'yellow';
+  if (b.includes('red_circle'))          return 'red';
+  return 'gray';
+}
+function rsiColor(v) { const n=parseFloat(v); if(isNaN(n))return'gray'; if(n<40)return'green'; if(n<75)return'yellow'; if(n<85)return'orange'; return'red'; }
+function fgColor(v)  { const n=parseInt(v);   if(isNaN(n))return'gray'; if(n<20)return'green'; if(n<65)return'yellow'; if(n<85)return'orange'; return'red'; }
+function phaseClass(ph) { const p=(ph||'').toUpperCase(); if(p.includes('BOTTOM WINDOW'))return'phase-bottom'; if(p.includes('ENTERING'))return'phase-entering'; if(p.includes('EXTENDED'))return'phase-extended'; return'phase-early'; }
+function signalDotColor(sig) { const s=(sig||'').toUpperCase(); if(s.includes('STRONG ACCUM')||s.includes('EXTREME ACCUM'))return'green'; if(s.includes('BUY')||s.includes('ACCUM'))return'yellow'; if(s.includes('REDUCE'))return'orange'; if(s.includes('SELL'))return'red'; return'gray'; }
+
+function parseSlack(raw) {
+  const d = {};
+  const priceM=raw.match(/BTC \$([\d,]+)/); d.price=priceM?'$'+priceM[1]:'N/C';
+  const weekM=raw.match(/Week (\d+) from/); d.week=weekM?weekM[1]:'N/C';
+  const pu=raw.toUpperCase();
+  d.phase = pu.includes('BOTTOM WINDOW')?'BOTTOM WINDOW': pu.includes('ENTERING WINDOW')?'ENTERING WINDOW': pu.includes('EXTENDED')?'EXTENDED':'EARLY BEAR';
+  // Skip Slack MCP channel-header lines ("Channel: DM ..." or "Messages:") to get actual signal line
+  const lines = raw.split('\n');
+  const fl = lines.find(l => l.includes('circle') || l.includes('ACCUM') || l.includes('WATCH') || l.includes('NEUTRAL') || l.includes('BTC $')) || lines[0];
+  d.signalDotColor = fl.includes('large_green_circle')?'green': fl.includes('large_orange_circle')?'orange': fl.includes('large_yellow_circle')?'yellow': fl.includes('red_circle')?'red':'gray';
+  d.signal = fl.replace(/:[\w_]+:/g,'').replace(/[_*~]/g,'').replace(/[—-]/g,'').trim().slice(0,60);
+  d.big3=[];
+  if(raw.includes('BIG 3')) {
+    [{name:'Hash Ribbons',key:'Hash Ribbons'},{name:'SOPR Recovery',key:'SOPR Recovery'},{name:'Monthly Stoch RSI',key:'Monthly Stoch RSI'}].forEach(({name,key})=>{
+      const c=colorBefore(raw,key); if(c){const sm=raw.match(new RegExp(key+'[^\\n]*?[\\u2014\\-]\\s*([^\\n]+)')); d.big3.push({name,color:c,status:sm?sm[1].replace(/:[\w_]+:/g,'').trim().slice(0,80):''});}
+    });
+  }
+  const m=(r,def='N/C')=>{const x=raw.match(r);return x?x[1]:def;};
+  d.mvrv=m(/MVRV ([\d.]+)/); d.mvrvZone=m(/MVRV [\d.]+ \(([^)]+)\)/,''); d.puell=m(/Puell ([\d.]+)/); d.reserveRisk=m(/Reserve Risk ([^\s·\n]+)/);
+  d.realizedPrice=m(/Realized (~?\$[\d,]+)/); d.realizedDiff=m(/Realized ~?\$[\d,]+ \(([^)]+)\)/,'');
+  d.piCycle=raw.includes('Pi Cycle TRIGGERED')?'TRIGGERED ⚠️':raw.includes('Pi Cycle')?'CLEAR':'N/C';
+  const bcM=raw.match(/BOTTOM CONF:\s*(\d+\/\d+)/); d.bottomConf=bcM?bcM[1]:'0/8';
+  const bcLM=raw.match(/BOTTOM CONF:[^\n]+—\s*([^\n]+)/); d.bottomGreen=bcLM?bcLM[1].split(/[·,]/).map(s=>s.replace(/:[\w_]+:/g,'').trim()).filter(Boolean):[];
+  const suppM=raw.match(/Supporting[^:]*:\s*([^\n]+)/); d.bottomYellow=suppM?suppM[1].split('·').map(s=>s.replace(/:[\w_]+:/g,'').trim()).filter(Boolean):[];
+  const mrsiM=raw.match(/Monthly RSI[^·\n]*?~?([\d.]+)/); d.monthlyRsi=mrsiM?'~'+mrsiM[1]:'N/C'; d.monthlyRsiColor=rsiColor(mrsiM?mrsiM[1]:'');
+  const wrsiM=raw.match(/Weekly RSI[^·\n]*?~?([\d.]+)/); d.weeklyRsi=wrsiM?'~'+wrsiM[1]:'N/C'; d.weeklyRsiColor=rsiColor(wrsiM?wrsiM[1]:'');
+  d.macd=raw.includes('MACD bullish')?'Bullish':raw.includes('MACD bearish')?'Bearish':'N/C'; d.macdColor=d.macd==='Bullish'?'green':d.macd==='Bearish'?'orange':'yellow';
+  const fgM=raw.match(/F&G (\d+)/); d.fearGreed=fgM?fgM[1]:'N/C'; d.fearGreedColor=fgColor(d.fearGreed);
+  const ma200M=raw.match(/200WMA ([^\n·]+)/); d.ma200=ma200M?ma200M[1].trim().slice(0,50):'N/C'; d.ma200Color=(raw.includes('tagged')||raw.includes('testing')||raw.includes('below'))?'green':'yellow';
+  const etfM=raw.match(/ETF[:\s]+([^\n·]{10,60})/); d.etf=etfM?etfM[1].trim():'N/C'; d.etfColor=raw.includes('inflow')?'yellow':'orange'; if(raw.match(/\$\d+[BM].*inflow/)&&!raw.includes('outflow'))d.etfColor='green';
+  const dxyM=raw.match(/DXY[^·\n]+/); d.dxy=dxyM?dxyM[0].replace('DXY','').trim().slice(0,40):'N/C'; d.dxyColor=(raw.includes('DXY')&&raw.includes('bullish'))||raw.includes('down from')?'green':'yellow';
+  const m2M=raw.match(/M2 ([^\n·]+)/); d.m2=m2M?m2M[1].trim().slice(0,40):'N/C'; d.m2Color=raw.includes('expanding')?'green':raw.includes('contracting')?'orange':'yellow';
+  d.fed=raw.includes('hawkish')?'Hawkish':raw.includes('easing')?'Easing':raw.includes('on hold')?'On hold':'N/C'; d.fedColor=d.fed==='Easing'?'green':d.fed==='On hold'?'yellow':'orange';
+  const actM=raw.match(/ACTION:\s*\*{0,2}([^\n*]+)/); d.action=actM?actM[1].replace(/:[\w_]+:/g,'').replace(/[*_]/g,'').trim():'N/C';
+  d.timestamp=new Date().toLocaleString();
+  return d;
+}
+
+// =====================================================================
+// RENDER TODAY TAB
+// =====================================================================
+// BIG 3 ENHANCED CARDS + LIVE DATA
+// =====================================================================
+const BIG3_META = [
+  { name:'Hash Ribbons',
+    tip:'Fires when the 30-day hashrate MA crosses back above the 60-day MA after miner capitulation. Historically one of the highest-conviction BTC buy signals — price often doubles within 6 months after trigger.',
+    proxySrc:'mvrv' },
+  { name:'SOPR Recovery',
+    tip:'Spent Output Profit Ratio sustained above 1.0 signals that coins are being moved at a profit — a bear-to-recovery trend shift. Watch for it to hold above 1 for multiple weeks.',
+    proxySrc:'fg' },
+  { name:'Monthly Stoch RSI',
+    tip:'Stochastic RSI on the monthly chart. Lines compressing below 20 = oversold. Pre-cross (K tightening) is the strongest signal. The actual cross lags but confirms direction.',
+    proxySrc:'live' },
+];
+
+function calcRSI(closes, period) {
+  if (closes.length < period + 1) return closes.map(() => 50);
+  const rsi = [];
+  let gains = 0, losses = 0;
+  for (let i = 1; i <= period; i++) {
+    const d = closes[i] - closes[i-1];
+    if (d > 0) gains += d; else losses -= d;
+  }
+  gains /= period; losses /= period;
+  rsi.push(losses === 0 ? 100 : 100 - 100 / (1 + gains/losses));
+  for (let i = period + 1; i < closes.length; i++) {
+    const d = closes[i] - closes[i-1];
+    gains = (gains * (period-1) + Math.max(d,0)) / period;
+    losses = (losses * (period-1) + Math.max(-d,0)) / period;
+    rsi.push(losses === 0 ? 100 : 100 - 100 / (1 + gains/losses));
+  }
+  return rsi;
+}
+
+function calcStochK(rsiVals, period, smooth) {
+  const raw = [];
+  for (let i = period - 1; i < rsiVals.length; i++) {
+    const slice = rsiVals.slice(i - period + 1, i + 1);
+    const lo = Math.min(...slice), hi = Math.max(...slice);
+    raw.push(hi === lo ? 50 : (rsiVals[i] - lo) / (hi - lo) * 100);
+  }
+  // smooth K
+  const k = [];
+  for (let i = smooth - 1; i < raw.length; i++) {
+    k.push(raw.slice(i - smooth + 1, i + 1).reduce((a,b)=>a+b,0) / smooth);
+  }
+  return k;
+}
+
+function makeSpark(vals, color, threshold) {
+  if (!vals || vals.length < 2) return '';
+  const w = 200, h = 60, pad = 4;
+  const lo = Math.min(...vals), hi = Math.max(...vals);
+  const range = hi - lo || 1;
+  const pts = vals.map((v,i) => {
+    const x = pad + (i / (vals.length-1)) * (w - 2*pad);
+    const y = (h-pad) - ((v - lo) / range) * (h - 2*pad);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  const thY = threshold != null ? ((h-pad) - ((threshold - lo) / range) * (h - 2*pad)).toFixed(1) : null;
+  return `<svg class="big3-spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+    ${thY ? `<line x1="${pad}" y1="${thY}" x2="${w-pad}" y2="${thY}" stroke="#2a2a2a" stroke-width="1" stroke-dasharray="3,2"/>` : ''}
+    <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  </svg>`;
+}
+
+function renderBig3Cards(big3arr, liveData) {
+  const grid = document.getElementById('big3-grid');
+  if (!grid) return;
+  grid.innerHTML = BIG3_META.map((meta, i) => {
+    const active = big3arr[i] && big3arr[i].color === 'green';
+    const dotColor = active ? '#22c55e' : '#555';
+    const status   = active ? '✓ ACTIVE' : '— Waiting';
+    const statusClr= active ? '#22c55e' : '#555';
+
+    let pct = 0, meterColor = '#333', sparkSvg = '', pctLabel = '—';
+    if (liveData) {
+      const d = liveData[i];
+      pct = d.pct;
+      // Only show color when active; otherwise keep everything muted
+      meterColor = active ? '#22c55e' : '#fff';
+      const sparkColor = active ? '#22c55e' : '#666';
+      if (d.spark) {
+        // Just replace stroke color — polyline has fill="none", no circle to worry about
+        sparkSvg = d.spark.replace(/stroke="[^"]*"/g, `stroke="${sparkColor}"`);
+      }
+      pctLabel = Math.round(pct) + '%';
+    }
+
+    return `<div class="big3-card" data-b3tip="${meta.tip}">
+      <div class="big3-card-top">
+        <div class="big3-dot" style="background:${dotColor}"></div>
+        <div class="big3-name">${meta.name}</div>
+        <div class="big3-status" style="color:${statusClr}">${status}</div>
+      </div>
+      <div class="big3-meter-row">
+        <div class="big3-meter"><div class="big3-meter-fill" style="width:${pct}%;background:${meterColor}"></div></div>
+        <span class="big3-pct" style="color:${meterColor}">${pctLabel}</span>
+      </div>
+      ${sparkSvg || `<div style="height:28px;background:#0d0d0d;border-radius:4px;display:flex;align-items:center;justify-content:center"><span style="font-size:9px;color:#333">loading…</span></div>`}
+    </div>`;
+  }).join('');
+}
+
+async function fetchBig3Live(big3arr) {
+  try {
+    // Fetch ~400 days of daily prices for monthly grouping
+    const resp = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=400&interval=daily');
+    const json = await resp.json();
+    const prices = json.prices; // [[ts, price],...]
+
+    // Group into monthly closes
+    const byMonth = {};
+    prices.forEach(([ts, p]) => {
+      const d = new Date(ts);
+      const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+      byMonth[key] = p;
+    });
+    const monthlyCloses = Object.keys(byMonth).sort().map(k => byMonth[k]);
+
+    // Compute Monthly Stoch RSI
+    const rsiVals = calcRSI(monthlyCloses, 14);
+    const stochK  = calcStochK(rsiVals, 14, 3);
+    const lastK   = stochK[stochK.length - 1] ?? 50;
+    const stochSpark = makeSpark(stochK.slice(-14), lastK < 20 ? '#22c55e' : lastK < 40 ? '#f97316' : '#94a3b8', 20);
+    const stochPct = lastK < 20
+      ? 85 + (1 - lastK/20) * 10        // below 20 — very close
+      : lastK < 40
+        ? 50 + (40 - lastK) / 20 * 35   // 20-40 range
+        : Math.max(10, 50 - (lastK-40)/60*40);
+    const stochColor = lastK < 20 ? '#22c55e' : lastK < 40 ? '#f97316' : '#64748b';
+
+    // Hash Ribbons proxy: 30d vs 60d MA of price (price-based ribbon)
+    const dailyPrices = prices.map(([,p]) => p);
+    const ma30 = dailyPrices.slice(-30).reduce((a,b)=>a+b,0)/30;
+    const ma60 = dailyPrices.slice(-60).reduce((a,b)=>a+b,0)/60;
+    const ratio = ma30 / ma60; // >1 = bullish cross, <1 = still under
+    // Track ratio trend over last 60 days (every 5 days)
+    const ratioHistory = [];
+    for (let i = 60; i <= dailyPrices.length; i += 5) {
+      const s30 = dailyPrices.slice(i-30, i).reduce((a,b)=>a+b,0)/30;
+      const s60 = dailyPrices.slice(i-60, i).reduce((a,b)=>a+b,0)/60;
+      ratioHistory.push((s30/s60 - 0.85) / 0.3 * 100); // normalize to 0-100 range
+    }
+    const hrPct = Math.min(95, Math.max(5, (ratio - 0.85) / 0.2 * 100));
+    const hrColor = ratio > 1 ? '#22c55e' : ratio > 0.96 ? '#f97316' : '#64748b';
+    const hrSpark = makeSpark(ratioHistory.slice(-12), hrColor, 50);
+
+    // SOPR proxy: use F&G trend from recent HISTORY_DATA
+    const fgHistory = HISTORY_DATA.slice(-14).map(h => h.fearGreed != null ? +h.fearGreed : 50);
+    const latestFG  = fgHistory[fgHistory.length-1] ?? 50;
+    const fgPct = latestFG < 15 ? 70 : latestFG < 25 ? 50 : latestFG < 40 ? 35 : 20;
+    const soprColor = latestFG < 20 ? '#f97316' : '#64748b';
+    const soprSpark = makeSpark(fgHistory, soprColor, 25);
+
+    const liveData = [
+      { pct: Math.round(hrPct),    color: hrColor,    spark: hrSpark },
+      { pct: fgPct,                color: soprColor,  spark: soprSpark },
+      { pct: Math.round(stochPct), color: stochColor, spark: stochSpark },
+    ];
+    renderBig3Cards(big3arr, liveData);
+  } catch(e) {
+    console.warn('Big3 live fetch failed — using HISTORY_DATA fallback', e);
+    // Fallback: derive all 3 from HISTORY_DATA only, no external fetch
+    const h = HISTORY_DATA[HISTORY_DATA.length - 1] || {};
+    const mvrv = h.mvrv != null ? +h.mvrv : 1;
+    const fg   = h.fearGreed != null ? +h.fearGreed : 50;
+
+    // Hash Ribbons proxy: MVRV < 1 = near capitulation
+    const hrPct = Math.min(90, Math.max(5, Math.round((1 - Math.min(mvrv, 2) / 2) * 80)));
+    const hrColor = hrPct > 60 ? '#22c55e' : hrPct > 35 ? '#f97316' : '#64748b';
+    const hrVals = HISTORY_DATA.slice(-14).map(d => d.mvrv != null ? Math.max(0, 1 - Math.min(+d.mvrv, 2)/2) * 100 : 50);
+
+    // SOPR proxy: F&G
+    const soprPct = fg < 15 ? 70 : fg < 25 ? 50 : fg < 40 ? 35 : 20;
+    const soprColor = soprPct > 60 ? '#22c55e' : soprPct > 35 ? '#f97316' : '#64748b';
+    const soprVals = HISTORY_DATA.slice(-14).map(d => d.fearGreed != null ? Math.max(0, 50 - +d.fearGreed) : 25);
+
+    // Stoch RSI proxy: composite score trend
+    const stochPct = Math.round(Math.min(90, Math.max(10, (HISTORY_DATA.slice(-14).map(d => computeScore(d)).reduce((a,b)=>a+b,0) / 14))));
+    const stochColor = stochPct > 65 ? '#22c55e' : stochPct > 40 ? '#f97316' : '#64748b';
+    const stochVals = HISTORY_DATA.slice(-14).map(d => computeScore(d));
+
+    renderBig3Cards(big3arr, [
+      { pct: hrPct,    color: hrColor,    spark: makeSpark(hrVals,    hrColor,    50) },
+      { pct: soprPct,  color: soprColor,  spark: makeSpark(soprVals,  soprColor,  25) },
+      { pct: stochPct, color: stochColor, spark: makeSpark(stochVals, stochColor, 50) },
+    ]);
+  }
+}
+
+// =====================================================================
+function renderToday(d) {
+  document.getElementById('sig-dot').style.background = CLR[d.signalDotColor]||CLR.gray;
+  document.getElementById('sig-text').textContent = d.signal||'—';
+  // hdr-price set by startLivePriceWS(); only set here as initial fallback if no live feed yet
+  if (!livePrice) document.getElementById('hdr-price').textContent = d.price||'—';
+  document.getElementById('hdr-week').textContent  = d.week||'—';
+  const pb=document.getElementById('hdr-phase'); pb.textContent=d.phase||'—'; pb.className='phase-badge '+phaseClass(d.phase);
+  document.getElementById('action-text').textContent = d.action||'—';
+  if(d.big3&&d.big3.length){ document.getElementById('big3-section').style.display=''; renderBig3Cards(d.big3, null); fetchBig3Live(d.big3); }
+  const ct=parseInt((d.bottomConf||'0/8').split('/')[0])||0;
+  document.getElementById('conf-count').textContent=d.bottomConf||'0/8';
+  document.getElementById('conf-pips').innerHTML=Array.from({length:8},(_,i)=>`<div class="conf-pip${i<ct?' active':''}"></div>`).join('');
+  const gtags=(d.bottomGreen||[]).map(s=>`<span class="conf-tag conf-tag-green">${s}</span>`).join('');
+  const ytags=(d.bottomYellow||[]).map(s=>`<span class="conf-tag conf-tag-yellow">${s}</span>`).join('');
+  document.getElementById('conf-tags').innerHTML=gtags+ytags||'<span style="color:#94a3b8;font-size:12px">No indicators firing</span>';
+  renderApathyMonitor();
+  // Parse numerics for meters
+  const mvrvN = parseFloat(d.mvrv);
+  const puellN = parseFloat(d.puell);
+  const rrN    = parseFloat(d.reserveRisk);
+  const fgN    = parseInt(d.fearGreed);
+  const mrsiN  = parseFloat((d.monthlyRsi||'').replace('~',''));
+  const wrsiN  = parseFloat((d.weeklyRsi||'').replace('~',''));
+
+  // Valuation — meters + qual cards
+  const rlzdColor = (d.realizedDiff||'').includes('-') ? '#22c55e' : '#f97316';
+  const piColor   = (d.piCycle||'').includes('TRIGGERED') ? '#ef4444' : '#22c55e';
+  document.getElementById('val-grid').innerHTML =
+    meterCard('MVRV Z-Score',   d.mvrv||'N/C', mvrvN, 0, 7,    'mvrv') +
+    meterCard('Puell Multiple', d.puell||'N/C', puellN, 0, 4,   'puell') +
+    meterCard('Reserve Risk',   d.reserveRisk||'N/C', rrN, 0, 0.02, 'rr') +
+    qualCard('Realized Price',  d.realizedPrice, rlzdColor, d.realizedDiff) +
+    qualCard('Pi Cycle',        d.piCycle,       piColor);
+
+  // Momentum — meters + qual cards
+  document.getElementById('mom-grid').innerHTML =
+    meterCard('Fear &amp; Greed', d.fearGreed||'N/C', fgN, 0, 100, 'fg', true, 'fg-live-card') +
+    meterCard('Monthly RSI',    d.monthlyRsi||'N/C', mrsiN, 0, 100, 'rsi') +
+    meterCard('Weekly RSI',     d.weeklyRsi||'N/C',  wrsiN, 0, 100, 'rsi') +
+    qualCard('MACD',   d.macd,  CLR[d.macdColor]||CLR.gray) +
+    qualCard('200W MA', d.ma200, CLR[d.ma200Color]||CLR.gray);
+
+  // Macro — qual cards only (qualitative data)
+  document.getElementById('macro-grid').innerHTML =
+    qualCard('ETF Flows',  d.etf, CLR[d.etfColor]||CLR.gray) +
+    qualCard('DXY',        d.dxy, CLR[d.dxyColor]||CLR.gray) +
+    qualCard('Global M2',  d.m2,  CLR[d.m2Color]||CLR.gray) +
+    qualCard('Fed Policy', d.fed, CLR[d.fedColor]||CLR.gray);
+
+  document.getElementById('ts').textContent='Last updated: '+(d.timestamp||new Date().toLocaleString());
+}
+
+// =====================================================================
+// HISTORY CHART STATE
+// =====================================================================
+let mainChart = null;
+let isLogScale = false;
+let allDates = [];
+let histMap  = {};
+let livePrice = null; // set after API fetch, used by renderPlan()
+let intraDates = [];   // hourly datetime strings "YYYY-MM-DDTHH" for 24h/1W views
+let intraPrices = [];  // matching hourly close prices
+
+const IND_CFG = {
+  mvrv:  { key:'mvrv',       norm:10,  color:'#8b5cf6', label:'MVRV Z-Score',   fmt: v=>'MVRV Z: '+(v*10).toFixed(2) },
+  puell: { key:'puell',      norm:4,   color:'#06b6d4', label:'Puell Multiple', fmt: v=>'Puell: '+(v*4).toFixed(2) },
+  fg:    { key:'fearGreed',  norm:100, color:'#f59e0b', label:'Fear & Greed',   fmt: v=>'F&G: '+Math.round(v*100) },
+  conf:  { key:'bottomConf', norm:8,   color:'#22c55e', label:'Bottom Conf',    fmt: v=>'Conf: '+Math.round(v*8)+'/8' },
+  rsi:   { key:'weeklyRsi',  norm:100, color:'#f43f5e', label:'Weekly RSI',     fmt: v=>'W RSI: '+Math.round(v*100) },
+};
+
+// =====================================================================
+// INDICATOR ZONE CLASSIFIERS
+// =====================================================================
+function mvrvZone(v)  {
+  if (v < 0.3) return { label:'EXTREME ACCUM', color:'#16a34a' };
+  if (v < 0.5) return { label:'STRONG ACCUM',  color:'#22c55e' };
+  if (v < 1.2) return { label:'WATCH',          color:'#f59e0b' };
+  if (v < 3.5) return { label:'NEUTRAL',        color:'#94a3b8' };
+  if (v < 7)   return { label:'ELEVATED',       color:'#f97316' };
+  return               { label:'EUPHORIC',      color:'#ef4444' };
+}
+function puellZone(v) {
+  if (v < 0.5) return { label:'EXTREME ACCUM', color:'#16a34a' };
+  if (v < 0.8) return { label:'ACCUMULATION',  color:'#22c55e' };
+  if (v < 2)   return { label:'NEUTRAL',        color:'#94a3b8' };
+  if (v < 4)   return { label:'CAUTION',        color:'#f97316' };
+  return               { label:'DANGER',        color:'#ef4444' };
+}
+function fgZone(v) {
+  if (v < 20)  return { label:'EXTREME FEAR',  color:'#16a34a' };
+  if (v < 35)  return { label:'FEAR',           color:'#22c55e' };
+  if (v < 65)  return { label:'NEUTRAL',        color:'#94a3b8' };
+  if (v < 85)  return { label:'GREED',          color:'#f97316' };
+  return               { label:'EXTREME GREED', color:'#ef4444' };
+}
+function confZone(v) {
+  if (v >= 4)  return { label:'CONFIRMED ✓',   color:'#16a34a' };
+  if (v >= 2)  return { label:'BUILDING',       color:'#f59e0b' };
+  return               { label:'EARLY',         color:'#ef4444' };
+}
+function big3Zone(v) {
+  if (v === 3) return { label:'ALL FIRING ✓',  color:'#16a34a' };
+  if (v === 2) return { label:'2 OF 3',         color:'#22c55e' };
+  if (v === 1) return { label:'1 OF 3',         color:'#f59e0b' };
+  return               { label:'NONE FIRING',   color:'#ef4444' };
+}
+function phaseInfo(p) {
+  return { EARLY_BEAR:{label:'EARLY BEAR',color:'#7c3aed'}, ENTERING_WINDOW:{label:'ENTERING WINDOW',color:'#f97316'}, BOTTOM_WINDOW:{label:'BOTTOM WINDOW',color:'#22c55e'}, EXTENDED:{label:'EXTENDED BEAR',color:'#ef4444'} }[p] || { label:p, color:'#94a3b8' };
+}
+
+let lastPanelDate = null;
+
+function updateIndicatorPanel(h, isHover) {
+  const wrap  = document.getElementById('ind-grid');
+  const label = document.getElementById('ind-panel-date');
+  if (!wrap) return;
+
+  if (!h) {
+    if (label) label.textContent = 'No signal data for this date';
+    wrap.innerHTML = '';
+    return;
+  }
+
+  if (label) {
+    label.textContent = isHover
+      ? fmtDate(h.date) + ', ' + h.date.slice(0,4)
+      : 'Latest · ' + fmtDate(h.date) + ', ' + h.date.slice(0,4);
+  }
+
+  const ph    = phaseInfo(h.phase);
+  const score = computeScore(h);
+  const tier  = scoreTier(score);
+  const upg   = whatWouldUpgrade(h);
+  const week  = h.week || 0;
+
+  // --- Phase risk warning (early bear only) ---
+  const isEarlyBear = (h.phase === 'EARLY_BEAR');
+  const phaseWarning = isEarlyBear ? `
+    <div style="background:#111;border-left:3px solid #78350f;border-radius:0 6px 6px 0;padding:10px 12px;margin-bottom:12px">
+      <div style="font-size:11px;font-weight:700;color:#fbbf24;margin-bottom:3px">⚠️ Early Bear Phase — High False-Bottom Risk</div>
+      <div style="font-size:11px;color:#666;line-height:1.5">Bear markets typically produce 2-3 rallies before true capitulation. Historical BTC bottoms form W44–58 (Aug–Dec 2026). Price could still reach $40-50K. Score penalized 38% for timing risk.</div>
+    </div>` : '';
+
+  // --- Composite score card ---
+  const scoreHtml = `
+    <div class="chart-card" style="flex:1;min-width:0;padding:10px 14px">
+      <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Composite Buy Score</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+        <span style="font-size:28px;font-weight:900;color:${tier.color};line-height:1">${score}</span>
+        <div>
+          <div style="font-size:12px;font-weight:800;color:${tier.color}">${tier.label}</div>
+          <div style="font-size:10px;color:#444">/100</div>
+        </div>
+        <div style="flex:1;height:5px;background:#2a2a2a;border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${score}%;background:${tier.color};border-radius:3px;transition:width .3s"></div>
+        </div>
+      </div>
+      <div style="font-size:10px;color:#555">${tier.desc}</div>
+    </div>`;
+
+  // --- Bear cycle card ---
+  const TOTAL_WKS = 58;
+  const earlyPct    = (34/TOTAL_WKS*100).toFixed(1);
+  const enterPct    = (9/TOTAL_WKS*100).toFixed(1);
+  const bottomPct   = (15/TOTAL_WKS*100).toFixed(1);
+  const needlePct   = Math.min((week/TOTAL_WKS)*100, 100).toFixed(1);
+  const daysToW35   = week < 35 ? Math.round((35-week)*7) : 0;
+  const daysToW44   = week < 44 ? Math.round((44-week)*7) : 0;
+  const cyclePhaseLabel = week < 35 ? 'Early Bear' : week < 44 ? 'Entering Window' : week < 58 ? 'Bottom Window' : 'Extended';
+  const cyclePhaseColor = week < 35 ? '#a78bfa' : week < 44 ? '#fb923c' : week < 58 ? '#4ade80' : '#f87171';
+  const cycleHtml = `
+    <div class="chart-card" style="flex:1;min-width:0;padding:10px 14px">
+      <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Bear Cycle</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+        <span style="font-size:28px;font-weight:900;color:${cyclePhaseColor};line-height:1">W${week}</span>
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:800;color:${cyclePhaseColor}">${cyclePhaseLabel}</div>
+          <div style="font-size:10px;color:#444">${daysToW35>0?daysToW35+'d to W35':daysToW44>0?daysToW44+'d to bottom':'In bottom window'}</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          ${daysToW35>0?`<div style="text-align:center;padding:4px 8px;background:#0a0a0a;border:1px solid #222;border-radius:5px"><div style="font-size:13px;font-weight:800;color:#a78bfa">${daysToW35}d</div><div style="font-size:8px;color:#555">W35</div></div>`:''}
+          ${daysToW44>0?`<div style="text-align:center;padding:4px 8px;background:#0a0a0a;border:1px solid #222;border-radius:5px"><div style="font-size:13px;font-weight:800;color:#4ade80">${daysToW44}d</div><div style="font-size:8px;color:#555">W44</div></div>`:``}
+        </div>
+      </div>
+      <div style="position:relative;height:5px;border-radius:3px;overflow:hidden;background:#1a1a1a;margin-bottom:4px">
+        <div style="position:absolute;left:0;top:0;height:100%;width:${earlyPct}%;background:rgba(124,58,237,0.5)"></div>
+        <div style="position:absolute;left:${earlyPct}%;top:0;height:100%;width:${enterPct}%;background:rgba(249,115,22,0.6)"></div>
+        <div style="position:absolute;left:${(parseFloat(earlyPct)+parseFloat(enterPct)).toFixed(1)}%;top:0;height:100%;width:${bottomPct}%;background:rgba(34,197,94,0.65)"></div>
+        <div style="position:absolute;left:${needlePct}%;top:-1px;width:2px;height:7px;background:#fff;border-radius:1px;transform:translateX(-1px)"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:8px;color:#333">
+        <span>W1</span><span style="color:#7c3aed">W35</span><span style="color:#22c55e">W44</span><span>W58</span>
+      </div>
+    </div>`;
+
+  // --- Indicator cards ---
+  const cards = [
+    { lbl:'BTC Price',      val:'$'+Math.round(h.price).toLocaleString(),                                    zone:{ label:ph.label, color:ph.color } },
+    { lbl:'MVRV Z-Score',  val:h.mvrv  != null ? (+h.mvrv).toFixed(2)  : 'N/C', zone:h.mvrv  != null ? mvrvZone(+h.mvrv)  : {label:'N/C',color:'#94a3b8'} },
+    { lbl:'Puell Multiple',val:h.puell != null ? (+h.puell).toFixed(2) : 'N/C', zone:h.puell != null ? puellZone(+h.puell) : {label:'N/C',color:'#94a3b8'} },
+    { lbl:'Fear & Greed',  val:h.fearGreed != null ? h.fearGreed : 'N/C',        zone:h.fearGreed != null ? fgZone(+h.fearGreed) : {label:'N/C',color:'#94a3b8'} },
+    { lbl:'Bottom Conf',   val:h.bottomConf+'/8', zone:confZone(h.bottomConf) },
+  ];
+  const cardsHtml = `<div class="ind-grid">
+    ${cards.map(c=>`
+      <div class="ind-card">
+        <div class="ind-card-bar" style="background:${c.zone.color}"></div>
+        <div class="ind-card-body">
+          <div class="ind-card-lbl">${c.lbl}</div>
+          <div class="ind-card-val" style="color:${c.zone.color}">${c.val}</div>
+          <div class="ind-card-zone" style="color:${c.zone.color}">${c.zone.label}</div>
+        </div>
+      </div>`).join('')}
+  </div>`;
+
+  // --- Big 3 breakdown (named individually) ---
+  // Note: HISTORY_DATA stores a count (0-3), not individual flags.
+  // Hash Ribbons is historically earliest to fire. SOPR next. Monthly Stoch RSI last.
+  const BIG3 = [
+    { name:'Hash Ribbons',      desc:'Miner capitulation ends — cost basis recovery' },
+    { name:'SOPR Recovery',     desc:'Spent outputs returning to profit — trend shift' },
+    { name:'Monthly Stoch RSI', desc:'Lines compressing/tightening below 20 (pre-cross = strongest signal; cross itself is lagging)' },
+  ];
+  const big3Html = `
+    <div class="big3-section-hdr">🎯 Big 3 Triggers (${h.big3}/3 confirmed)</div>
+    <div class="ind-grid" style="margin-bottom:10px">
+      ${BIG3.map((b3, i) => {
+        const active = i < (h.big3||0);
+        return `<div class="ind-card">
+          <div class="ind-card-bar" style="background:${active?'#22c55e':'#222'}"></div>
+          <div class="ind-card-body">
+            <div class="ind-card-lbl">${b3.name}</div>
+            <div class="ind-card-val" style="color:${active?'#22c55e':'#94a3b8'};font-size:14px">${active?'✓ ACTIVE':'— Waiting'}</div>
+            <div class="ind-card-zone" style="color:${active?'#16a34a':'#94a3b8'};font-size:9px;white-space:normal;line-height:1.3">${b3.desc}</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+
+  // --- Key price levels ---
+  const below200wma = h.price < 61000;
+  const belowLTH    = h.price < 48000;
+  const levelsHtml = `
+    <div class="levels-box">
+      <div class="levels-lbl">Key Price Levels</div>
+      <div class="levels-row">
+        <span class="levels-item">200WMA ~$61K &nbsp;<strong style="color:${below200wma?'#16a34a':'#94a3b8'}">${below200wma?'BELOW ✓':'Above'}</strong></span>
+        <span class="levels-item">LTH Cost ~$48K &nbsp;<strong style="color:${belowLTH?'#16a34a':'#94a3b8'}">${belowLTH?'BELOW ✓':'Above'}</strong></span>
+      </div>
+    </div>`;
+
+  // --- What would upgrade ---
+  const upgradeHtml = upg.tips.length ? `
+    <div class="upgrade-box">
+      <div class="upgrade-lbl">⬆ What would upgrade this signal</div>
+      ${upg.tips.map(t=>`<div class="upgrade-tip">· ${t}</div>`).join('')}
+    </div>` : '';
+
+  const scoreCycleHtml = `<div style="display:flex;gap:10px;margin-bottom:10px">${scoreHtml}${cycleHtml}</div>`;
+  const rightCol = `<div style="display:flex;flex-direction:column;gap:8px;width:240px;flex-shrink:0">${levelsHtml}${upgradeHtml}</div>`;
+  const mainRow  = `<div style="display:flex;gap:10px;align-items:flex-start">`
+                 + `<div style="flex:1;min-width:0">${cardsHtml}</div>`
+                 + rightCol + `</div>`;
+  wrap.innerHTML = phaseWarning + scoreCycleHtml + mainRow;
+}
+
+// =====================================================================
+// BUILD DATE AXIS (CG + history + future through CHART_END)
+// =====================================================================
+function buildAllDates(cgMap) {
+  const set = new Set(Object.keys(cgMap));
+  HISTORY_DATA.forEach(h => set.add(h.date));
+  // Generate daily dates from today → CHART_END
+  const today = new Date(); today.setHours(0,0,0,0);
+  const end   = new Date(CHART_END);
+  for (let d = new Date(today); d <= end; d.setDate(d.getDate()+1)) {
+    set.add(d.toISOString().slice(0,10));
+  }
+  return [...set].sort();
+}
+
+// =====================================================================
+// CUSTOM CHART.JS PLUGINS
+// =====================================================================
+function makePhaseBgPlugin(datesRef) {
+  return {
+    id: 'phaseBg',
+    beforeDraw(chart) {
+      const { ctx, chartArea: { left, right, top, bottom }, scales: { x } } = chart;
+      if (!x) return;
+      PHASE_ZONES.forEach(zone => {
+        const si = datesRef.indexOf(zone.start);
+        const ei = datesRef.indexOf(zone.end);
+        if (si < 0 || ei < 0) return;
+        const x0 = Math.max(x.getPixelForValue(si), left);
+        const x1 = Math.min(x.getPixelForValue(ei), right);
+        if (x1 <= x0) return;
+        ctx.save();
+        ctx.fillStyle = zone.fill;
+        ctx.fillRect(x0, top, x1 - x0, bottom - top);
+        ctx.restore();
+      });
+    }
+  };
+}
+
+function makeVMarkerPlugin(datesRef) {
+  return {
+    id: 'vMarkers',
+    afterDraw(chart) {
+      const { ctx, chartArea: { top, bottom }, scales: { x } } = chart;
+      if (!x) return;
+      const todayStr = new Date().toISOString().slice(0,10);
+      // Draw "Today" line
+      const ti = datesRef.indexOf(todayStr);
+      if (ti >= 0) {
+        const xp = x.getPixelForValue(ti);
+        ctx.save();
+        ctx.beginPath();
+        ctx.setLineDash([2,2]);
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = 1;
+        ctx.moveTo(xp, top); ctx.lineTo(xp, bottom);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#64748b';
+        ctx.font = 'bold 9px system-ui';
+        ctx.fillText('Today', xp+3, top+22);
+        ctx.restore();
+      }
+      // Draw phase markers
+      V_MARKERS.forEach(m => {
+        const idx = datesRef.indexOf(m.date);
+        if (idx < 0) return;
+        const xp = x.getPixelForValue(idx);
+        ctx.save();
+        ctx.beginPath();
+        ctx.setLineDash(m.dash);
+        ctx.strokeStyle = m.color;
+        ctx.lineWidth = 1.5;
+        ctx.moveTo(xp, top); ctx.lineTo(xp, bottom);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = m.color;
+        ctx.font = 'bold 9px system-ui';
+        ctx.fillText(m.label, xp+3, top+10);
+        ctx.restore();
+      });
+    }
+  };
+}
+
+function makePriceLevelPlugin() {
+  return {
+    id: 'priceLevels',
+    afterDraw(chart) {
+      const { ctx, chartArea: { left, right }, scales: { y } } = chart;
+      if (!y) return;
+
+      // Market reference levels
+      const marketLevels = [
+        { price: 61000, color: '#0284c7', label: '200WMA ~$61K', dash: [8,4], width: 1.5, alpha: 0.75 },
+        { price: 48000, color: '#7c3aed', label: 'LTH Cost ~$48K', dash: [5,3], width: 1.5, alpha: 0.75 },
+      ];
+
+      // Personal tranche targets
+      const trancheColors = ['#f97316','#f97316','#ef4444','#ef4444','#dc2626'];
+      const trancheLevels = PLAN.tranches.map((t, i) => ({
+        price: t.price,
+        color: t.filled ? '#94a3b8' : trancheColors[i],
+        label: t.label + ' $' + (t.price/1000).toFixed(0) + 'K' + (t.note ? ' · '+t.note : ''),
+        dash: [4,3], width: 1, alpha: t.filled ? 0.3 : 0.55,
+      }));
+
+      [...marketLevels, ...trancheLevels].forEach(lv => {
+        if (lv.price < y.min || lv.price > y.max) return;
+        const yp = y.getPixelForValue(lv.price);
+        ctx.save();
+        ctx.beginPath();
+        ctx.setLineDash(lv.dash);
+        ctx.strokeStyle = lv.color;
+        ctx.lineWidth = lv.width;
+        ctx.globalAlpha = lv.alpha;
+        ctx.moveTo(left, yp);
+        ctx.lineTo(right, yp);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = lv.color;
+        ctx.font = 'bold 9px system-ui';
+        ctx.fillText(lv.label, left+5, yp-4);
+        ctx.restore();
+      });
+    }
+  };
+}
+
+// =====================================================================
+// BUILD & RENDER MAIN CHART
+// =====================================================================
+async function renderHistory() {
+  // Build histMap
+  histMap = {};
+  HISTORY_DATA.forEach(h => { histMap[h.date] = h; });
+
+  // Fetch BTC price history — Binance primary (matches CMC aggregate), fallbacks for resilience
+  let cgMap = {};
+  const priceStatus = document.getElementById('price-status');
+
+  // Source 1: Binance — most accurate daily OHLC, matches CMC aggregate closely
+  const tryBinance = async () => {
+    const res = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=730');
+    if (!res.ok) throw new Error('Binance '+res.status);
+    const rows = await res.json();
+    if (!Array.isArray(rows) || rows.length < 10) throw new Error('Binance empty');
+    const m = {};
+    rows.forEach(([ts,,,, close]) => { m[new Date(parseInt(ts)).toISOString().slice(0,10)] = Math.round(parseFloat(close)); });
+    return m;
+  };
+
+  // Source 2: Kraken — public CORS, no key, ~720 daily bars
+  const tryKraken = async () => {
+    const res = await fetch('https://api.kraken.com/0/public/OHLC?pair=XBTUSD&interval=1440');
+    if (!res.ok) throw new Error('Kraken '+res.status);
+    const data = await res.json();
+    if (data.error && data.error.length) throw new Error('Kraken err');
+    const rows = data.result?.XXBTZUSD || data.result?.XBTUSD || Object.values(data.result||{})[0];
+    if (!Array.isArray(rows) || rows.length < 10) throw new Error('Kraken empty');
+    const m = {};
+    rows.forEach(([ts,,,, close]) => { m[new Date(ts*1000).toISOString().slice(0,10)] = Math.round(parseFloat(close)); });
+    return m;
+  };
+
+  // Source 3: Bitstamp — public CORS, daily OHLC, up to 1000 bars
+  const tryBitstamp = async () => {
+    const res = await fetch('https://www.bitstamp.net/api/v2/ohlc/btcusd/?step=86400&limit=1000');
+    if (!res.ok) throw new Error('Bitstamp '+res.status);
+    const data = await res.json();
+    const rows = data?.data?.ohlc;
+    if (!Array.isArray(rows) || rows.length < 10) throw new Error('Bitstamp empty');
+    const m = {};
+    rows.forEach(r => { m[new Date(parseInt(r.timestamp)*1000).toISOString().slice(0,10)] = Math.round(parseFloat(r.close)); });
+    return m;
+  };
+
+  // Source 4: Bybit — public CORS, 365 daily bars
+  const tryBybit = async () => {
+    const res = await fetch('https://api.bybit.com/v5/market/kline?category=spot&symbol=BTCUSDT&interval=D&limit=365');
+    if (!res.ok) throw new Error('Bybit '+res.status);
+    const data = await res.json();
+    const rows = data?.result?.list;
+    if (!Array.isArray(rows) || rows.length < 10) throw new Error('Bybit empty');
+    const m = {};
+    rows.forEach(([ts,,,, close]) => { m[new Date(parseInt(ts)).toISOString().slice(0,10)] = Math.round(parseFloat(close)); });
+    return m;
+  };
+
+  const sources = [
+    { fn: tryBinance,  name: '' },
+    { fn: tryKraken,   name: '(Kraken)' },
+    { fn: tryBitstamp, name: '(Bitstamp)' },
+    { fn: tryBybit,    name: '(Bybit)' },
+  ];
+  for (const src of sources) {
+    try { cgMap = await src.fn(); if (priceStatus) priceStatus.textContent = src.name; break; }
+    catch(_) { /* try next */ }
+  }
+  if (!Object.keys(cgMap).length && priceStatus) priceStatus.textContent = '⚠️ Price feed unavailable — showing signals only';
+
+  // Update header price with live feed value for today (or most recent available)
+  if (Object.keys(cgMap).length) {
+    const todayStr = new Date().toISOString().slice(0,10);
+    const fetched = cgMap[todayStr] || cgMap[Object.keys(cgMap).sort().pop()];
+    if (fetched) {
+      livePrice = fetched;
+      const el = document.getElementById('hdr-price');
+      if (el) el.textContent = '$' + Math.round(livePrice).toLocaleString();
+      if (mainChart) mainChart.update('none');
+    }
+  }
+
+  // Always include our tracked prices (fills in recent days + acts as floor)
+  HISTORY_DATA.forEach(h => { if (!cgMap[h.date]) cgMap[h.date] = h.price; });
+
+  // Fallback: if APIs failed, set livePrice from most recent HISTORY_DATA entry
+  if (!livePrice && HISTORY_DATA.length) {
+    livePrice = HISTORY_DATA[HISTORY_DATA.length - 1].price;
+    const el = document.getElementById('hdr-price');
+    if (el) el.textContent = '$' + Math.round(livePrice).toLocaleString() + '*';
+  }
+
+  allDates = buildAllDates(cgMap);
+
+  // Price dataset — null for future dates
+  const priceData = allDates.map(d => cgMap[d] ?? null);
+
+  // Signal dot datasets — grouped by valuation color (MVRV+F&G+phase)
+  // NOT by alert signal tier — so dots show "is it cheap?" not "is it confirmed?"
+  const sigGroups = {};
+  HISTORY_DATA.forEach(h => {
+    const c = valuationColor(h);
+    if (!sigGroups[c]) sigGroups[c] = {};
+    sigGroups[c][h.date] = cgMap[h.date] ?? h.price;
+  });
+  const sigDatasets = Object.entries(sigGroups).map(([color, dateMap]) => ({
+    type: 'line',
+    label: '__sig__'+color,
+    data: allDates.map(d => dateMap[d] ?? null),
+    borderColor: 'transparent',
+    backgroundColor: color,
+    pointBackgroundColor: color,
+    pointBorderColor: 'transparent',
+    pointBorderWidth: 0,
+    pointRadius: ctx => dateMap[allDates[ctx.dataIndex]] != null ? 5 : 0,
+    pointHoverRadius: 7,
+    showLine: false,
+    fill: false,
+    yAxisID: 'y',
+    order: 0,
+    spanGaps: false,
+    datalabels: { display: false }
+  }));
+
+  // Buy markers — green triangles at each purchase price
+  const buysByDate = {};
+  (PLAN.buys || []).forEach(b => {
+    if (!buysByDate[b.date]) buysByDate[b.date] = [];
+    buysByDate[b.date].push(b);
+  });
+  const buyData = allDates.map(d => {
+    const bs = buysByDate[d];
+    if (!bs || !bs.length) return null;
+    const totQty = bs.reduce((s,b) => s + b.qty, 0);
+    // Offset 2% above actual price so triangle sits above the signal dot
+    return bs.reduce((s,b) => s + b.price * b.qty, 0) / totQty * 1.02;
+  });
+  const buyLabelsMap = {};
+  Object.entries(buysByDate).forEach(([d, bs]) => {
+    buyLabelsMap[d] = bs.map(b => b.label).join(' + ');
+  });
+  const buyDataset = {
+    label: '__buys__',
+    data: buyData,
+    showLine: false,
+    backgroundColor: '#22c55e',
+    borderColor: '#fff',
+    borderWidth: 1.5,
+    pointStyle: 'triangle',
+    pointRadius: buyData.map(v => v !== null ? 12 : 0),
+    pointHoverRadius: 14,
+    yAxisID: 'y',
+    order: -1   // draw on top of signal dots
+  };
+
+  // (indicator overlay datasets removed — indicator data shown in panel below chart)
+
+  // Tick labels: quarterly (Jan/Apr/Jul/Oct) — Jan shows year, others show month abbr
+  const _MO = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const tickLabels = allDates.map(d => {
+    if (!d) return '';
+    const [y,m,day] = d.split('-');
+    if (parseInt(day) !== 1) return '';
+    const mo = parseInt(m);
+    if (![1,4,7,10].includes(mo)) return '';
+    return mo === 1 ? y : _MO[mo-1];
+  });
+
+  // Register custom plugins
+  const phaseBgPlugin    = makePhaseBgPlugin(allDates);
+  const vMarkerPlugin    = makeVMarkerPlugin(allDates);
+  const priceLevelPlugin = makePriceLevelPlugin();
+  const livePricePlugin  = {
+    id: 'livePrice',
+    afterDraw(chart) {
+      const price = livePrice;
+      if (!price) return;
+      const { ctx, scales: { x, y } } = chart;
+      const yPos = y.getPixelForValue(price);
+      if (yPos < y.top || yPos > y.bottom) return;
+      // Dotted line
+      ctx.save();
+      ctx.setLineDash([3, 4]);
+      ctx.strokeStyle = 'rgba(239,68,68,0.7)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x.left, yPos);
+      ctx.lineTo(x.right, yPos);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // Price badge on right edge
+      const label = '$' + Math.round(price).toLocaleString();
+      ctx.font = '700 10px Inter,sans-serif';
+      const tw = ctx.measureText(label).width;
+      const pad = 5, bh = 18, bw = tw + pad * 2;
+      const bx = x.right + 2;
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(bx, yPos - bh/2, bw, bh, 3);
+      else ctx.rect(bx, yPos - bh/2, bw, bh);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, bx + pad, yPos);
+      ctx.restore();
+    }
+  };
+
+  if (mainChart) { mainChart.destroy(); mainChart = null; }
+
+  const ctx = document.getElementById('chart-main').getContext('2d');
+  mainChart = new Chart(ctx, {
+    type: 'line',
+    plugins: [phaseBgPlugin, vMarkerPlugin, priceLevelPlugin, livePricePlugin],
+    data: {
+      labels: allDates,
+      datasets: [
+        {
+          label: '__price__',
+          data: priceData,
+          borderColor: '#60a5fa',
+          borderWidth: 1.5,
+          pointRadius: 0,
+          tension: 0.1,
+          fill: false,
+          spanGaps: true,
+          yAxisID: 'y',
+          order: 5
+        },
+        ...sigDatasets,
+        buyDataset
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      animation: { duration: 300 },
+      onHover: (evt, elements, chart) => {
+        const pts = chart.getElementsAtEventForMode(evt, 'index', { intersect: false }, false);
+        if (pts.length) {
+          const d = allDates[pts[0].index];
+          if (d !== lastPanelDate) {
+            lastPanelDate = d;
+            updateIndicatorPanel(histMap[d] || null, true);
+          }
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(15,23,42,0.95)',
+          titleColor: '#f8fafc',
+          bodyColor: '#94a3b8',
+          borderColor: '#334155',
+          borderWidth: 1,
+          padding: 12,
+          callbacks: {
+            title: items => {
+              const d = allDates[items[0].dataIndex];
+              return d ? fmtDate(d) + ' ' + d.slice(0,4) : '';
+            },
+            label: item => {
+              if (item.dataset.label === '__buys__')
+                return item.raw != null ? '  ▲ Buy  $' + Math.round(item.raw / 1.02).toLocaleString() + '  · ' + (buyLabelsMap[allDates[item.dataIndex]] || '') : null;
+              if (item.dataset.label === '__price__') {
+                const dKey = allDates[item.dataIndex];
+                const h2 = histMap[dKey];
+                const p2 = (h2 && h2.price) ? h2.price : item.raw;
+                return p2 != null ? '  BTC  $' + Math.round(p2).toLocaleString() : null;
+              }
+              return null;
+            },
+            afterBody: items => {
+              const d = allDates[items[0].dataIndex];
+              const h = histMap[d];
+              if (!h) return [];
+              const dot = c => c === '#16a34a' ? '🟢' : c === '#22c55e' ? '🟢' : c === '#f59e0b' ? '🟡' : c === '#ef4444' ? '🔴' : '⚪';
+              return [
+                '',
+                '  ' + dot(sigColor(h.signal)) + ' ' + sigLabel(h.signal) + '  ·  Wk ' + h.week,
+                '  MVRV ' + (h.mvrv||'—') + '  ·  Puell ' + (h.puell||'—'),
+                '  F&G ' + (h.fearGreed||'—') + '  ·  Conf ' + h.bottomConf + '/8  ·  Big3 ' + h.big3 + '/3',
+              ];
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: {
+            maxRotation: 0,
+            callback: (_,i) => tickLabels[i]||null,
+            autoSkip: false,
+            font: { size: 11 },
+            color: '#94a3b8',
+            maxTicksLimit: 50
+          },
+          grid: { color: '#1a1a1a', lineWidth: 1 }
+        },
+        y: {
+          position: 'right',
+          type: isLogScale ? 'logarithmic' : 'linear',
+          ticks: {
+            callback: v => v>=1000?'$'+(v/1000).toFixed(0)+'K':'$'+v,
+            font: { size: 10 },
+            color: '#94a3b8',
+            maxTicksLimit: 8
+          },
+          grid: { color: '#1a1a1a' }
+        }
+      },
+      layout: { padding: { right: 20, left: 4 } }
+    },
+    plugins: [
+      {
+        id: 'crosshair',
+        afterDraw(chart) {
+          if (chart._crosshairX == null) return;
+          const { ctx, chartArea: { top, bottom } } = chart;
+          ctx.save();
+          ctx.setLineDash([4, 4]);
+          ctx.strokeStyle = 'rgba(148,163,184,0.5)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(chart._crosshairX, top);
+          ctx.lineTo(chart._crosshairX, bottom);
+          ctx.stroke();
+          ctx.restore();
+        }
+      },
+      {
+        id: 'livePriceLabel',
+        afterDraw(chart) {
+          // Read last non-null value directly from the price dataset — always in sync with the line
+          const ds = chart.data.datasets.find(d => d.label === '__price__');
+          if (!ds) return;
+          let price = null;
+          for (let i = ds.data.length - 1; i >= 0; i--) {
+            if (ds.data[i] != null) { price = ds.data[i]; break; }
+          }
+          if (!price) return;
+
+          const { ctx, chartArea, scales } = chart;
+          const y = scales.y.getPixelForValue(price);
+          if (y < chartArea.top || y > chartArea.bottom) return;
+
+          // Dotted horizontal line spanning full chart width (TradingView style)
+          ctx.save();
+          ctx.setLineDash([3, 4]);
+          ctx.strokeStyle = 'rgba(239,68,68,0.5)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(chartArea.left, y);
+          ctx.lineTo(chartArea.right, y);
+          ctx.stroke();
+          ctx.restore();
+
+          // Badge — full price, right-anchored so it never clips
+          const label = '$' + Math.round(price).toLocaleString();
+          ctx.save();
+          ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, sans-serif';
+          const tw = ctx.measureText(label).width;
+          const pw = 8, bh = 20;
+          const bw = tw + pw * 2;
+          const bx = chart.width - bw - 2;
+          const by = y - bh / 2;
+          const r = 4;
+
+          ctx.fillStyle = '#dc2626';
+          ctx.beginPath();
+          ctx.moveTo(bx + r, by);
+          ctx.lineTo(bx + bw - r, by);
+          ctx.quadraticCurveTo(bx + bw, by, bx + bw, by + r);
+          ctx.lineTo(bx + bw, by + bh - r);
+          ctx.quadraticCurveTo(bx + bw, by + bh, bx + bw - r, by + bh);
+          ctx.lineTo(bx + r, by + bh);
+          ctx.quadraticCurveTo(bx, by + bh, bx, by + bh - r);
+          ctx.lineTo(bx, by + r);
+          ctx.quadraticCurveTo(bx, by, bx + r, by);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.fillStyle = '#ffffff';
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(label, bx + pw, y);
+          ctx.restore();
+        }
+      }
+    ]
+  });
+
+  // Crosshair — track mouse position on canvas
+  const chartCanvas = document.getElementById('chart-main');
+  chartCanvas.addEventListener('mousemove', evt => {
+    if (!mainChart) return;
+    const rect = chartCanvas.getBoundingClientRect();
+    const x = evt.clientX - rect.left;
+    const ca = mainChart.chartArea;
+    mainChart._crosshairX = (x >= ca.left && x <= ca.right) ? x : null;
+    mainChart.draw();
+  });
+
+  // Mouse leaves chart → reset panel to latest
+  chartCanvas.addEventListener('mouseleave', () => {
+    if (mainChart) { mainChart._crosshairX = null; mainChart.draw(); }
+    lastPanelDate = null;
+    const latest = HISTORY_DATA[HISTORY_DATA.length - 1];
+    if (latest) updateIndicatorPanel(latest, false);
+  });
+
+  // Populate panel with latest on init
+  const latest = HISTORY_DATA[HISTORY_DATA.length - 1];
+  if (latest) updateIndicatorPanel(latest, false);
+
+  buildHistoryTable();
+  // Defer one frame so the chart canvas finishes layout before we set x-axis bounds
+  requestAnimationFrame(() => setRange('1M'));
+
+  // Fetch hourly data from Binance for 24h/1W intraday views (fire-and-forget)
+  (async () => {
+    try {
+      const res = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=336');
+      if (!res.ok) return;
+      const rows = await res.json();
+      if (!Array.isArray(rows) || rows.length < 10) return;
+      intraDates = rows.map(([ts]) => new Date(parseInt(ts)).toISOString().slice(0,13));
+      intraPrices = rows.map(([,,,, c]) => Math.round(parseFloat(c)));
+      // If user already selected 24h/1W, refresh now that hourly data is ready
+      if (activeRange === '24h' || activeRange === '1W') setRange(activeRange);
+    } catch(e) { /* silent — daily data still works */ }
+  })();
+}
+
+// =====================================================================
+// INDICATOR TOGGLE
+// =====================================================================
+function toggleInd(id) {
+  if (!mainChart) return;
+  const dsIdx = mainChart.data.datasets.findIndex(ds => ds.label === '__ind__'+id);
+  if (dsIdx < 0) return;
+  const nowHidden = !mainChart.data.datasets[dsIdx].hidden;
+  mainChart.data.datasets[dsIdx].hidden = nowHidden;
+  const btn = document.getElementById('btn-'+id);
+  if (btn) btn.classList.toggle('active', !nowHidden);
+  // Show yInd axis only if at least one indicator is active
+  const anyActive = Object.keys(IND_CFG).some(k => {
+    const i = mainChart.data.datasets.findIndex(ds => ds.label==='__ind__'+k);
+    return i>=0 && !mainChart.data.datasets[i].hidden;
+  });
+  mainChart.options.scales.yInd.display = anyActive ? true : 'auto';
+  mainChart.update();
+}
+
+
+function toggleLog() {
+  if (!mainChart) return;
+  isLogScale = !isLogScale;
+  mainChart.options.scales.y.type = isLogScale ? 'logarithmic' : 'linear';
+  mainChart.update();
+  document.getElementById('log-btn').classList.toggle('active', isLogScale);
+}
+
+let activeRange = 'ALL';
+function setRange(range) {
+  if (!mainChart || !allDates.length) return;
+  activeRange = range;
+  ['24h','1W','1M','1Y','ALL'].forEach(r => {
+    const b = document.getElementById('rb-'+r);
+    if (b) b.classList.toggle('active', r === range);
+  });
+
+  const needIntra = (range === '24h' || range === '1W') && intraDates.length > 0;
+
+  if (needIntra) {
+    // ── INTRADAY MODE (hourly Binance data) ─────────────────────────────
+    const hours = range === '24h' ? 25 : 7 * 24 + 1;
+    const cutoff = new Date(Date.now() - hours * 3600000).toISOString().slice(0, 13);
+    const startIdx = intraDates.findIndex(d => d >= cutoff);
+    if (startIdx < 0) { /* no data in range — fall through to daily */ }
+    else {
+      const slicedDates  = intraDates.slice(startIdx);
+      const slicedPrices = intraPrices.slice(startIdx);
+
+      // Save daily state on first intra switch
+      if (!mainChart._dailyState) {
+        const pds = mainChart.data.datasets.find(d => d.label === '__price__');
+        mainChart._dailyState = {
+          labels:      mainChart.data.labels ? [...mainChart.data.labels] : undefined,
+          priceData:   pds ? [...pds.data] : [],
+          tickCb:      mainChart.options.scales.x.ticks.callback,
+          hiddenFlags: mainChart.data.datasets.map(ds => ds.hidden),
+          xMin:        mainChart.options.scales.x.min,
+          xMax:        mainChart.options.scales.x.max,
+        };
+      }
+
+      // Build tick labels: midnight → "Jun 24", every 6h → "14:00", else null
+      const intraTickCb = (val) => {
+        // val is the label string "2026-06-24T14"
+        const parts = val.split('T');
+        const h = parseInt(parts[1] || '0', 10);
+        if (h === 0) {
+          const dt = new Date(val + ':00:00Z');
+          return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+        }
+        const step = range === '24h' ? 6 : 12;
+        if (h % step === 0) return h + ':00';
+        return null;
+      };
+
+      // Swap in hourly data
+      mainChart.data.labels = slicedDates;
+      const pds = mainChart.data.datasets.find(d => d.label === '__price__');
+      if (pds) pds.data = slicedPrices;
+
+      // Hide non-price datasets (both config and meta — meta is what Chart.js actually checks at render time)
+      mainChart.data.datasets.forEach((ds, idx) => {
+        if (ds.label !== '__price__') {
+          ds.hidden = true;
+          mainChart.getDatasetMeta(idx).hidden = true;
+        }
+      });;
+
+      // Update x-axis
+      mainChart.options.scales.x.ticks.callback = intraTickCb;
+      mainChart.options.scales.x.min = undefined;
+      mainChart.options.scales.x.max = undefined;
+
+      mainChart._intraMode = true;
+      mainChart.update('none');
+      return;
+    }
+  }
+
+  // ── DAILY MODE ─────────────────────────────────────────────────────────
+  // Restore daily state if coming from intraday
+  if (mainChart._intraMode) {
+    mainChart._intraMode = false;
+    const saved = mainChart._dailyState;
+    if (saved) {
+      mainChart.data.labels = saved.labels;
+      const pds = mainChart.data.datasets.find(d => d.label === '__price__');
+      if (pds) pds.data = saved.priceData;
+      mainChart.data.datasets.forEach((ds, i) => {
+        ds.hidden = saved.hiddenFlags[i];
+        mainChart.getDatasetMeta(i).hidden = saved.hiddenFlags[i] || false;
+      });
+      mainChart.options.scales.x.ticks.callback = saved.tickCb;
+      mainChart._dailyState = null;
+    }
+  }
+
+  let minDate = null;
+  const now = new Date();
+  const tomorrow = new Date(now); tomorrow.setDate(tomorrow.getDate()+1);
+  const tomorrowStr = tomorrow.toISOString().slice(0,10);
+  if (range === '24h') { const d = new Date(now); d.setDate(d.getDate()-2);   minDate = d.toISOString().slice(0,10); }
+  if (range === '1W')  { const d = new Date(now); d.setDate(d.getDate()-7);   minDate = d.toISOString().slice(0,10); }
+  if (range === '1M')  { const d = new Date(now); d.setMonth(d.getMonth()-1); minDate = d.toISOString().slice(0,10); }
+  if (range === '1Y')  { const d = new Date(now); d.setFullYear(d.getFullYear()-1); minDate = d.toISOString().slice(0,10); }
+  if (minDate) {
+    const start = allDates.find(d => d >= minDate) || allDates[0];
+    mainChart.options.scales.x.min = start;
+    mainChart.options.scales.x.max = tomorrowStr;
+  } else {
+    mainChart.options.scales.x.min = allDates[0];
+    mainChart.options.scales.x.max = CHART_END;
+  }
+  mainChart.update('none');
+}
+
+// =====================================================================
+// HISTORY TABLE
+// =====================================================================
+function buildHistoryTable() {
+  const rows = [...HISTORY_DATA].reverse().slice(0,14);
+  if (!rows.length) return;
+  document.getElementById('history-table-wrap').innerHTML = `
+    <table class="hist-table">
+      <thead><tr>
+        <th>Date</th><th style="text-align:right">Price</th>
+        <th style="text-align:right">MVRV</th><th style="text-align:right">F&amp;G</th>
+        <th style="text-align:right">Conf</th><th style="text-align:right">Big3</th>
+        <th style="text-align:right">Score</th><th>Valuation</th><th style="text-align:right">Wk</th>
+      </tr></thead>
+      <tbody>${rows.map(h=>{
+        const sc  = computeScore(h);
+        const ti  = scoreTier(sc);
+        const vc  = valuationColor(h);
+        const vlbl= vc==='#16a34a'?'Extreme Cheap':vc==='#22c55e'?'Very Cheap':vc==='#3b82f6'?'Cheap':vc==='#94a3b8'?'Fair Value':vc==='#f97316'?'Expensive':'Neutral';
+        return `
+        <tr>
+          <td style="color:#64748b">${fmtDate(h.date)}</td>
+          <td style="text-align:right;font-weight:700">$${h.price.toLocaleString()}</td>
+          <td style="text-align:right">${h.mvrv}</td>
+          <td style="text-align:right">${h.fearGreed}</td>
+          <td style="text-align:right">${h.bottomConf}/8</td>
+          <td style="text-align:right">${h.big3}/3</td>
+          <td style="text-align:right;font-weight:700;color:${ti.color}">${sc}</td>
+          <td><span class="sig-pill"><span style="width:8px;height:8px;border-radius:50%;background:${vc};display:inline-block;margin-right:4px"></span>${vlbl}</span></td>
+          <td style="text-align:right;color:#94a3b8">${h.week}</td>
+        </tr>`;}).join('')}
+      </tbody>
+    </table>`;
+}
+
+// =====================================================================
+// MY PLAN — personal DCA strategy tracker
+// =====================================================================
+function renderPlan() {
+  const el = document.getElementById('plan-content');
+  if (!el) return;
+
+  const now      = new Date();
+  const price    = livePrice || (HISTORY_DATA.length ? HISTORY_DATA[HISTORY_DATA.length-1].price : null);
+  const latest   = HISTORY_DATA.length ? HISTORY_DATA[HISTORY_DATA.length-1] : null;
+  const score    = latest ? computeScore(latest) : 0;
+  const tier     = scoreTier(score);
+
+  // ── Deployment target schedule ──────────────────────────────────
+  const bearWeek = latest ? (latest.week || 0) : 0;
+  const depSchedule = [
+    { from:  1, to: 34, base: 12 },
+    { from: 35, to: 43, base: 30 },
+    { from: 44, to: 49, base: 55 },
+    { from: 50, to: 57, base: 75 },
+    { from: 58, to: 99, base: 88 },
+  ];
+  const depPhase = depSchedule.find(p => bearWeek >= p.from && bearWeek <= p.to) || depSchedule[0];
+  const scoreAdj = score >= 80 ? 15 : score >= 65 ? 10 : score >= 55 ? 5 : score >= 40 ? 0 : -5;
+  const depTarget = Math.min(95, Math.max(5, depPhase.base + scoreAdj));
+  const depPhaseLabel = depPhase.from === 1  ? 'Early Bear'
+                      : depPhase.from === 35 ? 'Entering Window'
+                      : depPhase.from === 44 ? 'Bottom Window (early)'
+                      : depPhase.from === 50 ? 'Bottom Window (peak)'
+                      : 'Extended';
+
+  // ── Capital deployment ──────────────────────────────────────────
+  const deployed   = PLAN.deployed;
+  const remaining  = PLAN.totalBudget - deployed;
+  const pct        = (deployed / PLAN.totalBudget * 100).toFixed(1);
+  const dcaSpent   = PLAN.dcaDeployed   || 0;
+  const trancheSp  = PLAN.trancheDeployed || 0;
+  // Committed = unfilled tranches with active exchange orders
+  const committed    = (PLAN.tranches || []).filter(t => !t.filled && t.size && t.note && t.note.includes('Order set')).reduce((s,t) => s + t.size, 0);
+  const committedPct = (committed / PLAN.totalBudget * 100).toFixed(1);
+  const combinedPct  = Math.min(100, parseFloat(pct) + parseFloat(committedPct)).toFixed(1);
+
+  // ── DCA week + this-week schedule ───────────────────────────────
+  const startMs  = new Date(PLAN.dcaStartDate).getTime();
+  const weekNum  = Math.floor((now.getTime() - startMs) / (7*86400000)) + 1;
+  const totalDcaWeeks = Math.ceil(PLAN.dcaBudget / PLAN.dcaWeekly);
+  const dcaRemaining  = PLAN.dcaBudget - dcaSpent;
+  const weeksLeft     = Math.ceil(dcaRemaining / PLAN.dcaWeekly);
+
+  // Day-of-week labels for Sun/Tue/Thu (0=Sun,2=Tue,4=Thu)
+  const dayNames  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const todayDow  = now.getDay(); // 0-6
+  const buyDays   = [0, 2, 4];   // Sun, Tue, Thu
+  const buyLabels = buyDays.map(d => {
+    const diff = ((d - todayDow + 7) % 7);
+    const date = new Date(now); date.setDate(date.getDate() + diff);
+    const label = diff === 0 ? '← TODAY' : diff === 7 ? '← NEXT WEEK' : '';
+    return { name: dayNames[d], date: date.toLocaleDateString('en-US',{month:'short',day:'numeric'}), isToday: diff===0, isPast: diff>3 && todayDow > d };
+  });
+
+  // ── Tranche distances ────────────────────────────────────────────
+  const trancheRows = PLAN.tranches.map(t => {
+    const dist   = price ? (((price - t.price) / price) * 100).toFixed(1) : null;
+    const hit    = price && price <= t.price;
+    const near   = price && !hit && dist && parseFloat(dist) < 8;
+    const status = t.filled ? '✓ Filled' : hit ? '⚡ Triggered!' : t.note ? t.note : 'Pending';
+    const color  = t.filled ? '#94a3b8' : hit ? '#16a34a' : near ? '#f97316' : '#64748b';
+    const bg     = t.filled ? '#111' : hit ? '#0d1f0d' : near ? '#1f0d00' : '#141414';
+    const border = t.filled ? '#334155' : hit ? '#14532d' : near ? '#7c2d12' : '#334155';
+    return { ...t, dist, hit, near, status, color, bg, border };
+  });
+
+  // ── Double DCA trigger ───────────────────────────────────────────
+  const lastDCABuy      = [...PLAN.buys].reverse().find(b => b.type === 'dca');
+  const lastDCAPrice    = lastDCABuy ? lastDCABuy.price : null;
+  const dropFromLastDCA = price && lastDCAPrice ? (lastDCAPrice - price) / lastDCAPrice : 0;
+  const triggerPrice    = lastDCAPrice ? Math.round(lastDCAPrice * (1 - PLAN.doubleDropPct)) : null;
+  const shouldDouble    = dropFromLastDCA >= PLAN.doubleDropPct;
+  const dcaAmount       = shouldDouble ? PLAN.dcaDouble : PLAN.dcaWeekly;
+  const dcaLabel        = shouldDouble ? '$1,000/buy · AGGRESSIVE MODE' : '$500/buy · standard';
+
+  // ── DCA Zone escalation ──────────────────────────────────────────
+  const latestBig3  = HISTORY_DATA.length ? (HISTORY_DATA[HISTORY_DATA.length-1].big3 || 0) : 0;
+  const dcaZones    = PLAN.dcaZones || [];
+  const activeDcaZone = price
+    ? dcaZones.find(z => price >= z.minPrice) || dcaZones[dcaZones.length-1]
+    : dcaZones[0];
+  const dcaZoneIndex = dcaZones.indexOf(activeDcaZone);
+
+  // ── Next key milestone ───────────────────────────────────────────
+  const w35Ms   = new Date(W35_DATE).getTime();
+  const w44Ms   = new Date(W44_DATE).getTime();
+  const daysToW35 = Math.max(0, Math.ceil((w35Ms - now.getTime()) / 86400000));
+  const daysToW44 = Math.max(0, Math.ceil((w44Ms - now.getTime()) / 86400000));
+  const milestone = daysToW35 > 0
+    ? { label: 'W35 Entering Window', days: daysToW35, date: W35_DATE, color:'#f97316', note:'Score multiplier jumps from 0.62× → 0.85×' }
+    : { label: 'W44 Bottom Window',   days: daysToW44, date: W44_DATE, color:'#22c55e', note:'Full score thresholds unlock — historical buy zone' };
+
+  // ── Emotional anchor text ────────────────────────────────────────
+  let anchor, anchorColor;
+  if (score >= 65) {
+    anchor = 'Multiple signals aligned. Your indicators are green. Execute the plan — this is what you prepared for.';
+    anchorColor = '#4ade80';
+  } else if (score >= 50) {
+    anchor = 'Valuation is favorable and timing is approaching. Keep DCAing, watch for tranche triggers.';
+    anchorColor = '#60a5fa';
+  } else if (score >= 35) {
+    anchor = 'Bear market phase risk is real — but your tranches are set and your DCA is working. Stay the course.';
+    anchorColor = '#fbbf24';
+  } else {
+    anchor = 'Too early for heavy allocation. Your $500/week DCA is accumulating. Patience protects capital.';
+    anchorColor = '#555';
+  }
+
+  // ── Render ───────────────────────────────────────────────────────
+  el.innerHTML = `
+
+  <!-- CAPITAL DEPLOYMENT -->
+  <div class="chart-card" style="margin-bottom:10px">
+    <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">💰 Capital Deployment</div>
+    ${(()=>{
+      const gap = parseFloat(combinedPct) - depTarget;
+      const onTrack = Math.abs(gap) <= 5;
+      const behind  = gap < -5;
+      const statusColor = onTrack ? '#22c55e' : behind ? (gap < -15 ? '#ef4444' : '#f97316') : '#60a5fa';
+      const statusText  = onTrack ? 'On pace (deployed + committed)' : behind ? (gap < -15 ? `${Math.abs(gap).toFixed(1)}% behind target — load more orders` : `${Math.abs(gap).toFixed(1)}% behind target`) : `${gap.toFixed(1)}% ahead of target`;
+      return `
+      <div style="position:relative;margin-bottom:4px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="flex:1;height:10px;background:#1a1a1a;border-radius:5px;overflow:visible;position:relative">
+            <!-- Committed orders bar (teal, behind deployed) -->
+            <div style="position:absolute;left:0;top:0;height:100%;width:${combinedPct}%;background:#0e7490;border-radius:5px;transition:width .4s;opacity:0.55"></div>
+            <!-- Deployed bar (solid blue) -->
+            <div style="position:absolute;left:0;top:0;height:100%;width:${pct}%;background:${tier.color};border-radius:5px;transition:width .4s"></div>
+            ${[
+              { pct: 12, color: '#7c3aed', label: 'Early Bear' },
+              { pct: 30, color: '#f97316', label: 'Entering Window' },
+              { pct: 55, color: '#22c55e', label: 'Bottom Window' },
+              { pct: 75, color: '#22c55e', label: 'Bottom Window (peak)' },
+              { pct: 88, color: '#f87171', label: 'Extended Bear' },
+            ].map(m => `<div style="position:absolute;top:-2px;left:${m.pct}%;transform:translateX(-0.5px);z-index:10" onmouseenter="this.querySelector('.pm-tip').style.display='block'" onmouseleave="this.querySelector('.pm-tip').style.display='none'"><div style="width:1px;height:14px;background:${m.color};opacity:0.6"></div><div class="pm-tip" style="display:none;position:absolute;bottom:18px;left:50%;transform:translateX(-50%);white-space:nowrap;background:#111;border:1px solid ${m.color};border-radius:4px;padding:3px 8px;font-size:10px;font-weight:600;color:${m.color};pointer-events:none;z-index:99">${m.label} · ${m.pct}% · $${Math.round(m.pct/100*PLAN.totalBudget).toLocaleString()}</div></div>`).join('')}
+            <div class="tip" style="position:absolute;top:-3px;left:${depTarget}%;transform:translateX(-2px);width:4px;height:16px;z-index:20"><div style="width:4px;height:16px;background:#e5e5e5;border-radius:1px"></div><span class="tiptext">📍 <strong>Deployment Target: ${depTarget}%</strong> ($${Math.round(depTarget/100*PLAN.totalBudget).toLocaleString()})<br><br>Where your capital deployment should be right now:<br>• Phase: ${depPhaseLabel} (base ${depPhase.base}%)<br>• Score adj: ${scoreAdj >= 0 ? '+' : ''}${scoreAdj}%<br><br>Blue = filled/deployed. Teal = active limit orders waiting to fill.<br>Bar left of line = behind target. Right = ahead.</span></div>
+          </div>
+          <span style="font-size:14px;font-weight:800;color:${tier.color};white-space:nowrap">${combinedPct}% <span style="font-size:10px;font-weight:500;color:#64748b">(${pct}% filled)</span></span>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:5px;align-items:center;flex-wrap:wrap">
+          <span style="color:${statusColor};font-weight:600;font-size:10px">${statusText}</span>
+          <span style="display:flex;gap:8px;align-items:center;font-size:10px">
+            <span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:2px;background:${tier.color};display:inline-block"></span><span style="color:#64748b">Deployed $${deployed.toLocaleString()}</span></span>
+            <span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:2px;background:#0e7490;display:inline-block;opacity:0.7"></span><span style="color:#64748b">Committed $${committed.toLocaleString()}</span></span>
+          </span>
+          <span style="color:#333;font-size:10px;margin-left:auto">Target: <strong style="color:#666">${depTarget}%</strong> · ${depPhaseLabel}${scoreAdj !== 0 ? ' · Score adj: '+(scoreAdj>0?'+':'')+scoreAdj+'%' : ''}</span>
+        </div>
+      </div>`;
+    })()}
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+      <div class="card"><div class="card-label">Total Deployed</div><div class="card-value">$${deployed.toLocaleString()}</div></div>
+      <div class="card"><div class="card-label">Remaining</div><div class="card-value" style="color:#22c55e">$${remaining.toLocaleString()}</div></div>
+      <div class="card"><div class="card-label">Total Budget</div><div class="card-value">$${PLAN.totalBudget.toLocaleString()}</div></div>
+      <div class="card"><div class="card-label">DCA Deployed</div><div class="card-value">$${dcaSpent.toLocaleString()}</div><div class="card-sub">of $${PLAN.dcaBudget.toLocaleString()} · ${weeksLeft}wk left</div></div>
+      <div class="card"><div class="card-label">Tranches Filled</div><div class="card-value">$${trancheSp.toLocaleString()}</div><div class="card-sub">of $${PLAN.trancheBudget.toLocaleString()} · ${PLAN.tranches.filter(t=>t.filled).length} of ${PLAN.tranches.length} hit</div></div>
+      <div class="card"><div class="card-label">DCA Week</div><div class="card-value">Week ${weekNum}</div><div class="card-sub">of ~${totalDcaWeeks}</div></div>
+      ${(()=>{
+        const qty = PLAN.btcQty || 0;
+        const avg = PLAN.avgPrice || 0;
+        const nowPrice = price || 0;
+        const mktVal = qty * nowPrice;
+        const cost = qty * avg;
+        const pnl = mktVal - cost;
+        const pnlPct = cost > 0 ? (pnl / cost * 100) : 0;
+        const pnlColor = pnl >= 0 ? '#22c55e' : '#ef4444';
+        const pnlSign = pnl >= 0 ? '+' : '';
+        return `
+      <div class="card"><div class="card-label">BTC Acquired</div><div class="card-value">${qty.toFixed(4)} BTC</div><div class="card-sub">${nowPrice ? '≈ $' + Math.round(mktVal).toLocaleString() + ' mkt value' : 'update btcQty in PLAN'}</div></div>
+      <div class="card"><div class="card-label">Avg Cost Basis</div><div class="card-value">$${avg.toLocaleString()}</div><div class="card-sub" style="color:${pnlColor}">${nowPrice && qty ? pnlSign + '$' + Math.round(pnl).toLocaleString() + ' (' + pnlSign + pnlPct.toFixed(1) + '%)' : 'update avgPrice in PLAN'}</div></div>`;
+      })()}
+    </div>
+  </div>
+
+  <!-- THIS WEEK'S DCA -->
+  <div class="chart-card" style="margin-bottom:10px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em">This Week's DCA</div>
+      <div style="font-size:12px;font-weight:700;color:${shouldDouble?'#ef4444':'#22c55e'}">${dcaLabel}</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      ${buyLabels.map(b => `
+        <div style="flex:1;text-align:center;padding:10px 6px;border-radius:8px;border:1px solid ${b.isToday?'#e5e5e5':'#222'};background:${b.isToday?'#1a1a1a':'#0d0d0d'}">
+          <div style="font-size:12px;font-weight:700;color:${b.isToday?'#fff':'#aaa'}">${b.name}</div>
+          <div style="font-size:10px;color:#94a3b8;margin-top:2px">${b.date}</div>
+          <div style="font-size:13px;font-weight:800;color:${b.isToday?'#2563eb':'#22c55e'};margin-top:4px">$${(shouldDouble?1000:500).toLocaleString()}</div>
+          ${b.isToday?'<div style="font-size:9px;color:#2563eb;margin-top:2px;font-weight:700">BUY TODAY</div>':''}
+        </div>`).join('')}
+    </div>
+    ${shouldDouble?`<div style="background:#111;border-left:3px solid #ef4444;border-radius:0 6px 6px 0;padding:9px 12px;font-size:12px;color:#f87171;font-weight:600">⚡ Aggressive DCA triggered — price is ${(dropFromLastDCA*100).toFixed(1)}% below last DCA buy ($${lastDCAPrice?.toLocaleString()}). Switch to $1,000/buy until price recovers or a new DCA buy is recorded.</div>`
+    : `<div style="background:#111;border-left:3px solid #22c55e;border-radius:0 6px 6px 0;padding:9px 12px;font-size:12px;color:#555">✓ Standard DCA. Doubles to $1,000/buy if price drops 9% from last DCA buy ($${lastDCAPrice?.toLocaleString()} → trigger at $${triggerPrice?.toLocaleString()}). Resets automatically when new buy recorded at lower level.</div>`}
+  </div>
+
+  <!-- PLAN STATUS -->
+  <div style="background:#111;border-radius:6px;padding:12px 16px;margin-bottom:10px">
+    <div style="font-size:11px;font-weight:700;color:${anchorColor};text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">📌 Plan Status — Score ${score}/100 · ${tier.label}</div>
+    <div style="font-size:12px;color:#666;line-height:1.5">${anchor}</div>
+  </div>
+
+  <!-- TRANCHE STATUS -->
+  <div class="chart-card" style="margin-bottom:10px">
+    <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Tranche Targets ${price?'· Live $'+Math.round(price).toLocaleString():''}</div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      ${(() => {
+        // Group sub-levels (T5a/b/c, T6a/b/c) into zone blocks
+        const groups = [];
+        let g = null;
+        trancheRows.forEach(t => {
+          const isSubLevel = /[abc]$/i.test(t.label);
+          const zoneKey = t.label.replace(/[abc]$/i, '');
+          if (isSubLevel) {
+            if (!g || g.key !== zoneKey) {
+              g = { key: zoneKey, rows: [], total: 0, isSingle: false };
+              groups.push(g);
+            }
+            g.rows.push(t);
+            g.total += (t.size || 0);
+          } else {
+            g = null;
+            groups.push({ key: t.label, rows: [t], total: t.size || 0, isSingle: true });
+          }
+        });
+
+        return groups.map(grp => {
+          if (grp.isSingle) {
+            const t = grp.rows[0];
+            const isSplit = t.note && t.note.includes('split 2 exchanges') && t.size;
+            const perEx = isSplit ? Math.round(t.size / 2).toLocaleString() : null;
+            return `
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;border:1.5px solid ${t.border};background:${t.bg}">
+              <div style="font-size:13px;font-weight:800;color:${t.color};min-width:52px">${t.label}</div>
+              <div style="font-size:14px;font-weight:700;color:#e5e5e5;min-width:72px">$${t.price.toLocaleString()}</div>
+              <div style="min-width:130px">
+                ${t.size ? `<div style="font-size:11px;color:#64748b">$${t.size.toLocaleString()} total</div>` : ''}
+                ${perEx ? `<div style="font-size:11px;color:#f97316;font-weight:600">$${perEx} × 2 exch</div>` : ''}
+              </div>
+              <div style="flex:1"></div>
+              ${t.dist && !t.filled ? `<div style="font-size:11px;color:${t.color};font-weight:600">${t.hit ? 'AT LEVEL' : '↓ '+t.dist+'% away'}</div>` : ''}
+              <div style="font-size:11px;font-weight:700;color:${t.color};min-width:80px;text-align:right">${t.status}</div>
+            </div>`;
+          } else {
+            const allFilled = grp.rows.every(r => r.filled);
+            const anyFilled = grp.rows.some(r => r.filled);
+            const gc = allFilled ? '#22c55e' : anyFilled ? '#f97316' : grp.rows[0].color;
+            const priceHigh = grp.rows[0].price.toLocaleString();
+            const priceLow  = grp.rows[grp.rows.length-1].price.toLocaleString();
+            const perLevel  = grp.rows[0].size ? '$'+grp.rows[0].size.toLocaleString()+'/level' : '';
+            return `
+            <div style="border:1.5px solid ${gc}33;border-radius:10px;overflow:hidden;background:#0d0d0d">
+              <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:${gc}12;border-bottom:1px solid ${gc}22">
+                <div style="font-size:12px;font-weight:800;color:${gc};min-width:52px">${grp.key} ZONE</div>
+                <div style="font-size:11px;color:#94a3b8">$${priceLow} – $${priceHigh} · ${grp.rows.length} levels · ${perLevel}</div>
+                <div style="flex:1"></div>
+                <div style="font-size:12px;font-weight:800;color:${gc}">$${grp.total.toLocaleString()} zone total</div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:3px;padding:5px 6px">
+                ${grp.rows.map(t => {
+                  const isSplit = t.note && t.note.includes('split 2 exchanges') && t.size;
+                  const perEx = isSplit ? Math.round(t.size / 2).toLocaleString() : null;
+                  return `
+                  <div style="display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:6px;border:1px solid ${t.border};background:${t.bg}">
+                    <div style="font-size:12px;font-weight:700;color:${t.color};min-width:52px">${t.label}</div>
+                    <div style="font-size:13px;font-weight:700;color:#e5e5e5;min-width:72px">$${t.price.toLocaleString()}</div>
+                    <div style="min-width:130px">
+                      ${t.size ? `<div style="font-size:11px;color:#64748b">$${t.size.toLocaleString()} total</div>` : ''}
+                      ${perEx ? `<div style="font-size:11px;color:#f97316;font-weight:600">$${perEx} × 2 exch</div>` : ''}
+                    </div>
+                    <div style="flex:1"></div>
+                    ${t.dist && !t.filled ? `<div style="font-size:11px;color:${t.color};font-weight:600">${t.hit ? 'AT LEVEL' : '↓ '+t.dist+'%'}</div>` : ''}
+                    <div style="font-size:11px;font-weight:700;color:${t.color};min-width:80px;text-align:right">${t.status}</div>
+                  </div>`;
+                }).join('')}
+              </div>
+            </div>`;
+          }
+        }).join('');
+      })()}
+    </div>
+    <div style="margin-top:10px;font-size:11px;color:#94a3b8">Tranche lines are drawn on the History chart. Mark filled=true in PLAN.tranches when a level executes.</div>
+  </div>
+
+  <!-- DCA ESCALATION MODE -->
+  <div class="chart-card" style="margin-bottom:10px">
+    <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">DCA Escalation Mode</div>
+    <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px">
+      ${(PLAN.dcaZones||[]).map((z,i) => {
+        const isActive = i === dcaZoneIndex;
+        const big3Met  = latestBig3 >= z.big3Req;
+        const locked   = isActive && z.big3Req > 0 && !big3Met;
+        const bg       = isActive ? (locked ? '#1a1000' : '#0d1a0d') : '#111';
+        const border   = isActive ? (locked ? '#92400e' : z.color) : '#222';
+        const labelCol = isActive ? (locked ? '#fbbf24' : z.color) : '#334155';
+        const priceLabel = i === 0
+          ? `Above $${(z.minPrice - 1).toLocaleString()}`
+          : i === (PLAN.dcaZones.length-1)
+            ? `Below $${z.minPrice.toLocaleString() === '0' ? (PLAN.dcaZones[i-1]?.minPrice||0).toLocaleString() : z.minPrice.toLocaleString()}`
+            : `$${z.minPrice.toLocaleString()} – $${((PLAN.dcaZones[i-1]?.minPrice||0)-1).toLocaleString()}`;
+        return `<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;border:1.5px solid ${border};background:${bg}">
+          <div style="width:8px;height:8px;border-radius:50%;background:${isActive?z.color:'#333'};flex-shrink:0"></div>
+          <div style="font-size:12px;font-weight:700;color:${labelCol};min-width:80px">${z.label}</div>
+          <div style="font-size:11px;color:#64748b;min-width:120px">${priceLabel}</div>
+          <div style="font-size:11px;font-weight:${isActive?'700':'400'};color:${isActive?(locked?'#fbbf24':z.color):'#475569'};flex:1">${z.perBuy}</div>
+          ${isActive && locked ? `<div style="font-size:10px;color:#fbbf24;font-weight:600">⚠ Awaiting Big 3 (${latestBig3}/${z.big3Req})</div>` : ''}
+          ${isActive && !locked ? `<div style="font-size:10px;color:${z.color};font-weight:700">● ACTIVE</div>` : ''}
+        </div>`;
+      }).join('')}
+    </div>
+    ${activeDcaZone ? `
+    <div style="background:#0f1a0f;border:1px solid #1a3a1a;border-radius:8px;padding:10px 12px">
+      <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Current Instruction</div>
+      <div style="font-size:12px;color:${activeDcaZone.color};font-weight:600">${activeDcaZone.action}</div>
+      ${activeDcaZone.big3Req > 0 && latestBig3 < activeDcaZone.big3Req ? `<div style="font-size:11px;color:#fbbf24;margin-top:4px">⚠ Big 3 confirmation required (${latestBig3}/${activeDcaZone.big3Req}) before switching to this mode</div>` : ''}
+    </div>` : ''}
+    <div style="margin-top:8px;font-size:11px;color:#475569">Remaining DCA budget: <strong style="color:#e5e5e5">$${((PLAN.dcaBudget||0)-(PLAN.dcaDeployed||0)).toLocaleString()}</strong> · Escalation triggers automatically on price zone entry</div>
+  </div>
+
+  <!-- BUY HISTORY -->
+  <div class="chart-card" style="margin-bottom:10px">
+    <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Buy History</div>
+    ${(()=>{
+      const buys = [...(PLAN.buys || [])].reverse();
+      const rows = buys.map(b => {
+        const usd = Math.round(b.price * b.qty);
+        const isTranche = (b.type === 'tranche') || (usd >= 1000);
+        const typeColor = isTranche ? '#f97316' : '#3b82f6';
+        const typeLabel = isTranche ? 'Tranche' : 'DCA';
+        const d = new Date(b.date + 'T12:00:00');
+        const dateStr = d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+        return `<tr style="border-bottom:1px solid #161616">
+          <td style="padding:7px 8px;color:#94a3b8;white-space:nowrap">${dateStr}</td>
+          <td style="padding:7px 8px"><span style="font-size:10px;font-weight:700;color:${typeColor};background:${typeColor}20;padding:2px 7px;border-radius:4px;white-space:nowrap">${typeLabel}</span></td>
+          <td style="padding:7px 8px;text-align:right;color:#64748b;font-variant-numeric:tabular-nums">$${b.price.toLocaleString()}</td>
+          <td style="padding:7px 8px;text-align:right;color:#cbd5e1;font-weight:600;font-variant-numeric:tabular-nums">${b.qty.toFixed(5)}</td>
+          <td style="padding:7px 8px;text-align:right;font-weight:700;color:${typeColor};font-variant-numeric:tabular-nums">$${usd.toLocaleString()}</td>
+        </tr>`;
+      }).join('');
+      const totalBtc = (PLAN.btcQty || 0).toFixed(4);
+      return `
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead>
+          <tr style="color:#475569;font-size:10px;text-transform:uppercase;letter-spacing:.06em">
+            <th style="text-align:left;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Date</th>
+            <th style="text-align:left;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Type</th>
+            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Price</th>
+            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">BTC</th>
+            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">USD</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div style="margin-top:10px;display:flex;gap:20px;flex-wrap:wrap;font-size:11px;padding:8px 4px;border-top:1px solid #1e1e1e">
+        <span style="color:#64748b">Tranches: <strong style="color:#f97316">$${(PLAN.trancheDeployed||0).toLocaleString()}</strong></span>
+        <span style="color:#64748b">DCA: <strong style="color:#3b82f6">$${(PLAN.dcaDeployed||0).toLocaleString()}</strong></span>
+        <span style="color:#64748b">BTC held: <strong style="color:#e5e5e5">${totalBtc} BTC</strong></span>
+        <span style="color:#64748b">Avg cost: <strong style="color:#e5e5e5">$${(PLAN.avgPrice||0).toLocaleString()}</strong></span>
+      </div>`;
+    })()}
+  </div>
+
+  <!-- MILESTONE COUNTDOWN -->
+  <div class="chart-card" style="margin-bottom:10px">
+    <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Next Milestone</div>
+    <div style="display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:6px;background:#111;border-left:3px solid ${milestone.color}">
+      <div style="font-size:32px;font-weight:900;color:${milestone.color};min-width:44px;text-align:center;line-height:1">${milestone.days}</div>
+      <div>
+        <div style="font-size:13px;font-weight:700;color:#e5e5e5">${milestone.label} <span style="color:#555;font-weight:400">· ${milestone.date}</span></div>
+        <div style="font-size:11px;color:#64748b;margin-top:3px">${milestone.note}</div>
+      </div>
+    </div>
+    ${daysToW35 > 0 ? `<div style="margin-top:8px;font-size:11px;color:#94a3b8">After W35: score multiplier lifts to 0.85×. After W44 (${daysToW44}d): full thresholds unlock — historical bottom zone.</div>` : `<div style="margin-top:8px;font-size:11px;color:#16a34a;font-weight:600">✓ In entering window. Watch for Stoch RSI compression + SOPR recovery as bottom confirmation.</div>`}
+  </div>
+
+  <!-- STRATEGY REMINDER -->
+  <div style="background:#0f172a;border-radius:10px;padding:14px 16px;color:#94a3b8;font-size:11px;line-height:1.7">
+    <div style="color:#e5e5e5;font-weight:700;margin-bottom:6px">Your Strategy in Plain Terms</div>
+    $500 × Sun/Tue/Thu every week regardless. If price drops 9%+ from the last DCA buy price, double to $1,000/buy. Resets automatically when a new buy is recorded at the lower level.
+    Tranches at $58K, $53K, $49K, $43K, $38K are set — they fill automatically when price hits them.
+    The emotional job of this dashboard: <span style="color:#60a5fa">remind you the plan is working when it feels like it isn't.</span>
+    Bear markets are won by people who don't panic. Your average cost matters more than any single entry.
+  </div>`;
+}
+
+// =====================================================================
+// TAB SWITCHING
+// =====================================================================
+let histLoaded = false;
+function switchTab(tab) {
+  ['today','plan','history'].forEach(t => {
+    const btn = document.getElementById('tab-btn-'+t);
+    const panel = document.getElementById('tab-'+t);
+    if (btn) btn.classList.toggle('active', t===tab);
+    if (panel) panel.classList.toggle('active', t===tab);
+  });
+  if (tab==='history' && !histLoaded) {
+    histLoaded = true;
+    setTimeout(() => renderHistory(), 60);
+  }
+  if (tab==='plan') {
+    // Render plan with latest live price if available
+    setTimeout(() => renderPlan(), 30);
+  }
+}
+
+// =====================================================================
+// INIT — no loading screen, no timeouts
+// History chart always shows immediately.
+// Cowork: also fetches Slack in background to populate Today tab.
+// GitHub Pages / local: Today tab hidden, History is default.
+// =====================================================================
+
+// Populate header from latest HISTORY_DATA (works everywhere)
+(function populateHeader() {
+  var latest = HISTORY_DATA.length ? HISTORY_DATA[HISTORY_DATA.length - 1] : null;
+  if (!latest) return;
+  var el;
+  el = document.getElementById('sig-dot');   if (el) el.style.background = sigColor(latest.signal);
+  el = document.getElementById('sig-text');  if (el) el.textContent = sigLabel(latest.signal) + ' — Week ' + latest.week;
+  el = document.getElementById('hdr-price'); if (el && !livePrice) el.textContent = '$' + latest.price.toLocaleString();
+  el = document.getElementById('hdr-week');  if (el) el.textContent = latest.week;
+  el = document.getElementById('hdr-phase'); if (el) {
+    var phMap = { EARLY_BEAR:'EARLY BEAR', ENTERING_WINDOW:'ENTERING WINDOW', BOTTOM_WINDOW:'BOTTOM WINDOW', EXTENDED:'EXTENDED' };
+    el.textContent = phMap[latest.phase] || latest.phase;
+    el.className = 'phase-badge ' + phaseClass(phMap[latest.phase] || '');
+  }
+  el = document.getElementById('action-text');
+  if (el) el.textContent = 'Last tracked ' + latest.date + ' — MVRV ' + latest.mvrv + ' · F&G ' + latest.fearGreed + ' · Conf ' + latest.bottomConf + '/8';
+})();
+
+// Adapter: converts compact HISTORY_DATA entry → renderToday() format
+function histToTodayData(h) {
+  const sigLabelMap = {
+    EXTREME_ACCUM:'EXTREME ACCUM', STRONG_ACCUM:'STRONG ACCUM',
+    ACCUM_BOTTOM:'ACCUMULATE', WATCH:'WATCH',
+    NEUTRAL:'NEUTRAL', ELEVATED:'ELEVATED', EUPHORIC:'EUPHORIC'
+  };
+  const sigDotMap = {
+    EXTREME_ACCUM:'darkgreen', STRONG_ACCUM:'green',
+    ACCUM_BOTTOM:'blue', WATCH:'gray', NEUTRAL:'gray',
+    ELEVATED:'orange', EUPHORIC:'red'
+  };
+  const phMap = {
+    EARLY_BEAR:'Early Bear', ENTERING_WINDOW:'Entering Window',
+    BOTTOM_WINDOW:'Bottom Window', EXTENDED:'Extended'
+  };
+  // Big 3 display based on count
+  const big3Names = ['Hash Ribbons','SOPR Recovery','Monthly Stoch RSI'];
+  const big3Count = parseInt(h.big3) || 0;
+  const big3Arr = big3Names.map((name, i) => ({
+    name,
+    color: i < big3Count ? 'green' : 'gray',
+    status: i < big3Count ? 'Confirmed 🟢' : 'Not yet triggered'
+  }));
+
+  return {
+    signalDotColor: sigDotMap[h.signal] || 'gray',
+    signal: sigLabelMap[h.signal] || h.signal || '—',
+    price: '$' + (h.price||0).toLocaleString(),
+    week: h.week,
+    phase: phMap[h.phase] || h.phase || '—',
+    action: 'Snapshot ' + h.date,
+    big3: big3Arr,
+    bottomConf: (h.bottomConf||0) + '/8',
+    bottomGreen: [],
+    bottomYellow: [],
+    mvrv:       h.mvrv  != null ? String(h.mvrv)      : null,
+    puell:      h.puell != null ? String(h.puell)     : null,
+    fearGreed:  h.fearGreed != null ? String(h.fearGreed) : null,
+    reserveRisk: null, realizedPrice: h.realizedPrice||null, realizedDiff: h.realizedDiff||null, piCycle: h.piCycle||null,
+    monthlyRsi: h.monthlyRsi ? '~'+h.monthlyRsi : null, weeklyRsi: h.weeklyRsi ? '~'+h.weeklyRsi : null,
+    macd: h.macd||null, macdColor: h.macdColor||'gray',
+    ma200: h.ma200||null, ma200Color: h.ma200Color||'gray',
+    etf: h.etf||null, etfColor: h.etfColor||'gray',
+    dxy: h.dxy||null, dxyColor: h.dxyColor||'gray',
+    m2: h.m2||null, m2Color: h.m2Color||'gray',
+    fed: h.fed||null, fedColor: h.fedColor||'gray',
+    timestamp: h.date
+  };
+}
+
+// Today tab renders from latest HISTORY_DATA entry (qualitative fields stored inline).
+(function() {
+  var latest = HISTORY_DATA[HISTORY_DATA.length - 1];
+  if (latest) {
+    renderToday(histToTodayData(latest));
+    // Set last-updated date
+    var lu = document.getElementById('last-updated');
+    if (lu) {
+      var now = new Date();
+      var hh = now.getHours(), mm = now.getMinutes();
+      var ampm = hh >= 12 ? 'pm' : 'am';
+      hh = hh % 12 || 12;
+      var timeStr = hh + ':' + String(mm).padStart(2,'0') + ampm;
+      lu.textContent = latest.date + ' · ' + timeStr;
+    }
+  }
+  fetchLiveFG();
+  startLivePriceWS();
+})();
+switchTab('today');
+
+// =====================================================================
+// BOTTOM PATH MONITOR — Live signal fetcher
+// =====================================================================
+window._apathyLive = { funding: null, volume: null };
+
+async function fetchApathyLiveSignals() {
+  try {
+    // Funding rates — last 21 periods (8h each ≈ 7 days)
+    const fr = await fetch('https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&limit=21');
+    const fd = await fr.json();
+    if (Array.isArray(fd) && fd.length) {
+      const avg = fd.reduce((s, d) => s + parseFloat(d.fundingRate), 0) / fd.length;
+      window._apathyLive.funding = { avg, neutral: avg <= 0.0001 };
+    }
+  } catch(e) { window._apathyLive.funding = null; }
+
+  try {
+    // Volume character — 14 daily candles [o,h,l,c,vol in BTC]
+    const kr = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=14');
+    const kd = await kr.json();
+    if (Array.isArray(kd) && kd.length >= 7) {
+      const upDays = kd.filter(c => parseFloat(c[4]) >= parseFloat(c[1]));
+      const dnDays = kd.filter(c => parseFloat(c[4]) <  parseFloat(c[1]));
+      const avgUp  = upDays.length ? upDays.reduce((s,c) => s + parseFloat(c[5]), 0) / upDays.length : 0;
+      const avgDn  = dnDays.length ? dnDays.reduce((s,c) => s + parseFloat(c[5]), 0) / dnDays.length : 0;
+      window._apathyLive.volume = { avgUp, avgDn, good: avgDn > 0 && avgUp > avgDn * 1.15 };
+    }
+  } catch(e) { window._apathyLive.volume = null; }
+
+  renderApathyMonitor();
+}
+
+// =====================================================================
+// BOTTOM PATH MONITOR — Classic track vs Apathy track
+// =====================================================================
+function renderApathyMonitor() {
+  const el = document.getElementById('apathy-monitor');
+  if (!el || !HISTORY_DATA.length) return;
+
+  const prices  = HISTORY_DATA.map(d => d.price).filter(Boolean);
+  const mvrvArr = HISTORY_DATA.map(d => parseFloat(d.mvrv)).filter(n => !isNaN(n));
+  const latest  = HISTORY_DATA[HISTORY_DATA.length - 1];
+  const bearWeek = Math.max(1, Math.floor((Date.now() - new Date(ATH_DATE).getTime()) / (7*86400000)) + 1);
+  const classicScore = latest ? (parseInt(latest.bottomConf) || 0) : 0;
+
+  const tog = k => localStorage.getItem('apath_' + k) === '1';
+  const sd  = arr => { if(arr.length<2) return 0; const m=arr.reduce((a,b)=>a+b,0)/arr.length; return Math.sqrt(arr.map(x=>(x-m)**2).reduce((a,b)=>a+b,0)/arr.length); };
+
+  // ── Auto signals ────────────────────────────────────────────────
+  // 1. Range Hold: no new cycle low in last ~3 weeks of data points
+  const recentPx = prices.slice(-21), priorPx = prices.slice(0,-21);
+  const recentMin = Math.min(...recentPx);
+  const priorMin  = priorPx.length ? Math.min(...priorPx) : recentMin + 1;
+  const rangeHeld = prices.length >= 14 && recentMin >= priorMin * 0.98;
+
+  // 2. Vol Compression: std dev of last 14 entries < prior 14
+  const vol14 = sd(prices.slice(-14));
+  const vol28 = prices.length >= 28 ? sd(prices.slice(-28,-14)) : vol14 * 2;
+  const volComp = vol14 > 0 && vol14 < vol28 * 0.80;
+
+  // 3. MVRV Recovering: 7-day avg rising vs prior 7-day avg
+  const mvrv7  = mvrvArr.length >= 7  ? mvrvArr.slice(-7).reduce((a,b)=>a+b,0)/7 : null;
+  const mvrv7p = mvrvArr.length >= 14 ? mvrvArr.slice(-14,-7).reduce((a,b)=>a+b,0)/7 : null;
+  const mvrvUp = mvrv7 && mvrv7p && mvrv7 > mvrv7p;
+
+  // 4. Floor Tested 3+ Times: price revisited cycle low zone multiple times — still holding
+  const cycleLow  = Math.min(...prices);
+  const floorZone = cycleLow * 1.07;
+  const floorTests= prices.filter(p => p <= floorZone).length;
+  const floorHeld = floorTests >= 3; // 3+ bounces off the floor = confirmation regardless of current position
+
+  // 5. Time Signal: Week 44+ = inside historical bottom window
+  const timeSignal = bearWeek >= 44;
+
+  const signals = [
+    { key:'range',   label:'Range Hold',          auto:true,  active:rangeHeld,
+      desc: rangeHeld   ? 'No new cycle low in 3+ weeks — floor forming'                              : 'Price still making new lows — floor not confirmed' },
+    { key:'vol',     label:'Vol Compression',      auto:true,  active:volComp,
+      desc: volComp     ? `Price range tightening (σ ${Math.round(vol14/1000)}K vs ${Math.round(vol28/1000)}K)` : 'Volatility still elevated — no compression yet' },
+    { key:'mvrv',    label:'MVRV Recovering',      auto:true,  active:!!mvrvUp,
+      desc: mvrvUp      ? `MVRV 7-day avg rising: ${mvrv7?.toFixed(2)} vs ${mvrv7p?.toFixed(2)} prior` : `MVRV trend still declining (${mvrv7?.toFixed(2)||'N/A'})` },
+    { key:'floor',   label:'Floor Tests ×3+',      auto:true,  active:floorHeld,
+      desc: floorHeld   ? `${floorTests} visits to $${Math.round(cycleLow).toLocaleString()} low — held each time` : `${floorTests}/3 floor tests · low $${Math.round(cycleLow).toLocaleString()}` },
+    { key:'time',    label:'Week 44+ Window',       auto:true,  active:timeSignal,
+      desc: timeSignal  ? `Week ${bearWeek} — inside historical bottom zone`                           : `Week ${bearWeek} — bottom window opens W44 (${44-bearWeek} wks away)` },
+    (()=>{ const f=window._apathyLive.funding; return {
+      key:'funding', label:'Funding Neutral/−',
+      auto:!!f, live:!!f,
+      active: f ? f.neutral : tog('funding'),
+      desc: f
+        ? (f.neutral
+            ? `7-day avg funding ${(f.avg*100).toFixed(4)}% — neutral/negative ✓`
+            : `7-day avg funding ${(f.avg*100).toFixed(4)}% — elevated, longs still paying`)
+        : 'Loading from Binance…' };
+    })(),
+    { key:'flows', label:'Exchange Outflows', auto:false, live:false, active:tog('flows'),
+      desc: tog('flows')
+        ? 'BTC net outflows confirmed — smart money accumulating'
+        : 'Check CryptoQuant or Glassnode · flip on if net outflows sustained 10+ days' },
+    (()=>{ const v=window._apathyLive.volume; return {
+      key:'volume', label:'Volume Character',
+      auto:!!v, live:!!v,
+      active: v ? v.good : tog('volume'),
+      desc: v
+        ? (v.good
+            ? `Up-day avg ${(v.avgUp/1000).toFixed(0)}K BTC vs down-day ${(v.avgDn/1000).toFixed(0)}K — buyers in control ✓`
+            : `Down-day avg ${(v.avgDn/1000).toFixed(0)}K BTC vs up-day ${(v.avgUp/1000).toFixed(0)}K — sellers still dominant`)
+        : 'Loading from Binance…' };
+    })(),
+  ];
+
+  const apathyScore = signals.filter(s => s.active).length;
+  const combined    = classicScore + apathyScore;
+
+  // ── Action line ─────────────────────────────────────────────────
+  // Auto score = signals that fire without human input (can't be gamed)
+  const autoScore = signals.filter(s => s.auto && s.active).length;
+  let action, ac, ab, ae;
+  if (classicScore >= 6 || (apathyScore >= 6 && autoScore >= 4)) {
+    action='PILE IN — Cancel orders below current price. Redeploy into spot or compress ladder to $52–56K.'; ac='#4ade80'; ab='#16a34a'; ae='🟢';
+  } else if (classicScore >= 5 || (apathyScore >= 5 && autoScore >= 3)) {
+    action='WATCH — Review orders below $47K. Consider canceling T6c/T7. Bottom may form without full capitulation.'; ac='#fb923c'; ab='#ea580c'; ae='🟠';
+  } else if (combined >= 7) {
+    action='BUILDING — Both tracks advancing. Hold full ladder. DCA at current pace.'; ac='#fbbf24'; ab='#d97706'; ae='🟡';
+  } else {
+    action='HOLD LADDER — Signals early. Keep all orders set. DCA $500/buy. Patience is the edge.'; ac='#64748b'; ab='#334155'; ae='⚪';
+  }
+
+  el.innerHTML = `
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+    <div style="background:#141414;border:1px solid #2a2a2a;border-radius:10px;padding:13px">
+      <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Classic Track</div>
+      <div style="font-size:26px;font-weight:800;color:${classicScore>=6?'#22c55e':classicScore>=4?'#f97316':'#94a3b8'}">${classicScore}<span style="font-size:12px;color:#64748b">/8</span></div>
+      <div style="display:flex;gap:2px;margin:7px 0 5px">${Array.from({length:8},(_,i)=>`<div style="flex:1;height:4px;border-radius:2px;background:${i<classicScore?'#22c55e':'#2a2a2a'}"></div>`).join('')}</div>
+      <div style="font-size:10px;color:#64748b">MVRV · Puell · F&G · Big 3 · Timing</div>
+      <div style="font-size:10px;color:#475569;margin-top:3px">Requires deep capitulation signals</div>
+    </div>
+    <div style="background:#141414;border:1px solid #2a2a2a;border-radius:10px;padding:13px">
+      <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Apathy Track</div>
+      <div style="font-size:26px;font-weight:800;color:${apathyScore>=5?'#22c55e':apathyScore>=3?'#06b6d4':'#94a3b8'}">${apathyScore}<span style="font-size:12px;color:#64748b">/8</span></div>
+      <div style="display:flex;gap:2px;margin:7px 0 5px">${Array.from({length:8},(_,i)=>`<div style="flex:1;height:4px;border-radius:2px;background:${i<apathyScore?'#06b6d4':'#2a2a2a'}"></div>`).join('')}</div>
+      <div style="font-size:10px;color:#64748b">Range · Vol · MVRV · Floor · Time</div>
+      <div style="font-size:10px;color:#475569;margin-top:3px">Bottom without blow-off top pattern</div>
+    </div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:3px;margin-bottom:8px">
+    ${signals.map(s=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#111;border-radius:6px;border:1px solid ${s.active?(s.auto?'#164e63':'#14532d'):'#1a1a1a'}">
+      <div style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${s.active?(s.auto?'#06b6d4':'#22c55e'):'#2a2a2a'}"></div>
+      <div style="flex:1;min-width:0">
+        <span style="font-size:12px;font-weight:600;color:${s.active?'#f1f5f9':'#64748b'}">${s.label}</span>
+        <span style="font-size:9px;color:${s.live?'#0891b2':s.auto?'#475569':'#475569'};margin-left:6px">${s.live?'LIVE API':s.auto?'AUTO':'MANUAL'}</span>
+        <div style="font-size:11px;color:${s.active?'#94a3b8':'#475569'};margin-top:2px">${s.desc}</div>
+      </div>
+      ${!s.auto?`<div onclick="apathyToggle('${s.key}')" style="width:36px;height:20px;border-radius:10px;background:${s.active?'#0e7490':'#222'};position:relative;cursor:pointer;flex-shrink:0;transition:background .15s;border:1px solid ${s.active?'#0891b2':'#333'}"><div style="position:absolute;top:2px;left:${s.active?'15px':'2px'};width:14px;height:14px;border-radius:50%;background:#fff;transition:left .15s"></div></div>`:''}
+    </div>`).join('')}
+  </div>
+  <div style="background:#111;border-left:3px solid ${ab};border-radius:0 8px 8px 0;padding:12px 14px">
+    <div style="font-size:10px;font-weight:700;color:#64748b;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">Order Strategy</div>
+    <div style="font-size:13px;font-weight:700;color:${ac}">${ae} ${action}</div>
+  </div>`;
+}
+
+window.apathyToggle = function(key) {
+  localStorage.setItem('apath_' + key, localStorage.getItem('apath_' + key) === '1' ? '0' : '1');
+  renderApathyMonitor();
+};
+
+renderApathyMonitor();
+// Fetch live signals immediately and refresh every 30 min
+fetchApathyLiveSignals();
+setInterval(fetchApathyLiveSignals, 30 * 60 * 1000);
+</script>
+</body>
+</html>
