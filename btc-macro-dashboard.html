@@ -2760,6 +2760,154 @@ renderApathyMonitor();
 // Fetch live signals immediately and refresh every 30 min
 fetchApathyLiveSignals();
 setInterval(fetchApathyLiveSignals, 30 * 60 * 1000);
+
+// =====================================================================
+// ALERT SYSTEM — Mid-cycle rally + strategy change notifications
+// =====================================================================
+const _sdUtil = arr => { if(arr.length<2) return 0; const m=arr.reduce((a,b)=>a+b,0)/arr.length; return Math.sqrt(arr.map(x=>(x-m)**2).reduce((a,b)=>a+b,0)/arr.length); };
+
+function computeAlertState() {
+  if (!HISTORY_DATA.length) return null;
+  const latest   = HISTORY_DATA[HISTORY_DATA.length - 1];
+  const prices   = HISTORY_DATA.map(d => d.price).filter(Boolean);
+  const mvrvArr  = HISTORY_DATA.map(d => parseFloat(d.mvrv)).filter(n => !isNaN(n));
+  const cycleLow = Math.min(...prices);
+  const currentPrice = livePrice || latest?.price || 0;
+  const classicScore = parseInt(latest?.bottomConf) || 0;
+  const big3Count    = parseInt(latest?.big3) || 0;
+  const bearWeek     = Math.max(1, Math.floor((Date.now() - new Date(ATH_DATE).getTime()) / (7*86400000)) + 1);
+
+  // Recompute apathy signals (mirrors renderApathyMonitor)
+  const recentPx  = prices.slice(-21), priorPx = prices.slice(0,-21);
+  const rangeHeld = prices.length >= 14 && Math.min(...recentPx) >= (priorPx.length ? Math.min(...priorPx) : Math.min(...recentPx)+1) * 0.98;
+  const vol14 = _sdUtil(prices.slice(-14));
+  const vol28 = prices.length >= 28 ? _sdUtil(prices.slice(-28,-14)) : vol14 * 2;
+  const volComp = vol14 > 0 && vol14 < vol28 * 0.80;
+  const mvrv7   = mvrvArr.length >= 7  ? mvrvArr.slice(-7).reduce((a,b)=>a+b,0)/7 : null;
+  const mvrv7p  = mvrvArr.length >= 14 ? mvrvArr.slice(-14,-7).reduce((a,b)=>a+b,0)/7 : null;
+  const mvrvUp  = mvrv7 && mvrv7p && mvrv7 > mvrv7p;
+  const floorTests = prices.filter(p => p <= cycleLow * 1.07).length;
+  const timeSignal = bearWeek >= 44;
+  const autoCount  = [rangeHeld, volComp, !!mvrvUp, floorTests >= 3, timeSignal].filter(Boolean).length;
+  const manualCount= ['funding','flows','volume'].filter(k => localStorage.getItem('apath_'+k)==='1').length;
+  const apathyScore = autoCount + manualCount;
+
+  // Action level
+  let actionLevel = 'HOLD';
+  if      (classicScore >= 6 || (apathyScore >= 6 && autoCount >= 4)) actionLevel = 'PILE_IN';
+  else if (classicScore >= 5 || (apathyScore >= 5 && autoCount >= 3)) actionLevel = 'WATCH';
+  else if (classicScore + apathyScore >= 7)                            actionLevel = 'BUILDING';
+
+  const rallyPct  = cycleLow > 0 ? (currentPrice - cycleLow) / cycleLow : 0;
+  const midRally  = rallyPct >= 0.20 && classicScore < 4;
+
+  return { classicScore, apathyScore, big3Count, actionLevel, midRally,
+           rallyPct: Math.round(rallyPct*100), cycleLow: Math.round(cycleLow),
+           currentPrice: Math.round(currentPrice), bearWeek };
+}
+
+function buildAlerts(curr, prev) {
+  const alerts = [];
+
+  // 1. Mid-cycle rally risk
+  if (curr.midRally) {
+    alerts.push({ level:'warn', icon:'⚠️', title:'Mid-Cycle Rally Risk',
+      body:`Price is ${curr.rallyPct}% above the cycle low ($${curr.cycleLow.toLocaleString()}) but Classic signals haven't confirmed (${curr.classicScore}/8). This matches bear market relief rally patterns — 2–3 of these are normal before the real bottom.`,
+      action:'Keep all tranche orders set. Do not touch the $61K reserve. DCA unchanged at $500/buy.' });
+  }
+
+  // 2. Action level changed
+  if (prev && curr.actionLevel !== prev.actionLevel) {
+    if (curr.actionLevel === 'WATCH')
+      alerts.push({ level:'orange', icon:'🟠', title:'Strategy Shift → WATCH',
+        body:`Bottom Path Monitor crossed WATCH. Signals are building enough to suggest the bottom may form without full classic capitulation.`,
+        action:'Review orders below $47K. Consider canceling T6c/T7. Consider bumping DCA to $750/buy.' });
+    else if (curr.actionLevel === 'PILE_IN')
+      alerts.push({ level:'green', icon:'🟢', title:'Strategy Shift → PILE IN',
+        body:`Confirmation reached PILE IN threshold. Both timing and signals align for maximum allocation.`,
+        action:'Cancel orders below current price. Deploy $61K reserve in $52–56K range. Switch DCA to $1,500/buy.' });
+    else if (curr.actionLevel === 'BUILDING')
+      alerts.push({ level:'yellow', icon:'🟡', title:'Both Tracks Advancing',
+        body:`Classic (${curr.classicScore}/8) and Apathy (${curr.apathyScore}/8) both building. Not action territory yet but trajectory is positive.`,
+        action:'Hold ladder. DCA $500/buy. Watch for Range Hold and funding rate signals next.' });
+  }
+
+  // 3. Classic score jumped 2+
+  if (prev && curr.classicScore >= prev.classicScore + 2)
+    alerts.push({ level:'info', icon:'📈', title:`Classic Track: ${prev.classicScore} → ${curr.classicScore}/8`,
+      body:`Multiple classic capitulation signals fired since last check. Meaningful advance.`,
+      action: curr.classicScore >= 4 ? 'Getting serious. Watch Big 3 closely — they unlock full deployment.' : 'Progress but score needs 5+ for WATCH action.' });
+
+  // 4. Big 3 advanced
+  if (prev && curr.big3Count > prev.big3Count)
+    alerts.push({ level:'green', icon:'🎯', title:`Big 3 Advanced: ${curr.big3Count}/3 Active`,
+      body:`A Big 3 trigger just fired. ${3 - curr.big3Count} remaining before max allocation unlocks.`,
+      action: curr.big3Count >= 2 ? 'Start sizing up. Consider moving reserve deployment forward.' : 'Hold ladder. Continue DCA.' });
+
+  // 5. Apathy at 5+ (meaningful threshold)
+  if (curr.apathyScore >= 5 && (!prev || prev.apathyScore < 5))
+    alerts.push({ level:'info', icon:'👁️', title:`Apathy Track at ${curr.apathyScore}/8 — Elevated`,
+      body:`Apathy signals at a level where action becomes realistic. This cycle topped on apathy — it could bottom the same way.`,
+      action:'Review lower tranches ($43–47K). Bottom may form without classic capitulation.' });
+
+  return alerts;
+}
+
+function showAlertModal(alerts, curr) {
+  window._alertCurr = curr;
+  const colors = { warn:'#d97706', orange:'#ea580c', green:'#16a34a', yellow:'#ca8a04', info:'#1d4ed8' };
+  const textColors = { warn:'#fbbf24', orange:'#fb923c', green:'#4ade80', yellow:'#fde047', info:'#60a5fa' };
+  const html = alerts.map(a => `
+    <div style="border-left:3px solid ${colors[a.level]};padding:12px 14px;background:#141414;border-radius:0 8px 8px 0;margin-bottom:8px">
+      <div style="font-size:13px;font-weight:700;color:${textColors[a.level]};margin-bottom:5px">${a.icon} ${a.title}</div>
+      <div style="font-size:12px;color:#94a3b8;line-height:1.55;margin-bottom:7px">${a.body}</div>
+      <div style="font-size:11px;font-weight:600;color:#64748b;border-top:1px solid #1e293b;padding-top:6px">→ ${a.action}</div>
+    </div>`).join('');
+  document.getElementById('alert-modal-body').innerHTML =
+    `<div style="font-size:10px;color:#475569;margin-bottom:12px;border-bottom:1px solid #1a1a1a;padding-bottom:10px">Week ${curr.bearWeek} · BTC $${curr.currentPrice.toLocaleString()} · ${new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>${html}`;
+  document.getElementById('alert-modal').style.display = 'flex';
+}
+
+window.dismissAlerts = function() {
+  if (window._alertCurr) localStorage.setItem('btc_alert_dismissed', JSON.stringify({ actionLevel: window._alertCurr.actionLevel, midRally: window._alertCurr.midRally, big3Count: window._alertCurr.big3Count, classicScore: window._alertCurr.classicScore, apathyScore5: window._alertCurr.apathyScore >= 5 }));
+  document.getElementById('alert-modal').style.display = 'none';
+};
+
+function checkAndShowAlerts() {
+  const curr = computeAlertState();
+  if (!curr) return;
+  let prev = null, dismissed = null;
+  try { prev = JSON.parse(localStorage.getItem('btc_alert_state') || 'null'); } catch(e) {}
+  try { dismissed = JSON.parse(localStorage.getItem('btc_alert_dismissed') || 'null'); } catch(e) {}
+  localStorage.setItem('btc_alert_state', JSON.stringify(curr));
+
+  const alerts = buildAlerts(curr, prev);
+  if (!alerts.length) return;
+
+  // Suppress if already dismissed for same state
+  const alreadySeen = dismissed &&
+    dismissed.actionLevel  === curr.actionLevel &&
+    dismissed.midRally     === curr.midRally &&
+    dismissed.big3Count    === curr.big3Count &&
+    dismissed.classicScore === curr.classicScore &&
+    dismissed.apathyScore5 === (curr.apathyScore >= 5);
+  if (!alreadySeen) showAlertModal(alerts, curr);
+}
+
+// Run after all signals computed (slight delay lets live price settle)
+setTimeout(checkAndShowAlerts, 2000);
 </script>
+
+<!-- ALERT MODAL -->
+<div id="alert-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#0d0d0d;border:1px solid #2a2a2a;border-radius:14px;width:100%;max-width:500px;padding:22px;max-height:82vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.8)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="font-size:15px;font-weight:700;color:#e5e5e5">⚡ Dashboard Alert</div>
+      <button onclick="dismissAlerts()" style="background:none;border:none;color:#555;font-size:22px;cursor:pointer;line-height:1;padding:0 2px">&times;</button>
+    </div>
+    <div id="alert-modal-body"></div>
+    <button onclick="dismissAlerts()" style="width:100%;margin-top:14px;padding:11px;background:#141414;border:1px solid #2a2a2a;border-radius:8px;color:#94a3b8;font-size:12px;font-weight:600;cursor:pointer;letter-spacing:.02em">Got it — dismiss until something changes</button>
+  </div>
+</div>
 </body>
 </html>
