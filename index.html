@@ -471,7 +471,7 @@ const PLAN = {
     { minPrice: 41000, label: 'Heavy',      color: '#ef4444', amount: 1500, perBuy: '$1,500/buy', action: 'T6 zone — increase cadence, flag remaining DCA budget for lump sum',     big3Req: 1 },
     { minPrice: 0,     label: 'Lump Sum',   color: '#22c55e', amount: null, perBuy: 'Lump sum',   action: 'HALT weekly DCA — redeploy remaining DCA budget as T7 tranche if Big 3 confirmed', big3Req: 2 },
   ],
-  doubleDropPct:     0.08,
+  doubleDropPct:     0.09,
   btcQty:       0.3684,    // total BTC acquired — updated Jun 25 2026 10:31pm
   avgPrice:    61749,      // weighted avg cost basis — updated Jun 25 2026 10:31pm
   buys: [
@@ -2129,11 +2129,13 @@ function renderPlan() {
   });
 
   // ── Double DCA trigger ───────────────────────────────────────────
-  const prevPrice    = HISTORY_DATA.length > 1 ? HISTORY_DATA[HISTORY_DATA.length-2].price : null;
-  const weeklyDrop   = price && prevPrice ? (prevPrice - price) / prevPrice : 0;
-  const shouldDouble = weeklyDrop >= PLAN.doubleDropPct;
-  const dcaAmount    = shouldDouble ? PLAN.dcaDouble : PLAN.dcaWeekly;
-  const dcaLabel     = shouldDouble ? '$1,000/buy · AGGRESSIVE MODE' : '$500/buy · standard';
+  const lastDCABuy      = [...PLAN.buys].reverse().find(b => b.type === 'dca');
+  const lastDCAPrice    = lastDCABuy ? lastDCABuy.price : null;
+  const dropFromLastDCA = price && lastDCAPrice ? (lastDCAPrice - price) / lastDCAPrice : 0;
+  const triggerPrice    = lastDCAPrice ? Math.round(lastDCAPrice * (1 - PLAN.doubleDropPct)) : null;
+  const shouldDouble    = dropFromLastDCA >= PLAN.doubleDropPct;
+  const dcaAmount       = shouldDouble ? PLAN.dcaDouble : PLAN.dcaWeekly;
+  const dcaLabel        = shouldDouble ? '$1,000/buy · AGGRESSIVE MODE' : '$500/buy · standard';
 
   // ── DCA Zone escalation ──────────────────────────────────────────
   const latestBig3  = HISTORY_DATA.length ? (HISTORY_DATA[HISTORY_DATA.length-1].big3 || 0) : 0;
@@ -2241,8 +2243,8 @@ function renderPlan() {
           ${b.isToday?'<div style="font-size:9px;color:#2563eb;margin-top:2px;font-weight:700">BUY TODAY</div>':''}
         </div>`).join('')}
     </div>
-    ${shouldDouble?`<div style="background:#111;border-left:3px solid #ef4444;border-radius:0 6px 6px 0;padding:9px 12px;font-size:12px;color:#f87171;font-weight:600">⚡ Aggressive DCA triggered — price dropped ${(weeklyDrop*100).toFixed(1)}% recently. Switch to $1,000/buy this week.</div>`
-    : `<div style="background:#111;border-left:3px solid #22c55e;border-radius:0 6px 6px 0;padding:9px 12px;font-size:12px;color:#555">✓ Standard DCA. Switch to $1,000/buy if price drops ${(PLAN.doubleDropPct*100).toFixed(0)}%+ in a week or hits $59K.</div>`}
+    ${shouldDouble?`<div style="background:#111;border-left:3px solid #ef4444;border-radius:0 6px 6px 0;padding:9px 12px;font-size:12px;color:#f87171;font-weight:600">⚡ Aggressive DCA triggered — price is ${(dropFromLastDCA*100).toFixed(1)}% below last DCA buy ($${lastDCAPrice?.toLocaleString()}). Switch to $1,000/buy until price recovers or a new DCA buy is recorded.</div>`
+    : `<div style="background:#111;border-left:3px solid #22c55e;border-radius:0 6px 6px 0;padding:9px 12px;font-size:12px;color:#555">✓ Standard DCA. Doubles to $1,000/buy if price drops 9% from last DCA buy ($${lastDCAPrice?.toLocaleString()} → trigger at $${triggerPrice?.toLocaleString()}). Resets automatically when new buy recorded at lower level.</div>`}
   </div>
 
   <!-- PLAN STATUS -->
@@ -2427,7 +2429,7 @@ function renderPlan() {
   <!-- STRATEGY REMINDER -->
   <div style="background:#0f172a;border-radius:10px;padding:14px 16px;color:#94a3b8;font-size:11px;line-height:1.7">
     <div style="color:#e5e5e5;font-weight:700;margin-bottom:6px">Your Strategy in Plain Terms</div>
-    $500 × Sun/Tue/Thu every week regardless. If price drops hard (8%+ in a week), double to $1,000/buy.
+    $500 × Sun/Tue/Thu every week regardless. If price drops 9%+ from the last DCA buy price, double to $1,000/buy. Resets automatically when a new buy is recorded at the lower level.
     Tranches at $58K, $53K, $49K, $43K, $38K are set — they fill automatically when price hits them.
     The emotional job of this dashboard: <span style="color:#60a5fa">remind you the plan is working when it feels like it isn't.</span>
     Bear markets are won by people who don't panic. Your average cost matters more than any single entry.
