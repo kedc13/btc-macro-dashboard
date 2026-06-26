@@ -297,6 +297,29 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <button class="hnav-btn active" id="tab-btn-history" onclick="switchTab('history')">Signals</button>
       <button class="hnav-btn"        id="tab-btn-plan"    onclick="switchTab('plan')">My Plan</button>
     </div>
+    <!-- Bell icon -->
+    <div style="position:relative;flex-shrink:0;margin-left:6px">
+      <button id="alert-bell-btn" onclick="toggleAlertSidebar()" title="Alert history" style="width:36px;height:36px;border-radius:50%;border:1px solid #2a2a2a;background:#111;color:#94a3b8;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s" onmouseover="this.style.borderColor='#444';this.style.color='#e5e5e5'" onmouseout="this.style.borderColor='#2a2a2a';this.style.color='#94a3b8'">🔔</button>
+      <div id="alert-badge" style="display:none;position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;background:#ef4444;border-radius:9px;font-size:10px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid #0a0a0a;pointer-events:none">0</div>
+    </div>
+  </div>
+
+  <!-- Alert sidebar backdrop -->
+  <div id="alert-backdrop" onclick="toggleAlertSidebar()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:4998"></div>
+
+  <!-- Alert sidebar -->
+  <div id="alert-sidebar" style="position:fixed;top:0;right:-380px;bottom:0;width:380px;background:#0d0d0d;border-left:1px solid #222;z-index:4999;transition:right .22s ease;display:flex;flex-direction:column;overflow:hidden">
+    <div style="padding:18px 18px 14px;border-bottom:1px solid #1a1a1a;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:#e5e5e5">⚡ Alert History</div>
+        <div style="font-size:10px;color:#475569;margin-top:2px">Alerts are saved as they fire. Click any to expand.</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button onclick="clearAlertHistory()" style="font-size:10px;color:#475569;background:none;border:1px solid #222;border-radius:5px;padding:4px 8px;cursor:pointer">Clear all</button>
+        <button onclick="toggleAlertSidebar()" style="background:none;border:none;color:#555;font-size:22px;cursor:pointer;line-height:1;padding:0">&times;</button>
+      </div>
+    </div>
+    <div id="alert-sidebar-body" style="flex:1;overflow-y:auto;padding:12px"></div>
   </div>
 
   <div id="big3-section" style="display:none;margin-bottom:20px">
@@ -874,13 +897,16 @@ function parseSlack(raw) {
 const BIG3_META = [
   { name:'Hash Ribbons',
     tip:'Fires when the 30-day hashrate MA crosses back above the 60-day MA after miner capitulation. Historically one of the highest-conviction BTC buy signals — price often doubles within 6 months after trigger.',
-    proxySrc:'mvrv' },
+    proxySrc:'mvrv',
+    triggerPct: 75, triggerLabel: '30d MA crosses above 60d MA' },
   { name:'SOPR Recovery',
     tip:'Spent Output Profit Ratio sustained above 1.0 signals that coins are being moved at a profit — a bear-to-recovery trend shift. Watch for it to hold above 1 for multiple weeks.',
-    proxySrc:'fg' },
+    proxySrc:'fg',
+    triggerPct: 70, triggerLabel: 'Fear & Greed drops below 15 (extreme fear)' },
   { name:'Monthly Stoch RSI',
     tip:'Stochastic RSI on the monthly chart. Lines compressing below 20 = oversold. Pre-cross (K tightening) is the strongest signal. The actual cross lags but confirms direction.',
-    proxySrc:'live' },
+    proxySrc:'live',
+    triggerPct: 85, triggerLabel: 'Stoch K-line crosses below 20' },
 ];
 
 function calcRSI(closes, period) {
@@ -957,17 +983,37 @@ function renderBig3Cards(big3arr, liveData) {
       pctLabel = Math.round(pct) + '%';
     }
 
+    const tp = meta.triggerPct;
+    const pastTrigger = pct >= tp;
+    const pctClamped = Math.min(pct, 96);
     return `<div class="big3-card" data-b3tip="${meta.tip}">
-      <div class="big3-card-top">
+      <div class="big3-card-top" style="margin-bottom:10px">
         <div class="big3-dot" style="background:${dotColor}"></div>
         <div class="big3-name">${meta.name}</div>
         <div class="big3-status" style="color:${statusClr}">${status}</div>
       </div>
-      <div class="big3-meter-row">
-        <div class="big3-meter"><div class="big3-meter-fill" style="width:${pct}%;background:${meterColor}"></div></div>
-        <span class="big3-pct" style="color:${meterColor}">${pctLabel}</span>
+
+      <!-- Progress bar with trigger marker -->
+      <div style="position:relative;margin-bottom:22px">
+        <!-- Track (overflow:hidden for fill only) -->
+        <div style="height:10px;background:#1a1a1a;border-radius:6px;overflow:hidden">
+          <div style="width:${pct}%;height:100%;background:${meterColor};border-radius:6px;transition:width .4s"></div>
+        </div>
+        <!-- Trigger marker: sibling of track so it's never clipped -->
+        <div style="position:absolute;top:-7px;left:${tp}%;transform:translateX(-50%);width:3px;height:24px;background:#fbbf24;border-radius:2px;z-index:2"></div>
+        <!-- Trigger label below marker -->
+        <div style="position:absolute;top:18px;left:${tp}%;transform:translateX(-50%);font-size:8px;color:#fbbf24;font-weight:700;white-space:nowrap;letter-spacing:.04em">▲ TRIGGER ${tp}%</div>
+        <!-- Current pct label -->
+        ${pct > 0 ? `<div style="position:absolute;top:-18px;left:${pctClamped}%;transform:translateX(-50%);font-size:10px;font-weight:700;color:${meterColor};white-space:nowrap">${pctLabel}</div>` : ''}
       </div>
-      ${sparkSvg || `<div style="height:28px;background:#0d0d0d;border-radius:4px;display:flex;align-items:center;justify-content:center"><span style="font-size:9px;color:#333">loading…</span></div>`}
+
+      <!-- Condition text -->
+      <div style="font-size:10px;margin-bottom:8px;padding:6px 8px;background:#111;border-radius:5px;border-left:2px solid #fbbf2444">
+        <span style="color:#fbbf24;font-weight:700;font-size:8px;letter-spacing:.06em;text-transform:uppercase">Fires when: </span>
+        <span style="color:${pastTrigger?'#fbbf24':'#94a3b8'}">${meta.triggerLabel}</span>
+      </div>
+
+      ${sparkSvg || `<div style="height:60px;background:#0d0d0d;border-radius:4px;display:flex;align-items:center;justify-content:center"><span style="font-size:9px;color:#333">loading…</span></div>`}
     </div>`;
   }).join('');
 }
@@ -2575,6 +2621,38 @@ function histToTodayData(h) {
 switchTab('today');
 
 // =====================================================================
+// BOTTOM PATH MONITOR — Live signal fetcher
+// =====================================================================
+window._apathyLive = { funding: null, volume: null };
+
+async function fetchApathyLiveSignals() {
+  try {
+    // Funding rates — last 21 periods (8h each ≈ 7 days)
+    const fr = await fetch('https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&limit=21');
+    const fd = await fr.json();
+    if (Array.isArray(fd) && fd.length) {
+      const avg = fd.reduce((s, d) => s + parseFloat(d.fundingRate), 0) / fd.length;
+      window._apathyLive.funding = { avg, neutral: avg <= 0.0001 };
+    }
+  } catch(e) { window._apathyLive.funding = null; }
+
+  try {
+    // Volume character — 14 daily candles [o,h,l,c,vol in BTC]
+    const kr = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=14');
+    const kd = await kr.json();
+    if (Array.isArray(kd) && kd.length >= 7) {
+      const upDays = kd.filter(c => parseFloat(c[4]) >= parseFloat(c[1]));
+      const dnDays = kd.filter(c => parseFloat(c[4]) <  parseFloat(c[1]));
+      const avgUp  = upDays.length ? upDays.reduce((s,c) => s + parseFloat(c[5]), 0) / upDays.length : 0;
+      const avgDn  = dnDays.length ? dnDays.reduce((s,c) => s + parseFloat(c[5]), 0) / dnDays.length : 0;
+      window._apathyLive.volume = { avgUp, avgDn, good: avgDn > 0 && avgUp > avgDn * 1.15 };
+    }
+  } catch(e) { window._apathyLive.volume = null; }
+
+  renderApathyMonitor();
+}
+
+// =====================================================================
 // BOTTOM PATH MONITOR — Classic track vs Apathy track
 // =====================================================================
 function renderApathyMonitor() {
@@ -2627,12 +2705,30 @@ function renderApathyMonitor() {
       desc: floorHeld   ? `${floorTests} visits to $${Math.round(cycleLow).toLocaleString()} low — held each time` : `${floorTests}/3 floor tests · low $${Math.round(cycleLow).toLocaleString()}` },
     { key:'time',    label:'Week 44+ Window',       auto:true,  active:timeSignal,
       desc: timeSignal  ? `Week ${bearWeek} — inside historical bottom zone`                           : `Week ${bearWeek} — bottom window opens W44 (${44-bearWeek} wks away)` },
-    { key:'funding', label:'Funding Neutral/−',     auto:false, active:tog('funding'),
-      desc:'Perp funding rate neutral or negative sustained 2+ weeks' },
-    { key:'flows',   label:'Exchange Outflows',     auto:false, active:tog('flows'),
-      desc:'Sustained BTC net outflows from exchanges = conviction accumulation' },
-    { key:'volume',  label:'Volume Character',      auto:false, active:tog('volume'),
-      desc:'Red candles declining volume · green candles rising volume' },
+    (()=>{ const f=window._apathyLive.funding; return {
+      key:'funding', label:'Funding Neutral/−',
+      auto:!!f, live:!!f,
+      active: f ? f.neutral : tog('funding'),
+      desc: f
+        ? (f.neutral
+            ? `7-day avg funding ${(f.avg*100).toFixed(4)}% — neutral/negative ✓`
+            : `7-day avg funding ${(f.avg*100).toFixed(4)}% — elevated, longs still paying`)
+        : 'Loading from Binance…' };
+    })(),
+    { key:'flows', label:'Exchange Outflows', auto:false, live:false, active:tog('flows'),
+      desc: tog('flows')
+        ? 'BTC net outflows confirmed — smart money accumulating'
+        : 'Check CryptoQuant or Glassnode · flip on if net outflows sustained 10+ days' },
+    (()=>{ const v=window._apathyLive.volume; return {
+      key:'volume', label:'Volume Character',
+      auto:!!v, live:!!v,
+      active: v ? v.good : tog('volume'),
+      desc: v
+        ? (v.good
+            ? `Up-day avg ${(v.avgUp/1000).toFixed(0)}K BTC vs down-day ${(v.avgDn/1000).toFixed(0)}K — buyers in control ✓`
+            : `Down-day avg ${(v.avgDn/1000).toFixed(0)}K BTC vs up-day ${(v.avgUp/1000).toFixed(0)}K — sellers still dominant`)
+        : 'Loading from Binance…' };
+    })(),
   ];
 
   const apathyScore = signals.filter(s => s.active).length;
@@ -2675,7 +2771,7 @@ function renderApathyMonitor() {
       <div style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${s.active?(s.auto?'#06b6d4':'#22c55e'):'#2a2a2a'}"></div>
       <div style="flex:1;min-width:0">
         <span style="font-size:12px;font-weight:600;color:${s.active?'#f1f5f9':'#64748b'}">${s.label}</span>
-        <span style="font-size:9px;color:#475569;margin-left:6px">${s.auto?'AUTO':'MANUAL'}</span>
+        <span style="font-size:9px;color:${s.live?'#0891b2':s.auto?'#475569':'#475569'};margin-left:6px">${s.live?'LIVE API':s.auto?'AUTO':'MANUAL'}</span>
         <div style="font-size:11px;color:${s.active?'#94a3b8':'#475569'};margin-top:2px">${s.desc}</div>
       </div>
       ${!s.auto?`<div onclick="apathyToggle('${s.key}')" style="width:36px;height:20px;border-radius:10px;background:${s.active?'#0e7490':'#222'};position:relative;cursor:pointer;flex-shrink:0;transition:background .15s;border:1px solid ${s.active?'#0891b2':'#333'}"><div style="position:absolute;top:2px;left:${s.active?'15px':'2px'};width:14px;height:14px;border-radius:50%;background:#fff;transition:left .15s"></div></div>`:''}
@@ -2693,6 +2789,257 @@ window.apathyToggle = function(key) {
 };
 
 renderApathyMonitor();
+// Fetch live signals immediately and refresh every 30 min
+fetchApathyLiveSignals();
+setInterval(fetchApathyLiveSignals, 30 * 60 * 1000);
+
+// =====================================================================
+// ALERT SYSTEM — Mid-cycle rally + strategy change notifications
+// =====================================================================
+
+// ── Sidebar / bell ──────────────────────────────────────────────────
+const ALERT_HISTORY_KEY = 'btc_alert_history_v2';
+const ALERT_READ_KEY    = 'btc_alert_read_ts';
+
+function loadAlertHistory() {
+  try { return JSON.parse(localStorage.getItem(ALERT_HISTORY_KEY) || '[]'); } catch(e) { return []; }
+}
+function saveAlertHistory(arr) {
+  localStorage.setItem(ALERT_HISTORY_KEY, JSON.stringify(arr.slice(-30))); // keep last 30
+}
+
+function addAlertToHistory(alerts, curr) {
+  if (!alerts.length) return;
+  const history = loadAlertHistory();
+  const ts = Date.now();
+  alerts.forEach(a => {
+    history.push({ id: ts + Math.random(), ts, level: a.level, icon: a.icon,
+      title: a.title, body: a.body, action: a.action,
+      price: curr.currentPrice, week: curr.bearWeek,
+      classicScore: curr.classicScore, apathyScore: curr.apathyScore });
+  });
+  saveAlertHistory(history);
+  updateBellBadge();
+}
+
+function updateBellBadge() {
+  const history  = loadAlertHistory();
+  const lastRead = parseInt(localStorage.getItem(ALERT_READ_KEY) || '0');
+  const unread   = history.filter(a => a.ts > lastRead).length;
+  const badge    = document.getElementById('alert-badge');
+  const bell     = document.getElementById('alert-bell-btn');
+  if (!badge) return;
+  if (unread > 0) {
+    badge.style.display = 'flex';
+    badge.textContent   = unread > 9 ? '9+' : unread;
+    if (bell) bell.style.color = '#fbbf24';
+  } else {
+    badge.style.display = 'none';
+    if (bell) bell.style.color = '#94a3b8';
+  }
+}
+
+function renderAlertSidebar() {
+  const body    = document.getElementById('alert-sidebar-body');
+  if (!body) return;
+  const history = loadAlertHistory().slice().reverse(); // newest first
+  if (!history.length) {
+    body.innerHTML = `<div style="text-align:center;color:#333;font-size:13px;margin-top:60px">No alerts yet.<br><span style="font-size:11px;color:#222">Alerts appear here as signals change.</span></div>`;
+    return;
+  }
+  const lastRead = parseInt(localStorage.getItem(ALERT_READ_KEY) || '0');
+  const borderColors = { warn:'#d97706', orange:'#ea580c', green:'#16a34a', yellow:'#ca8a04', info:'#1d4ed8' };
+  const textColors   = { warn:'#fbbf24', orange:'#fb923c', green:'#4ade80', yellow:'#fde047', info:'#60a5fa' };
+  body.innerHTML = history.map(a => {
+    const unread = a.ts > lastRead;
+    const dt = new Date(a.ts);
+    const dateStr = dt.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+    const timeStr = dt.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
+    return `
+    <div style="border:1px solid ${unread?borderColors[a.level]+'66':'#1a1a1a'};border-left:3px solid ${borderColors[a.level]||'#334155'};border-radius:8px;padding:12px 13px;margin-bottom:8px;background:${unread?'#111':'#0d0d0d'}">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+        <span style="font-size:12px;font-weight:700;color:${textColors[a.level]||'#94a3b8'}">${a.icon} ${a.title}</span>
+        ${unread?'<span style="font-size:8px;font-weight:700;color:#ef4444;letter-spacing:.04em">NEW</span>':''}
+      </div>
+      <div style="font-size:10px;color:#475569;margin-bottom:7px">${dateStr} · ${timeStr} &nbsp;·&nbsp; BTC $${(a.price||0).toLocaleString()} &nbsp;·&nbsp; Wk ${a.week} &nbsp;·&nbsp; C${a.classicScore}/A${a.apathyScore}</div>
+      <div style="font-size:11px;color:#64748b;line-height:1.5;margin-bottom:6px">${a.body}</div>
+      <div style="font-size:10px;font-weight:600;color:#475569;border-top:1px solid #1a1a1a;padding-top:6px">→ ${a.action}</div>
+    </div>`;
+  }).join('');
+}
+
+window.toggleAlertSidebar = function() {
+  const sidebar   = document.getElementById('alert-sidebar');
+  const backdrop  = document.getElementById('alert-backdrop');
+  const isOpen    = sidebar.style.right === '0px';
+  sidebar.style.right  = isOpen ? '-380px' : '0px';
+  backdrop.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) {
+    // Mark all read
+    localStorage.setItem(ALERT_READ_KEY, Date.now().toString());
+    renderAlertSidebar();
+    updateBellBadge();
+  }
+};
+
+window.clearAlertHistory = function() {
+  localStorage.removeItem(ALERT_HISTORY_KEY);
+  localStorage.setItem(ALERT_READ_KEY, Date.now().toString());
+  renderAlertSidebar();
+  updateBellBadge();
+};
+
+const _sdUtil = arr => { if(arr.length<2) return 0; const m=arr.reduce((a,b)=>a+b,0)/arr.length; return Math.sqrt(arr.map(x=>(x-m)**2).reduce((a,b)=>a+b,0)/arr.length); };
+
+function computeAlertState() {
+  if (!HISTORY_DATA.length) return null;
+  const latest   = HISTORY_DATA[HISTORY_DATA.length - 1];
+  const prices   = HISTORY_DATA.map(d => d.price).filter(Boolean);
+  const mvrvArr  = HISTORY_DATA.map(d => parseFloat(d.mvrv)).filter(n => !isNaN(n));
+  const cycleLow = Math.min(...prices);
+  const currentPrice = livePrice || latest?.price || 0;
+  const classicScore = parseInt(latest?.bottomConf) || 0;
+  const big3Count    = parseInt(latest?.big3) || 0;
+  const bearWeek     = Math.max(1, Math.floor((Date.now() - new Date(ATH_DATE).getTime()) / (7*86400000)) + 1);
+
+  // Recompute apathy signals (mirrors renderApathyMonitor)
+  const recentPx  = prices.slice(-21), priorPx = prices.slice(0,-21);
+  const rangeHeld = prices.length >= 14 && Math.min(...recentPx) >= (priorPx.length ? Math.min(...priorPx) : Math.min(...recentPx)+1) * 0.98;
+  const vol14 = _sdUtil(prices.slice(-14));
+  const vol28 = prices.length >= 28 ? _sdUtil(prices.slice(-28,-14)) : vol14 * 2;
+  const volComp = vol14 > 0 && vol14 < vol28 * 0.80;
+  const mvrv7   = mvrvArr.length >= 7  ? mvrvArr.slice(-7).reduce((a,b)=>a+b,0)/7 : null;
+  const mvrv7p  = mvrvArr.length >= 14 ? mvrvArr.slice(-14,-7).reduce((a,b)=>a+b,0)/7 : null;
+  const mvrvUp  = mvrv7 && mvrv7p && mvrv7 > mvrv7p;
+  const floorTests = prices.filter(p => p <= cycleLow * 1.07).length;
+  const timeSignal = bearWeek >= 44;
+  const autoCount  = [rangeHeld, volComp, !!mvrvUp, floorTests >= 3, timeSignal].filter(Boolean).length;
+  const manualCount= ['funding','flows','volume'].filter(k => localStorage.getItem('apath_'+k)==='1').length;
+  const apathyScore = autoCount + manualCount;
+
+  // Action level
+  let actionLevel = 'HOLD';
+  if      (classicScore >= 6 || (apathyScore >= 6 && autoCount >= 4)) actionLevel = 'PILE_IN';
+  else if (classicScore >= 5 || (apathyScore >= 5 && autoCount >= 3)) actionLevel = 'WATCH';
+  else if (classicScore + apathyScore >= 7)                            actionLevel = 'BUILDING';
+
+  const rallyPct  = cycleLow > 0 ? (currentPrice - cycleLow) / cycleLow : 0;
+  const midRally  = rallyPct >= 0.20 && classicScore < 4;
+
+  return { classicScore, apathyScore, big3Count, actionLevel, midRally,
+           rallyPct: Math.round(rallyPct*100), cycleLow: Math.round(cycleLow),
+           currentPrice: Math.round(currentPrice), bearWeek };
+}
+
+function buildAlerts(curr, prev) {
+  const alerts = [];
+
+  // 1. Mid-cycle rally risk
+  if (curr.midRally) {
+    alerts.push({ level:'warn', icon:'⚠️', title:'Mid-Cycle Rally Risk',
+      body:`Price is ${curr.rallyPct}% above the cycle low ($${curr.cycleLow.toLocaleString()}) but Classic signals haven't confirmed (${curr.classicScore}/8). This matches bear market relief rally patterns — 2–3 of these are normal before the real bottom.`,
+      action:'Keep all tranche orders set. Do not touch the $61K reserve. DCA unchanged at $500/buy.' });
+  }
+
+  // 2. Action level changed
+  if (prev && curr.actionLevel !== prev.actionLevel) {
+    if (curr.actionLevel === 'WATCH')
+      alerts.push({ level:'orange', icon:'🟠', title:'Strategy Shift → WATCH',
+        body:`Bottom Path Monitor crossed WATCH. Signals are building enough to suggest the bottom may form without full classic capitulation.`,
+        action:'Review orders below $47K. Consider canceling T6c/T7. Consider bumping DCA to $750/buy.' });
+    else if (curr.actionLevel === 'PILE_IN')
+      alerts.push({ level:'green', icon:'🟢', title:'Strategy Shift → PILE IN',
+        body:`Confirmation reached PILE IN threshold. Both timing and signals align for maximum allocation.`,
+        action:'Cancel orders below current price. Deploy $61K reserve in $52–56K range. Switch DCA to $1,500/buy.' });
+    else if (curr.actionLevel === 'BUILDING')
+      alerts.push({ level:'yellow', icon:'🟡', title:'Both Tracks Advancing',
+        body:`Classic (${curr.classicScore}/8) and Apathy (${curr.apathyScore}/8) both building. Not action territory yet but trajectory is positive.`,
+        action:'Hold ladder. DCA $500/buy. Watch for Range Hold and funding rate signals next.' });
+  }
+
+  // 3. Classic score jumped 2+
+  if (prev && curr.classicScore >= prev.classicScore + 2)
+    alerts.push({ level:'info', icon:'📈', title:`Classic Track: ${prev.classicScore} → ${curr.classicScore}/8`,
+      body:`Multiple classic capitulation signals fired since last check. Meaningful advance.`,
+      action: curr.classicScore >= 4 ? 'Getting serious. Watch Big 3 closely — they unlock full deployment.' : 'Progress but score needs 5+ for WATCH action.' });
+
+  // 4. Big 3 advanced
+  if (prev && curr.big3Count > prev.big3Count)
+    alerts.push({ level:'green', icon:'🎯', title:`Big 3 Advanced: ${curr.big3Count}/3 Active`,
+      body:`A Big 3 trigger just fired. ${3 - curr.big3Count} remaining before max allocation unlocks.`,
+      action: curr.big3Count >= 2 ? 'Start sizing up. Consider moving reserve deployment forward.' : 'Hold ladder. Continue DCA.' });
+
+  // 5. Apathy at 5+ (meaningful threshold)
+  if (curr.apathyScore >= 5 && (!prev || prev.apathyScore < 5))
+    alerts.push({ level:'info', icon:'👁️', title:`Apathy Track at ${curr.apathyScore}/8 — Elevated`,
+      body:`Apathy signals at a level where action becomes realistic. This cycle topped on apathy — it could bottom the same way.`,
+      action:'Review lower tranches ($43–47K). Bottom may form without classic capitulation.' });
+
+  return alerts;
+}
+
+function showAlertModal(alerts, curr) {
+  window._alertCurr = curr;
+  const colors = { warn:'#d97706', orange:'#ea580c', green:'#16a34a', yellow:'#ca8a04', info:'#1d4ed8' };
+  const textColors = { warn:'#fbbf24', orange:'#fb923c', green:'#4ade80', yellow:'#fde047', info:'#60a5fa' };
+  const html = alerts.map(a => `
+    <div style="border-left:3px solid ${colors[a.level]};padding:12px 14px;background:#141414;border-radius:0 8px 8px 0;margin-bottom:8px">
+      <div style="font-size:13px;font-weight:700;color:${textColors[a.level]};margin-bottom:5px">${a.icon} ${a.title}</div>
+      <div style="font-size:12px;color:#94a3b8;line-height:1.55;margin-bottom:7px">${a.body}</div>
+      <div style="font-size:11px;font-weight:600;color:#64748b;border-top:1px solid #1e293b;padding-top:6px">→ ${a.action}</div>
+    </div>`).join('');
+  document.getElementById('alert-modal-body').innerHTML =
+    `<div style="font-size:10px;color:#475569;margin-bottom:12px;border-bottom:1px solid #1a1a1a;padding-bottom:10px">Week ${curr.bearWeek} · BTC $${curr.currentPrice.toLocaleString()} · ${new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>${html}`;
+  document.getElementById('alert-modal').style.display = 'flex';
+}
+
+window.dismissAlerts = function() {
+  if (window._alertCurr) localStorage.setItem('btc_alert_dismissed', JSON.stringify({ actionLevel: window._alertCurr.actionLevel, midRally: window._alertCurr.midRally, big3Count: window._alertCurr.big3Count, classicScore: window._alertCurr.classicScore, apathyScore5: window._alertCurr.apathyScore >= 5 }));
+  document.getElementById('alert-modal').style.display = 'none';
+};
+
+function checkAndShowAlerts() {
+  const curr = computeAlertState();
+  if (!curr) return;
+  let prev = null, dismissed = null;
+  try { prev = JSON.parse(localStorage.getItem('btc_alert_state') || 'null'); } catch(e) {}
+  try { dismissed = JSON.parse(localStorage.getItem('btc_alert_dismissed') || 'null'); } catch(e) {}
+  localStorage.setItem('btc_alert_state', JSON.stringify(curr));
+
+  const alerts = buildAlerts(curr, prev);
+
+  // Always update bell badge on load
+  updateBellBadge();
+
+  if (!alerts.length) return;
+
+  // Save new alerts to history
+  addAlertToHistory(alerts, curr);
+
+  // Suppress modal if already dismissed for same state
+  const alreadySeen = dismissed &&
+    dismissed.actionLevel  === curr.actionLevel &&
+    dismissed.midRally     === curr.midRally &&
+    dismissed.big3Count    === curr.big3Count &&
+    dismissed.classicScore === curr.classicScore &&
+    dismissed.apathyScore5 === (curr.apathyScore >= 5);
+  if (!alreadySeen) showAlertModal(alerts, curr);
+}
+
+// Run after all signals computed (slight delay lets live price settle)
+setTimeout(checkAndShowAlerts, 2000);
 </script>
+
+<!-- ALERT MODAL -->
+<div id="alert-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#0d0d0d;border:1px solid #2a2a2a;border-radius:14px;width:100%;max-width:500px;padding:22px;max-height:82vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.8)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="font-size:15px;font-weight:700;color:#e5e5e5">⚡ Dashboard Alert</div>
+      <button onclick="dismissAlerts()" style="background:none;border:none;color:#555;font-size:22px;cursor:pointer;line-height:1;padding:0 2px">&times;</button>
+    </div>
+    <div id="alert-modal-body"></div>
+    <button onclick="dismissAlerts()" style="width:100%;margin-top:14px;padding:11px;background:#141414;border:1px solid #2a2a2a;border-radius:8px;color:#94a3b8;font-size:12px;font-weight:600;cursor:pointer;letter-spacing:.02em">Got it — dismiss until something changes</button>
+  </div>
+</div>
 </body>
 </html>
