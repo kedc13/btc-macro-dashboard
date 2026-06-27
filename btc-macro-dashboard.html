@@ -796,6 +796,72 @@ async function fetchLiveFG() {
   } catch(e) { /* keep Slack value */ }
 }
 
+// =====================================================================
+// PRICE LEVEL ALERTS — fire when live price crosses key decision thresholds
+// =====================================================================
+const PRICE_ALERT_LEVELS = [
+  { price: 49000, label: 'T5b zone ($49K)',  icon: '⚡', urgency: 'orange',
+    note: 'This is your manual review level. Check all indicators before committing reserve capital — could be a wick that recovers quickly to $52–53K.' },
+  { price: 45000, label: 'T6a zone ($45K)',  icon: '🔴', urgency: 'warn',
+    note: 'Deep accumulation zone. T6a filling. If Classic 4+ or Apathy 5+, strong case to pull remaining DCA budget forward as lump sum.' },
+  { price: 41000, label: 'T6c zone ($41K)',  icon: '🚨', urgency: 'warn',
+    note: 'Maximum conventional deployment zone. T6c loading range. Big 3 confirmation here = deploy full reserve immediately.' },
+  { price: 38000, label: 'T7 reserve zone ($38K)', icon: '🎯', urgency: 'green',
+    note: 'T7 territory. If Big 3 are confirming, this is the maximum allocation signal. Deploy reserve now.' },
+];
+
+let _lastPriceAlertCheck = 0;
+
+function checkPriceAlerts(price) {
+  // Throttle: only check once per minute to avoid hammering on every WS tick
+  const now = Date.now();
+  if (now - _lastPriceAlertCheck < 60000) return;
+  _lastPriceAlertCheck = now;
+
+  PRICE_ALERT_LEVELS.forEach(lvl => {
+    const resetKey  = `btc_palert_reset_${lvl.price}`;
+    const firedKey  = `btc_palert_fired_${lvl.price}`;
+    const firedAt   = parseFloat(localStorage.getItem(firedKey) || '0');
+
+    // Reset: if price recovers 6%+ above the level, allow re-alert on next dip
+    if (price > lvl.price * 1.06) {
+      if (firedAt > 0) {
+        localStorage.removeItem(firedKey);
+        localStorage.removeItem(resetKey);
+      }
+      return;
+    }
+
+    // Fire only once per dip below this level
+    if (price <= lvl.price && firedAt === 0) {
+      localStorage.setItem(firedKey, price.toString());
+
+      // Build indicator snapshot for the alert body
+      const latest   = HISTORY_DATA[HISTORY_DATA.length - 1] || {};
+      const mvrv     = latest.mvrv != null ? `MVRV ${latest.mvrv}` : '';
+      const fg       = window._fngHistory?.length ? `F&G ${window._fngHistory[window._fngHistory.length-1]}` : `F&G ${latest.fearGreed||'—'}`;
+      const curr     = computeAlertState ? computeAlertState() : null;
+      const scores   = curr ? `Classic ${curr.classicScore}/8 · Apathy ${curr.apathyScore}/8 · Big 3: ${curr.big3Count}/3` : '';
+      const pileIn   = curr && (curr.classicScore >= 5 || curr.apathyScore >= 5 || curr.big3Count >= 2);
+
+      const alert = {
+        level:  lvl.urgency,
+        icon:   lvl.icon,
+        title:  `Price Alert — BTC at $${Math.round(price).toLocaleString()} (${lvl.label})`,
+        body:   `${[mvrv, fg, scores].filter(Boolean).join(' · ')}\n\n${lvl.note}`,
+        action: pileIn
+          ? 'Indicators support deployment — review reserve capital now.'
+          : 'Indicators not yet confirming — hold reserve, let tranches work. Monitor closely.'
+      };
+
+      if (curr) {
+        addAlertToHistory([alert], curr);
+        showAlertModal([alert], curr);
+      }
+    }
+  });
+}
+
 // Live BTC Price fetch — Binance ticker, fallback Bybit, refresh every 60s
 // Real-time BTC price via Binance WebSocket — falls back to 10s REST poll
 function updatePriceDisplay(price) {
@@ -803,6 +869,8 @@ function updatePriceDisplay(price) {
   livePrice = price;
   const el = document.getElementById('hdr-price');
   if (el) el.innerHTML = '$' + Math.round(price).toLocaleString() + ' <span class="live-badge" style="font-size:8px;vertical-align:middle">LIVE</span>';
+  // Check price level alerts on every price update (throttled internally to 1/min)
+  if (typeof checkPriceAlerts === 'function') checkPriceAlerts(price);
 }
 
 function startLivePriceWS() {
