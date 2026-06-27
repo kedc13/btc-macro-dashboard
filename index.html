@@ -3078,6 +3078,9 @@ function histToTodayData(h) {
   };
 }
 
+// Utility — must be defined before computeAlertState is called synchronously at init
+const _sdUtil = arr => { if(arr.length<2) return 0; const m=arr.reduce((a,b)=>a+b,0)/arr.length; return Math.sqrt(arr.map(x=>(x-m)**2).reduce((a,b)=>a+b,0)/arr.length); };
+
 // Today tab renders from latest HISTORY_DATA entry (qualitative fields stored inline).
 (function() {
   var latest = HISTORY_DATA[HISTORY_DATA.length - 1];
@@ -3369,8 +3372,6 @@ window.clearAlertHistory = function() {
   renderAlertSidebar();
   updateBellBadge();
 };
-
-const _sdUtil = arr => { if(arr.length<2) return 0; const m=arr.reduce((a,b)=>a+b,0)/arr.length; return Math.sqrt(arr.map(x=>(x-m)**2).reduce((a,b)=>a+b,0)/arr.length); };
 
 function computeAlertState() {
   if (!HISTORY_DATA.length) return null;
