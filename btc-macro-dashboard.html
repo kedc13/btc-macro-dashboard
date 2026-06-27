@@ -994,26 +994,28 @@ function renderBig3Cards(big3arr, liveData) {
       </div>
 
       <!-- Progress bar with trigger marker -->
-      <div style="position:relative;margin-bottom:22px">
+      <div style="position:relative;margin-bottom:8px">
         <!-- Track (overflow:hidden for fill only) -->
         <div style="height:10px;background:#1a1a1a;border-radius:6px;overflow:hidden">
           <div style="width:${pct}%;height:100%;background:${meterColor};border-radius:6px;transition:width .4s"></div>
         </div>
         <!-- Trigger marker: sibling of track so it's never clipped -->
-        <div style="position:absolute;top:-7px;left:${tp}%;transform:translateX(-50%);width:3px;height:24px;background:#fbbf24;border-radius:2px;z-index:2"></div>
-        <!-- Trigger label below marker -->
-        <div style="position:absolute;top:18px;left:${tp}%;transform:translateX(-50%);font-size:8px;color:#fbbf24;font-weight:700;white-space:nowrap;letter-spacing:.04em">▲ TRIGGER ${tp}%</div>
+        <div style="position:absolute;top:-4px;left:${tp}%;transform:translateX(-50%);width:3px;height:18px;background:#fbbf24;border-radius:2px;z-index:2"></div>
         <!-- Current pct label -->
         ${pct > 0 ? `<div style="position:absolute;top:-18px;left:${pctClamped}%;transform:translateX(-50%);font-size:10px;font-weight:700;color:${meterColor};white-space:nowrap">${pctLabel}</div>` : ''}
       </div>
 
-      <!-- Condition text -->
-      <div style="font-size:10px;margin-bottom:8px;padding:6px 8px;background:#111;border-radius:5px;border-left:2px solid #fbbf2444">
-        <span style="color:#fbbf24;font-weight:700;font-size:8px;letter-spacing:.06em;text-transform:uppercase">Fires when: </span>
-        <span style="color:${pastTrigger?'#fbbf24':'#94a3b8'}">${meta.triggerLabel}</span>
-      </div>
-
       ${sparkSvg || `<div style="height:60px;background:#0d0d0d;border-radius:4px;display:flex;align-items:center;justify-content:center"><span style="font-size:9px;color:#333">loading…</span></div>`}
+
+      <!-- Trigger info below chart -->
+      <div style="margin-top:8px;display:flex;align-items:center;gap:10px">
+        <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+          <div style="width:3px;height:12px;background:#fbbf24;border-radius:2px"></div>
+          <span style="font-size:9px;color:#fbbf24;font-weight:700;letter-spacing:.04em">TRIGGER ${tp}%</span>
+        </div>
+        <span style="font-size:9px;color:#475569">|</span>
+        <span style="font-size:9px;color:${pastTrigger?'#fbbf24':'#64748b'}">${meta.triggerLabel}</span>
+      </div>
     </div>`;
   }).join('');
 }
