@@ -2620,12 +2620,13 @@ function histToTodayData(h) {
   fetchLiveFG();
   startLivePriceWS();
 })();
+// Must be set BEFORE switchTab so renderApathyMonitor doesn't throw
+window._apathyLive = { funding: null, volume: null };
 switchTab('today');
 
 // =====================================================================
 // BOTTOM PATH MONITOR — Live signal fetcher
 // =====================================================================
-window._apathyLive = { funding: null, volume: null };
 
 async function fetchApathyLiveSignals() {
   try {
@@ -2707,7 +2708,7 @@ function renderApathyMonitor() {
       desc: floorHeld   ? `${floorTests} visits to $${Math.round(cycleLow).toLocaleString()} low — held each time` : `${floorTests}/3 floor tests · low $${Math.round(cycleLow).toLocaleString()}` },
     { key:'time',    label:'Week 44+ Window',       auto:true,  active:timeSignal,
       desc: timeSignal  ? `Week ${bearWeek} — inside historical bottom zone`                           : `Week ${bearWeek} — bottom window opens W44 (${44-bearWeek} wks away)` },
-    (()=>{ const f=window._apathyLive.funding; return {
+    (()=>{ const f=(window._apathyLive||{}).funding; return {
       key:'funding', label:'Funding Neutral/−',
       auto:!!f, live:!!f,
       active: f ? f.neutral : tog('funding'),
@@ -2721,7 +2722,7 @@ function renderApathyMonitor() {
       desc: tog('flows')
         ? 'BTC net outflows confirmed — smart money accumulating'
         : 'Check CryptoQuant or Glassnode · flip on if net outflows sustained 10+ days' },
-    (()=>{ const v=window._apathyLive.volume; return {
+    (()=>{ const v=(window._apathyLive||{}).volume; return {
       key:'volume', label:'Volume Character',
       auto:!!v, live:!!v,
       active: v ? v.good : tog('volume'),
