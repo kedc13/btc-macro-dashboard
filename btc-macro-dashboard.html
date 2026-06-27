@@ -2706,12 +2706,12 @@ function renderPlan() {
         <div style="flex:1;text-align:center;padding:10px 6px;border-radius:8px;border:1px solid ${b.isToday?'#e5e5e5':'#222'};background:${b.isToday?'#1a1a1a':'#0d0d0d'}">
           <div style="font-size:12px;font-weight:700;color:${b.isToday?'#fff':'#aaa'}">${b.name}</div>
           <div style="font-size:10px;color:#94a3b8;margin-top:2px">${b.date}</div>
-          <div style="font-size:13px;font-weight:800;color:${b.isToday?'#2563eb':'#22c55e'};margin-top:4px">$${(shouldDouble?1000:500).toLocaleString()}</div>
+          <div style="font-size:13px;font-weight:800;color:${b.isToday?'#2563eb':'#22c55e'};margin-top:4px">$${dcaAmount.toLocaleString()}</div>
           ${b.isToday?'<div style="font-size:9px;color:#2563eb;margin-top:2px;font-weight:700">BUY TODAY</div>':''}
         </div>`).join('')}
     </div>
     ${shouldDouble?`<div style="background:#111;border-left:3px solid #ef4444;border-radius:0 6px 6px 0;padding:9px 12px;font-size:12px;color:#f87171;font-weight:600">⚡ Aggressive DCA triggered — price is ${(dropFromLastDCA*100).toFixed(1)}% below last DCA buy ($${lastDCAPrice?.toLocaleString()}). Switch to $1,000/buy until price recovers or a new DCA buy is recorded.</div>`
-    : `<div style="background:#111;border-left:3px solid #22c55e;border-radius:0 6px 6px 0;padding:9px 12px;font-size:12px;color:#555">✓ Standard DCA. Doubles to $1,000/buy if price drops 9% from last DCA buy ($${lastDCAPrice?.toLocaleString()} → trigger at $${triggerPrice?.toLocaleString()}). Resets automatically when new buy recorded at lower level.</div>`}
+    : `<div style="background:#111;border-left:3px solid #22c55e;border-radius:0 6px 6px 0;padding:9px 12px;font-size:12px;color:#555">✓ ${dcaLabel}. Doubles to $${(dcaAmount*2).toLocaleString()}/buy if price drops 9% from last DCA buy ($${lastDCAPrice?.toLocaleString()} → trigger at $${triggerPrice?.toLocaleString()}). Resets automatically when new buy recorded at lower level.</div>`}
   </div>
 
   <!-- PLAN STATUS -->
@@ -2986,7 +2986,7 @@ function renderPlan() {
   <!-- STRATEGY REMINDER -->
   <div style="background:#0f172a;border-radius:10px;padding:14px 16px;color:#94a3b8;font-size:11px;line-height:1.7">
     <div style="color:#e5e5e5;font-weight:700;margin-bottom:6px">Your Strategy in Plain Terms</div>
-    $500 × Sun/Tue/Thu every week regardless. If price drops 9%+ from the last DCA buy price, double to $1,000/buy. Resets automatically when a new buy is recorded at the lower level.
+    $${(dcaAmount).toLocaleString()} × Sun/Tue/Thu (${scoreBaseLabel}). If price drops 9%+ from the last DCA buy price, doubles to $${(dcaAmount*2).toLocaleString()}/buy. Resets automatically when a new buy is recorded at the lower level.
     Tranches at $58K, $53K, $49K, $43K, $38K are set — they fill automatically when price hits them.
     The emotional job of this dashboard: <span style="color:#60a5fa">remind you the plan is working when it feels like it isn't.</span>
     Bear markets are won by people who don't panic. Your average cost matters more than any single entry.
@@ -3444,7 +3444,7 @@ function buildAlerts(curr, prev) {
   if (curr.midRally) {
     alerts.push({ level:'warn', icon:'⚠️', title:'Mid-Cycle Rally Risk',
       body:`Price is ${curr.rallyPct}% above the cycle low ($${curr.cycleLow.toLocaleString()}) but Classic signals haven't confirmed (${curr.classicScore}/8). This matches bear market relief rally patterns — 2–3 of these are normal before the real bottom.`,
-      action:'Keep all tranche orders set. Do not touch the $61K reserve. DCA unchanged at $500/buy.' });
+      action:`Keep all tranche orders set. Do not touch the $61K reserve. DCA unchanged at score-based rate.` });
   }
 
   // 2. Action level changed
