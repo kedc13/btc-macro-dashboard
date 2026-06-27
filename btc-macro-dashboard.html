@@ -2576,14 +2576,26 @@ function renderPlan() {
     return { ...t, dist, hit, near, status, color, bg, border };
   });
 
-  // ── Double DCA trigger ───────────────────────────────────────────
+  // ── Score-based DCA base rate (drives This Week's DCA) ──────────
+  const _dcaState = computeAlertState();
+  const _cs = _dcaState ? _dcaState.classicScore : 0;
+  const _bw = _dcaState ? _dcaState.bearWeek : bearWeek;
+  const _al = _dcaState ? _dcaState.actionLevel : 'HOLD';
+  let scoreBaseRate, scoreBaseLabel;
+  if (_al === 'PILE_IN')              { scoreBaseRate = null;  scoreBaseLabel = 'Lump Sum'; }
+  else if (_bw >= 44 && _cs >= 5)    { scoreBaseRate = 1500;  scoreBaseLabel = '$1,500/buy · Maximum'; }
+  else if (_bw >= 44 && _cs >= 4)    { scoreBaseRate = 1000;  scoreBaseLabel = '$1,000/buy · Aggressive'; }
+  else if (_bw >= 35 || _cs >= 3)    { scoreBaseRate = 750;   scoreBaseLabel = '$750/buy · Enhanced'; }
+  else                                { scoreBaseRate = 500;   scoreBaseLabel = '$500/buy · Standard'; }
+
+  // ── Double DCA trigger (multiplies on top of score base) ────────
   const lastDCABuy      = [...PLAN.buys].reverse().find(b => b.type === 'dca');
   const lastDCAPrice    = lastDCABuy ? lastDCABuy.price : null;
   const dropFromLastDCA = price && lastDCAPrice ? (lastDCAPrice - price) / lastDCAPrice : 0;
   const triggerPrice    = lastDCAPrice ? Math.round(lastDCAPrice * (1 - PLAN.doubleDropPct)) : null;
   const shouldDouble    = dropFromLastDCA >= PLAN.doubleDropPct;
-  const dcaAmount       = shouldDouble ? PLAN.dcaDouble : PLAN.dcaWeekly;
-  const dcaLabel        = shouldDouble ? '$1,000/buy · AGGRESSIVE MODE' : '$500/buy · standard';
+  const dcaAmount       = shouldDouble ? (scoreBaseRate ? scoreBaseRate * 2 : PLAN.dcaDouble) : (scoreBaseRate || PLAN.dcaWeekly);
+  const dcaLabel        = shouldDouble ? `$${dcaAmount.toLocaleString()}/buy · DROP TRIGGER` : scoreBaseLabel;
 
   // ── DCA Zone escalation ──────────────────────────────────────────
   const latestBig3  = HISTORY_DATA.length ? (HISTORY_DATA[HISTORY_DATA.length-1].big3 || 0) : 0;
@@ -2614,7 +2626,7 @@ function renderPlan() {
     anchor = 'Bear market phase risk is real — but your tranches are set and your DCA is working. Stay the course.';
     anchorColor = '#fbbf24';
   } else {
-    anchor = 'Too early for heavy allocation. Your $500/week DCA is accumulating. Patience protects capital.';
+    anchor = `Too early for heavy allocation. Your ${scoreBaseLabel.split(' · ')[0]} DCA is accumulating. Patience protects capital.`;
     anchorColor = '#555';
   }
 
@@ -3220,15 +3232,22 @@ function renderApathyMonitor() {
   // ── Action line ─────────────────────────────────────────────────
   // Auto score = signals that fire without human input (can't be gamed)
   const autoScore = signals.filter(s => s.auto && s.active).length;
+  // Dynamic DCA rate (mirrors Score-Based DCA card)
+  let _dcaRate;
+  if      (bearWeek >= 44 && classicScore >= 5) _dcaRate = '$1,500/buy';
+  else if (bearWeek >= 44 && classicScore >= 4) _dcaRate = '$1,000/buy';
+  else if (bearWeek >= 35 || classicScore >= 3)  _dcaRate = '$750/buy';
+  else                                            _dcaRate = '$500/buy';
+
   let action, ac, ab, ae;
   if (classicScore >= 6 || (apathyScore >= 6 && autoScore >= 4)) {
     action='PILE IN — Cancel orders below current price. Redeploy into spot or compress ladder to $52–56K.'; ac='#4ade80'; ab='#16a34a'; ae='🟢';
   } else if (classicScore >= 5 || (apathyScore >= 5 && autoScore >= 3)) {
     action='WATCH — Review orders below $47K. Consider canceling T6c/T7. Bottom may form without full capitulation.'; ac='#fb923c'; ab='#ea580c'; ae='🟠';
   } else if (combined >= 7) {
-    action='BUILDING — Both tracks advancing. Hold full ladder. DCA at current pace.'; ac='#fbbf24'; ab='#d97706'; ae='🟡';
+    action=`BUILDING — Both tracks advancing. Hold full ladder. DCA ${_dcaRate}.`; ac='#fbbf24'; ab='#d97706'; ae='🟡';
   } else {
-    action='HOLD LADDER — Signals early. Keep all orders set. DCA $500/buy. Patience is the edge.'; ac='#64748b'; ab='#334155'; ae='⚪';
+    action=`HOLD LADDER — Signals early. Keep all orders set. DCA ${_dcaRate}. Patience is the edge.`; ac='#64748b'; ab='#334155'; ae='⚪';
   }
 
   el.innerHTML = `
@@ -3441,7 +3460,7 @@ function buildAlerts(curr, prev) {
     else if (curr.actionLevel === 'BUILDING')
       alerts.push({ level:'yellow', icon:'🟡', title:'Both Tracks Advancing',
         body:`Classic (${curr.classicScore}/8) and Apathy (${curr.apathyScore}/8) both building. Not action territory yet but trajectory is positive.`,
-        action:'Hold ladder. DCA $500/buy. Watch for Range Hold and funding rate signals next.' });
+        action:`Hold ladder. DCA at score-based rate. Watch for Range Hold and funding rate signals next.` });
   }
 
   // 3. Classic score jumped 2+
