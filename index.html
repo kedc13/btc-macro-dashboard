@@ -1416,14 +1416,44 @@ function renderShallowBottom(d) {
 async function fetchBTCDominance() {
   const card = document.getElementById('btc-dom-card');
   if (!card) return;
-  try {
-    // CoinGecko global — free, no auth, returns BTC dominance %
-    const r = await fetch('https://api.coingecko.com/api/v3/global');
-    const g = await r.json();
-    const dom    = g.data?.bitcoin_dominance_percentage;
-    const domChg = g.data?.market_cap_change_percentage_24h_usd; // proxy for market direction
 
-    // ETH/BTC ratio 24h change from Binance (altcoin behavior)
+  // Helper: render the dominance card from data (live or cached)
+  function renderDomCard(dom, ethBtcChg, isStale, staleAgeHours) {
+    const domHistory  = JSON.parse(localStorage.getItem('btc_dom_history') || '[]');
+    const nowTs       = Date.now();
+    const weekAgoEntry = domHistory.find(e => nowTs - e.ts >= 6 * 24 * 60 * 60 * 1000);
+    const domWeekAgo   = weekAgoEntry?.dom ?? null;
+    const domTrend     = domWeekAgo != null ? dom - domWeekAgo : null;
+    const domRising    = domTrend != null && domTrend > 0.4;
+    const domFalling   = domTrend != null && domTrend < -0.4;
+    const altRotating  = ethBtcChg != null && ethBtcChg > 3;
+    const trendLabel   = domTrend != null
+      ? ` (${domTrend > 0 ? '+' : ''}${domTrend.toFixed(1)}pp vs 7d ago)`
+      : ' (no 7d history yet)';
+    const color  = altRotating || domFalling ? '#f97316' : domRising ? '#22c55e' : '#f59e0b';
+    const badge  = altRotating ? '⚠️ Alt Rotation' : domFalling ? '↓ Falling' : domRising ? '↑ Rising ✓' : '~ Flat';
+    const ethLine = ethBtcChg != null
+      ? `ETH/BTC 24h: ${ethBtcChg > 0 ? '+' : ''}${ethBtcChg.toFixed(2)}% ${ethBtcChg > 2 ? '(alts outperforming — caution)' : '(BTC holding ground ✓)'}`
+      : '';
+    const staleNote = isStale ? `<div style="font-size:9px;color:#64748b;margin-top:5px">⏱ Cached ${staleAgeHours}h ago — CoinGecko rate limited · will auto-retry</div>` : '';
+    const contextText = altRotating || domFalling
+      ? 'Alts outperforming / BTC.D falling — mid-cycle rally risk. Hold reserve until BTC.D stabilizes or turns up.'
+      : domRising
+        ? 'BTC dominance rising — capital flowing into BTC, not alts. Consistent with accumulation floor forming.'
+        : 'Dominance flat. Monitor daily — a sustained rise confirms no alt rotation risk.';
+    const titleSuffix = `BTC Dominance${trendLabel}`;
+    const el = document.getElementById('btc-dom-card');
+    if (el) el.outerHTML = shallowCard(titleSuffix, `${dom.toFixed(1)}%`, color, ethLine + (isStale && ethLine ? '' : ''), contextText + (staleNote ? '\n' : '') + staleNote, badge);
+  }
+
+  // Try live fetch; fall back to cache on any failure
+  try {
+    const r = await fetch('https://api.coingecko.com/api/v3/global');
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const g = await r.json();
+    const dom = g.data?.bitcoin_dominance_percentage;
+    if (dom == null) throw new Error('no data');
+
     let ethBtcChg = null;
     try {
       const eb = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=ETHBTC');
@@ -1431,54 +1461,33 @@ async function fetchBTCDominance() {
       ethBtcChg = parseFloat(ed.priceChangePercent);
     } catch(_) {}
 
-    if (dom == null) throw new Error('no data');
-
-    // Store rolling dominance history in localStorage (max 10 entries, 10-day window)
+    // Cache successful result
     const domHistory = JSON.parse(localStorage.getItem('btc_dom_history') || '[]');
     const nowTs = Date.now();
     domHistory.push({ ts: nowTs, dom });
     const trimmed = domHistory.filter(e => nowTs - e.ts < 10 * 24 * 60 * 60 * 1000).slice(-10);
     localStorage.setItem('btc_dom_history', JSON.stringify(trimmed));
+    localStorage.setItem('btc_dom_cache', JSON.stringify({ dom, ethBtcChg, ts: nowTs }));
 
-    // Compare to 7-day-ago reading for directional signal (relative, not static threshold)
-    const weekAgoEntry = trimmed.find(e => nowTs - e.ts >= 6 * 24 * 60 * 60 * 1000);
-    const domWeekAgo   = weekAgoEntry?.dom ?? null;
-    const domTrend     = domWeekAgo != null ? dom - domWeekAgo : null; // + = rising, - = falling
-    const domRising    = domTrend != null && domTrend > 0.4;   // +0.4pp vs 7 days ago = rising
-    const domFalling   = domTrend != null && domTrend < -0.4;  // -0.4pp vs 7 days ago = falling
+    renderDomCard(dom, ethBtcChg, false, 0);
 
-    // Rising BTC.D + falling ETH/BTC = capital in BTC = good
-    // Falling BTC.D + rising ETH/BTC = alt rotation = mid-cycle rally risk
-    const altRotating = ethBtcChg != null && ethBtcChg > 3;
-    const trendLabel  = domTrend != null
-      ? ` (${domTrend > 0 ? '+' : ''}${domTrend.toFixed(1)}pp vs 7d ago)`
-      : ' (no 7d history yet — reload daily to build trend)';
-
-    const color  = altRotating || domFalling ? '#f97316' : domRising ? '#22c55e' : '#f59e0b';
-    const badge  = altRotating ? '⚠️ Alt Rotation' : domFalling ? '↓ Falling' : domRising ? '↑ Rising ✓' : '~ Flat';
-    const ethLine = ethBtcChg != null
-      ? `ETH/BTC 24h: ${ethBtcChg > 0 ? '+' : ''}${ethBtcChg.toFixed(2)}% ${ethBtcChg > 2 ? '(alts outperforming — caution)' : '(BTC holding ground ✓)'}`
-      : '';
-
-    card.outerHTML = shallowCard(
-      `BTC Dominance${trendLabel}`,
-      `${dom.toFixed(1)}%`,
-      color,
-      ethLine,
-      altRotating || domFalling
-        ? 'Alts outperforming / BTC.D falling — mid-cycle rally risk. Hold reserve until BTC.D stabilizes or turns up.'
-        : domRising
-          ? 'BTC dominance rising — capital flowing into BTC, not alts. Consistent with accumulation floor forming.'
-          : 'Dominance flat. Monitor daily — a sustained rise confirms no alt rotation risk.',
-      badge
-    );
   } catch(e) {
-    const errCard = document.getElementById('btc-dom-card');
-    if (errCard) errCard.innerHTML = `
-      <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">BTC Dominance</div>
-      <div style="font-size:16px;font-weight:700;color:#475569">Rate limited</div>
-      <div style="font-size:10px;color:#475569;margin-top:6px;line-height:1.4">Reload to retry · Manual: tradingview.com → BTC.D<br>Rising BTC.D = good · Falling = alt rotation risk</div>
-    `;
+    // Try to show cached data rather than an error
+    const cached = JSON.parse(localStorage.getItem('btc_dom_cache') || 'null');
+    if (cached && cached.dom != null) {
+      const ageHours = Math.round((Date.now() - cached.ts) / 3600000);
+      renderDomCard(cached.dom, cached.ethBtcChg, true, ageHours);
+      // Retry in 60 seconds silently
+      setTimeout(fetchBTCDominance, 60000);
+    } else {
+      const errCard = document.getElementById('btc-dom-card');
+      if (errCard) errCard.innerHTML = `
+        <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">BTC Dominance</div>
+        <div style="font-size:15px;font-weight:700;color:#64748b">CoinGecko rate limited</div>
+        <div style="font-size:10px;color:#7c8fa6;margin-top:6px;line-height:1.5">Will retry in 60s · Manual: tradingview.com → BTC.D<br>Rising BTC.D = good · Falling = alt rotation risk</div>
+      `;
+      setTimeout(fetchBTCDominance, 60000);
+    }
   }
 }
 
