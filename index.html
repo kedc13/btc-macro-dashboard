@@ -976,7 +976,7 @@ function renderBig3Cards(big3arr, liveData) {
     const status   = active ? '✓ ACTIVE' : '— Waiting';
     const statusClr= active ? '#22c55e' : '#555';
 
-    let pct = 0, meterColor = '#333', sparkSvg = '', pctLabel = '—';
+    let pct = 0, meterColor = '#333', sparkSvg = '', pctLabel = '—', extraLine = '';
     if (liveData) {
       const d = liveData[i];
       pct = d.pct;
@@ -988,6 +988,7 @@ function renderBig3Cards(big3arr, liveData) {
         sparkSvg = d.spark.replace(/stroke="[^"]*"/g, `stroke="${sparkColor}"`);
       }
       pctLabel = Math.round(pct) + '%';
+      if (d.extra) extraLine = `<div style="margin-top:6px;font-size:10px;color:#f97316;font-weight:600;letter-spacing:.02em">${d.extra}</div>`;
     }
 
     const tp = meta.triggerPct;
@@ -1013,6 +1014,7 @@ function renderBig3Cards(big3arr, liveData) {
       </div>
 
       ${sparkSvg || `<div style="height:60px;background:#0d0d0d;border-radius:4px;display:flex;align-items:center;justify-content:center"><span style="font-size:9px;color:#333">loading…</span></div>`}
+      ${extraLine}
 
       <!-- Trigger info below chart -->
       <div style="margin-top:8px;display:flex;align-items:center;gap:10px">
@@ -1054,6 +1056,15 @@ async function fetchBig3Live(big3arr) {
         ? 50 + (40 - lastK) / 20 * 35   // 20-40 range
         : Math.max(10, 50 - (lastK-40)/60*40);
     const stochColor = lastK < 20 ? '#22c55e' : lastK < 40 ? '#f97316' : '#64748b';
+    // Count consecutive months K has been below 20
+    let monthsBelowOversold = 0;
+    for (let j = stochK.length - 1; j >= 0; j--) {
+      if ((stochK[j] ?? 50) < 20) monthsBelowOversold++;
+      else break;
+    }
+    const stochExtra = monthsBelowOversold > 0
+      ? `Month ${monthsBelowOversold} of oversold  ·  prior cycles: 3–6 months`
+      : null;
 
     // Hash Ribbons proxy: 30d vs 60d MA of price (price-based ribbon)
     const dailyPrices = prices.map(([,p]) => p);
@@ -1100,7 +1111,7 @@ async function fetchBig3Live(big3arr) {
     const liveData = [
       { pct: Math.round(hrPct),   color: hrColor,   spark: hrSpark },
       { pct: soprPct,             color: soprColor, spark: soprSpark, activeOverride: soprActive },
-      { pct: Math.round(stochPct),color: stochColor,spark: stochSpark, activeOverride: lastK < 20 },
+      { pct: Math.round(stochPct),color: stochColor,spark: stochSpark, activeOverride: lastK < 20, extra: stochExtra },
     ];
     renderBig3Cards(big3arr, liveData);
   } catch(e) {
