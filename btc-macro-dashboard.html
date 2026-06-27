@@ -351,6 +351,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:10px" id="mom-grid"></div>
     <div class="section-title">💧 Macro</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px" id="macro-grid"></div>
+    <div class="section-title" style="margin-top:14px">👁️ Shallow Bottom Watch</div>
+    <div style="font-size:11px;color:#475569;margin-bottom:8px">3 signals that confirm a bottom is forming at current price — without needing lower</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px" id="shallow-grid"></div>
     <div class="tranche-guide">
       <span style="font-weight:600;color:#475569">Tranche guide:</span>
       <span class="tg-item"><span class="dot" style="background:#eab308"></span> BUY = first tranche</span>
@@ -1186,7 +1189,11 @@ async function fetchBig3Live(big3arr) {
       { pct: soprPct,             color: soprColor, spark: soprSpark, activeOverride: soprActive },
       { pct: Math.round(stochPct),color: stochColor,spark: stochSpark, activeOverride: lastK < 20, extra: stochExtra },
     ];
+    // Store lastK globally so checkShallowBottomAlert can reference it
+    window._lastStochK = lastK;
     renderBig3Cards(big3arr, liveData);
+    // Check shallow bottom signal after all live data is in place
+    if (typeof checkShallowBottomAlert === 'function') checkShallowBottomAlert();
   } catch(e) {
     console.warn('Big3 live fetch failed — using HISTORY_DATA fallback', e);
     // Fallback: derive all 3 from HISTORY_DATA only, no external fetch
@@ -1267,7 +1274,176 @@ function renderToday(d) {
     qualCard('Global M2',  d.m2,  CLR[d.m2Color]||CLR.gray) +
     qualCard('Fed Policy', d.fed, CLR[d.fedColor]||CLR.gray);
 
+  // Shallow Bottom Watch — render ETF + Realized Price from HISTORY_DATA; dominance fetched live
+  renderShallowBottom(d);
+
   document.getElementById('ts').textContent='Last updated: '+(d.timestamp||new Date().toLocaleString());
+}
+
+// =====================================================================
+// SHALLOW BOTTOM WATCH — ETF Flows, Realized Price, BTC Dominance
+// =====================================================================
+function shallowCard(title, value, color, sub, context, badge) {
+  return `<div style="background:#111;border:1px solid #1e1e1e;border-left:3px solid ${color};border-radius:10px;padding:14px 15px">
+    <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px">
+      <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em">${title}</div>
+      ${badge ? `<span style="font-size:8px;font-weight:700;padding:1px 5px;border-radius:4px;background:${color}22;color:${color};border:1px solid ${color}44">${badge}</span>` : ''}
+    </div>
+    <div style="font-size:18px;font-weight:700;color:${color};margin-bottom:4px">${value}</div>
+    ${sub  ? `<div style="font-size:11px;color:#64748b;margin-bottom:5px">${sub}</div>` : ''}
+    ${context ? `<div style="font-size:10px;color:#475569;border-top:1px solid #1a1a1a;padding-top:6px;margin-top:4px;line-height:1.4">${context}</div>` : ''}
+  </div>`;
+}
+
+function renderShallowBottom(d) {
+  const grid = document.getElementById('shallow-grid');
+  if (!grid) return;
+
+  // 1. ETF Flows — from HISTORY_DATA daily skill
+  const etfColor = CLR[d.etfColor] || CLR.gray;
+  const etfCard = shallowCard(
+    'ETF Flows', d.etf || 'N/C', etfColor,
+    d.etfColor === 'green' ? 'Sustained inflows — institutional accumulation' :
+    d.etfColor === 'yellow' ? 'Mixed / recovering — watch for sustained inflow streak' :
+    'Outflows or flat — institutional selling pressure',
+    'Sustained 2+ week inflow streak at current price = smart money confirming floor',
+    d.etfColor === 'green' ? '✓ Bullish' : d.etfColor === 'yellow' ? '~ Watch' : '✗ Bearish'
+  );
+
+  // 2. Realized Price — live comparison using livePrice vs HISTORY_DATA estimate
+  const rpRaw   = (d.realizedPrice || '').replace(/[^0-9]/g, '');
+  const rpVal   = rpRaw ? parseInt(rpRaw) : null;
+  const curPrice = livePrice || 0;
+  let rpColor = '#64748b', rpValue = d.realizedPrice || 'N/C', rpSub = '', rpCtx = '', rpBadge = '';
+  if (rpVal && curPrice) {
+    const diffPct = ((curPrice - rpVal) / rpVal * 100).toFixed(1);
+    const below   = curPrice < rpVal;
+    rpColor  = below ? '#22c55e' : parseFloat(diffPct) < 10 ? '#f59e0b' : '#64748b';
+    rpValue  = `~$${rpVal.toLocaleString()}`;
+    rpSub    = below
+      ? `Spot $${Math.round(curPrice).toLocaleString()} — ${Math.abs(diffPct)}% BELOW realized (accumulation zone)`
+      : `Spot $${Math.round(curPrice).toLocaleString()} — ${diffPct}% above realized`;
+    rpCtx  = 'Every prior cycle bottom has seen spot trade at or below realized price. Holding near here = historically strong floor.';
+    rpBadge = below ? '✓ Below' : parseFloat(diffPct) < 10 ? '~ Near' : 'Above';
+  }
+  const rpCard = shallowCard('Realized Price', rpValue, rpColor, rpSub, rpCtx, rpBadge);
+
+  // 3. BTC Dominance — placeholder, filled by fetchBTCDominance()
+  const domCard = `<div id="btc-dom-card" style="background:#111;border:1px solid #1e1e1e;border-left:3px solid #64748b;border-radius:10px;padding:14px 15px">
+    <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">BTC Dominance</div>
+    <div style="font-size:18px;font-weight:700;color:#64748b">Loading…</div>
+    <div style="font-size:10px;color:#475569;border-top:1px solid #1a1a1a;padding-top:6px;margin-top:8px;line-height:1.4">Rising dominance = capital staying in BTC (good). Falling = alt rotation risk / mid-cycle rally signal.</div>
+  </div>`;
+
+  grid.innerHTML = etfCard + rpCard + domCard;
+  fetchBTCDominance();
+}
+
+async function fetchBTCDominance() {
+  const card = document.getElementById('btc-dom-card');
+  if (!card) return;
+  try {
+    // CoinGecko global — free, no auth, returns BTC dominance %
+    const r = await fetch('https://api.coingecko.com/api/v3/global');
+    const g = await r.json();
+    const dom    = g.data?.bitcoin_dominance_percentage;
+    const domChg = g.data?.market_cap_change_percentage_24h_usd; // proxy for market direction
+
+    // ETH/BTC ratio 24h change from Binance (altcoin behavior)
+    let ethBtcChg = null;
+    try {
+      const eb = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=ETHBTC');
+      const ed = await eb.json();
+      ethBtcChg = parseFloat(ed.priceChangePercent);
+    } catch(_) {}
+
+    if (dom == null) throw new Error('no data');
+
+    // Rising BTC.D + falling ETH/BTC = capital in BTC = good signal
+    // Falling BTC.D + rising ETH/BTC = alt rotation = mid-cycle rally risk
+    const altRotating = ethBtcChg != null && ethBtcChg > 3;
+    const btcDomRising = dom > 54; // historically >54% = BTC accumulation phase
+
+    const color  = altRotating ? '#f97316' : btcDomRising ? '#22c55e' : '#f59e0b';
+    const badge  = altRotating ? '⚠️ Alt Rotation' : btcDomRising ? '✓ BTC Dominant' : '~ Watch';
+    const ethLine = ethBtcChg != null
+      ? `ETH/BTC 24h: ${ethBtcChg > 0 ? '+' : ''}${ethBtcChg.toFixed(2)}% ${ethBtcChg > 2 ? '(alts outperforming — caution)' : '(BTC holding ground ✓)'}`
+      : '';
+
+    card.outerHTML = shallowCard(
+      'BTC Dominance',
+      `${dom.toFixed(1)}%`,
+      color,
+      ethLine,
+      altRotating
+        ? 'Alts outperforming BTC — mid-cycle rally risk. Do not deploy reserve until BTC.D stabilizes or rises.'
+        : btcDomRising
+          ? 'BTC dominant — capital flowing into BTC, not rotating to alts. Consistent with accumulation floor.'
+          : 'Dominance neutral. Monitor ETH/BTC ratio for early alt rotation signal.',
+      badge
+    );
+  } catch(e) {
+    const errCard = document.getElementById('btc-dom-card');
+    if (errCard) errCard.innerHTML = `
+      <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">BTC Dominance</div>
+      <div style="font-size:16px;font-weight:700;color:#475569">Rate limited</div>
+      <div style="font-size:10px;color:#475569;margin-top:6px;line-height:1.4">Reload to retry · Manual: tradingview.com → BTC.D<br>Rising BTC.D = good · Falling = alt rotation risk</div>
+    `;
+  }
+}
+
+// =====================================================================
+// SHALLOW BOTTOM ALERT — fires when Range Hold + apathy signals confirm
+// at current price without needing lower. Different from price alerts.
+// =====================================================================
+let _shallowAlertFired = false;
+
+function checkShallowBottomAlert() {
+  // Only check once per session to avoid spam
+  if (_shallowAlertFired) return;
+
+  const d = HISTORY_DATA[HISTORY_DATA.length - 1] || {};
+  const _al = window._apathyLive || {};
+  const fundingOk = _al.funding ? _al.funding.neutral : false;
+  const volumeOk  = _al.volume  ? _al.volume.good    : false;
+
+  // Auto-count from apathy monitor (MVRV, F&G, Stoch RSI auto signals)
+  // We re-derive from the stored apathy signals
+  const mvrvActive   = (d.mvrv != null && +d.mvrv < 1);
+  const fgActive     = window._fngHistory?.length
+    ? window._fngHistory[window._fngHistory.length - 1] < 20
+    : (d.fearGreed != null && +d.fearGreed < 20);
+  // Monthly Stoch: check from window._lastStochK if available
+  const stochActive  = window._lastStochK != null ? window._lastStochK < 20 : false;
+
+  const autoCount = [mvrvActive, fgActive, stochActive].filter(Boolean).length;
+  const flowsOk   = localStorage.getItem('apath_flows') === '1';
+  const apathyScore = autoCount + [fundingOk, flowsOk, volumeOk].filter(Boolean).length;
+
+  // Range hold: price has been between 0.92–1.08x of a recent level for 3+ weeks
+  // Proxy: check if livePrice is within 8% of the 30-day trailing MVRV-implied floor
+  // Simpler proxy: livePrice is within 5% of the 3-week low in HISTORY_DATA
+  const recentPrices = HISTORY_DATA.slice(-21).map(x => x.price).filter(Boolean);
+  const recentLow = recentPrices.length ? Math.min(...recentPrices) : null;
+  const rangeHolding = recentLow && livePrice ? (livePrice - recentLow) / recentLow < 0.08 : false;
+
+  // Fire when: apathy 5+ AND range holding AND price hasn't gone to deep bottom levels
+  const priceIsShallow = livePrice && livePrice > 48000; // above the deep accumulation zone
+  const shouldFire = apathyScore >= 5 && rangeHolding && priceIsShallow;
+
+  if (!shouldFire) return;
+  _shallowAlertFired = true;
+
+  const curr = typeof computeAlertState === 'function' ? computeAlertState() : null;
+  const alert = {
+    level: 'warn',
+    icon: '🎯',
+    title: `Shallow Bottom Signal — Price holding ${livePrice ? '$' + Math.round(livePrice).toLocaleString() : 'current level'}`,
+    body: `Apathy Track ${apathyScore}/8 · Range holding · No new lows in 3 weeks\n\nThis pattern — consolidation at elevated price with extreme valuation readings — matches a shallow apathy bottom. Price may not reach $41–49K targets.`,
+    action: 'Consider moving unfilled tranches UP to current zone and bumping DCA. Do not wait for lower prices that may not come.'
+  };
+
+  if (curr) { addAlertToHistory([alert], curr); showAlertModal([alert], curr); }
 }
 
 // =====================================================================
