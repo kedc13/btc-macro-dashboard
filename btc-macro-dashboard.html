@@ -772,10 +772,15 @@ function qualCard(label, value, color, sub='') {
 }
 
 // Live Fear & Greed fetch
+window._fngHistory = []; // shared with Big 3 SOPR card
 async function fetchLiveFG() {
   try {
-    const r = await fetch('https://api.alternative.me/fng/?limit=1');
+    const r = await fetch('https://api.alternative.me/fng/?limit=14');
     const d = await r.json();
+    // Store history oldest→newest for Big 3 SOPR proxy
+    window._fngHistory = d.data.slice().reverse().map(x => parseInt(x.value));
+    // Overwrite to single value for card display
+    d.data = [d.data[0]];
     const val = parseInt(d.data[0].value);
     const card = document.getElementById('fg-live-card');
     if (!card) return;
@@ -902,7 +907,7 @@ const BIG3_META = [
   { name:'SOPR Recovery',
     tip:'Spent Output Profit Ratio sustained above 1.0 signals that coins are being moved at a profit — a bear-to-recovery trend shift. Watch for it to hold above 1 for multiple weeks.',
     proxySrc:'fg',
-    triggerPct: 70, triggerLabel: 'Fear & Greed drops below 15 (extreme fear)' },
+    triggerPct: 85, triggerLabel: 'F&G recovering above 18 after sustained extreme fear' },
   { name:'Monthly Stoch RSI',
     tip:'Stochastic RSI on the monthly chart. Lines compressing below 20 = oversold. Pre-cross (K tightening) is the strongest signal. The actual cross lags but confirms direction.',
     proxySrc:'live',
@@ -964,7 +969,9 @@ function renderBig3Cards(big3arr, liveData) {
   const grid = document.getElementById('big3-grid');
   if (!grid) return;
   grid.innerHTML = BIG3_META.map((meta, i) => {
-    const active = big3arr[i] && big3arr[i].color === 'green';
+    const active = (liveData && liveData[i]?.activeOverride !== undefined)
+      ? liveData[i].activeOverride
+      : (big3arr[i] && big3arr[i].color === 'green');
     const dotColor = active ? '#22c55e' : '#555';
     const status   = active ? '✓ ACTIVE' : '— Waiting';
     const statusClr= active ? '#22c55e' : '#555';
@@ -1064,17 +1071,36 @@ async function fetchBig3Live(big3arr) {
     const hrColor = ratio > 1 ? '#22c55e' : ratio > 0.96 ? '#f97316' : '#64748b';
     const hrSpark = makeSpark(ratioHistory.slice(-12), hrColor, 50);
 
-    // SOPR proxy: use F&G trend from recent HISTORY_DATA
-    const fgHistory = HISTORY_DATA.slice(-14).map(h => h.fearGreed != null ? +h.fearGreed : 50);
-    const latestFG  = fgHistory[fgHistory.length-1] ?? 50;
-    const fgPct = latestFG < 15 ? 70 : latestFG < 25 ? 50 : latestFG < 40 ? 35 : 20;
-    const soprColor = latestFG < 20 ? '#f97316' : '#64748b';
-    const soprSpark = makeSpark(fgHistory, soprColor, 25);
+    // SOPR proxy: live F&G history (stored by fetchLiveFG) + HISTORY_DATA fallback
+    // Recovery signal: was in extreme fear (<20), now recovering upward = SOPR likely crossing 1.0
+    const fgLive = window._fngHistory && window._fngHistory.length >= 7
+      ? window._fngHistory
+      : HISTORY_DATA.slice(-14).map(h => h.fearGreed != null ? +h.fearGreed : 50);
+    const liveFG    = fgLive[fgLive.length - 1] ?? 50;
+    const prior3avg = fgLive.slice(-4, -1).reduce((a,b)=>a+b,0) / Math.max(1, Math.min(3, fgLive.slice(-4,-1).length));
+    const wasInExtremeFear = fgLive.some(v => v <= 20);
+    const recovering = wasInExtremeFear && liveFG > prior3avg && liveFG >= 18;
+    // pct: 0-65 = not yet in extreme fear; 65-80 = in capitulation zone; 85+ = recovering (trigger zone)
+    let soprPct, soprColor, soprActive;
+    if (recovering) {
+      soprPct = Math.min(95, 85 + (liveFG - 18) * 1.5);
+      soprColor = '#22c55e'; soprActive = true;
+    } else if (liveFG <= 20) {
+      soprPct = Math.round(60 + (20 - liveFG) * 1.5); // 60-90 range in capitulation
+      soprColor = '#f97316'; soprActive = false;
+    } else if (liveFG <= 35) {
+      soprPct = Math.round(35 + (35 - liveFG)); // approaching extreme fear
+      soprColor = '#64748b'; soprActive = false;
+    } else {
+      soprPct = Math.max(10, Math.round(35 - (liveFG - 35) * 0.4));
+      soprColor = '#64748b'; soprActive = false;
+    }
+    const soprSpark = makeSpark(fgLive, soprColor, 20);
 
     const liveData = [
-      { pct: Math.round(hrPct),    color: hrColor,    spark: hrSpark },
-      { pct: fgPct,                color: soprColor,  spark: soprSpark },
-      { pct: Math.round(stochPct), color: stochColor, spark: stochSpark },
+      { pct: Math.round(hrPct),   color: hrColor,   spark: hrSpark },
+      { pct: soprPct,             color: soprColor, spark: soprSpark, activeOverride: soprActive },
+      { pct: Math.round(stochPct),color: stochColor,spark: stochSpark },
     ];
     renderBig3Cards(big3arr, liveData);
   } catch(e) {
