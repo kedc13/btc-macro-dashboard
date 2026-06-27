@@ -976,22 +976,29 @@ function renderBig3Cards(big3arr, liveData) {
     const status   = active ? '✓ ACTIVE' : '— Waiting';
     const statusClr= active ? '#22c55e' : '#555';
 
+    const tp = meta.triggerPct;
     let pct = 0, meterColor = '#333', sparkSvg = '', pctLabel = '—', extraLine = '';
     if (liveData) {
       const d = liveData[i];
       pct = d.pct;
-      // Only show color when active; otherwise keep everything muted
-      meterColor = active ? '#22c55e' : '#fff';
-      const sparkColor = active ? '#22c55e' : '#666';
+      // Color the meter fill by proximity to trigger — gives instant visual sense of where each card stands
+      if (active) {
+        meterColor = '#22c55e';                   // green: triggered
+      } else if (pct >= tp - 10) {
+        meterColor = '#f97316';                   // orange: within 10% of trigger
+      } else if (pct >= tp - 25) {
+        meterColor = '#f59e0b';                   // amber: within 25%
+      } else {
+        meterColor = '#3a3a3a';                   // dark gray: far away
+      }
+      const sparkColor = active ? '#22c55e' : pct >= tp - 10 ? '#f97316' : pct >= tp - 25 ? '#f59e0b' : '#444';
       if (d.spark) {
-        // Just replace stroke color — polyline has fill="none", no circle to worry about
         sparkSvg = d.spark.replace(/stroke="[^"]*"/g, `stroke="${sparkColor}"`);
       }
       pctLabel = Math.round(pct) + '%';
       if (d.extra) extraLine = `<div style="margin-top:6px;font-size:10px;color:#f97316;font-weight:600;letter-spacing:.02em">${d.extra}</div>`;
     }
 
-    const tp = meta.triggerPct;
     const pastTrigger = pct >= tp;
     const pctClamped = Math.min(pct, 96);
     return `<div class="big3-card" data-b3tip="${meta.tip}">
@@ -1031,19 +1038,17 @@ function renderBig3Cards(big3arr, liveData) {
 
 async function fetchBig3Live(big3arr) {
   try {
-    // Fetch ~960 days of daily prices for monthly grouping (need 31+ months for 14-period monthly Stoch RSI)
-    const resp = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=960&interval=daily');
-    const json = await resp.json();
-    const prices = json.prices; // [[ts, price],...]
+    // Fetch 36 monthly candles from Binance (reliable, no rate limits, no auth)
+    // 36 months → calcRSI(14) → 22 RSI vals → calcStochK(14,3) → 7 K values — plenty
+    const mResp = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1M&limit=36');
+    const mRows = await mResp.json();
+    // Also fetch daily prices for Hash Ribbons (30d/60d MA)
+    const dResp = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=90');
+    const dRows = await dResp.json();
+    const prices = dRows.map(r => ({ dummy: null, price: parseFloat(r[4]) })); // daily closes
 
-    // Group into monthly closes
-    const byMonth = {};
-    prices.forEach(([ts, p]) => {
-      const d = new Date(ts);
-      const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
-      byMonth[key] = p;
-    });
-    const monthlyCloses = Object.keys(byMonth).sort().map(k => byMonth[k]);
+    // Monthly closes (index 4 = close price in Binance kline format)
+    const monthlyCloses = mRows.map(r => parseFloat(r[4]));
 
     // Compute Monthly Stoch RSI
     const rsiVals = calcRSI(monthlyCloses, 14);
@@ -1067,7 +1072,7 @@ async function fetchBig3Live(big3arr) {
       : null;
 
     // Hash Ribbons proxy: 30d vs 60d MA of price (price-based ribbon)
-    const dailyPrices = prices.map(([,p]) => p);
+    const dailyPrices = dRows.map(r => parseFloat(r[4])); // daily closes from Binance
     const ma30 = dailyPrices.slice(-30).reduce((a,b)=>a+b,0)/30;
     const ma60 = dailyPrices.slice(-60).reduce((a,b)=>a+b,0)/60;
     const ratio = ma30 / ma60; // >1 = bullish cross, <1 = still under
