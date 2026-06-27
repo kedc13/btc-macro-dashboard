@@ -775,7 +775,7 @@ function qualCard(label, value, color, sub='') {
 window._fngHistory = []; // shared with Big 3 SOPR card
 async function fetchLiveFG() {
   try {
-    const r = await fetch('https://api.alternative.me/fng/?limit=14');
+    const r = await fetch('https://api.alternative.me/fng/?limit=90');
     const d = await r.json();
     // Store history oldest→newest for Big 3 SOPR proxy
     window._fngHistory = d.data.slice().reverse().map(x => parseInt(x.value));
@@ -911,7 +911,7 @@ const BIG3_META = [
   { name:'Monthly Stoch RSI',
     tip:'Stochastic RSI on the monthly chart. Lines compressing below 20 = oversold. Pre-cross (K tightening) is the strongest signal. The actual cross lags but confirms direction.',
     proxySrc:'live',
-    triggerPct: 85, triggerLabel: 'Stoch K-line crosses below 20' },
+    triggerPct: 85, triggerLabel: 'Stoch K-line below 20 (oversold zone)' },
 ];
 
 function calcRSI(closes, period) {
@@ -976,7 +976,7 @@ function renderBig3Cards(big3arr, liveData) {
     const status   = active ? '✓ ACTIVE' : '— Waiting';
     const statusClr= active ? '#22c55e' : '#555';
 
-    let pct = 0, meterColor = '#333', sparkSvg = '', pctLabel = '—';
+    let pct = 0, meterColor = '#333', sparkSvg = '', pctLabel = '—', extraLine = '';
     if (liveData) {
       const d = liveData[i];
       pct = d.pct;
@@ -988,6 +988,7 @@ function renderBig3Cards(big3arr, liveData) {
         sparkSvg = d.spark.replace(/stroke="[^"]*"/g, `stroke="${sparkColor}"`);
       }
       pctLabel = Math.round(pct) + '%';
+      if (d.extra) extraLine = `<div style="margin-top:6px;font-size:10px;color:#f97316;font-weight:600;letter-spacing:.02em">${d.extra}</div>`;
     }
 
     const tp = meta.triggerPct;
@@ -1013,6 +1014,7 @@ function renderBig3Cards(big3arr, liveData) {
       </div>
 
       ${sparkSvg || `<div style="height:60px;background:#0d0d0d;border-radius:4px;display:flex;align-items:center;justify-content:center"><span style="font-size:9px;color:#333">loading…</span></div>`}
+      ${extraLine}
 
       <!-- Trigger info below chart -->
       <div style="margin-top:8px;display:flex;align-items:center;gap:10px">
@@ -1029,8 +1031,8 @@ function renderBig3Cards(big3arr, liveData) {
 
 async function fetchBig3Live(big3arr) {
   try {
-    // Fetch ~400 days of daily prices for monthly grouping
-    const resp = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=400&interval=daily');
+    // Fetch ~960 days of daily prices for monthly grouping (need 31+ months for 14-period monthly Stoch RSI)
+    const resp = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=960&interval=daily');
     const json = await resp.json();
     const prices = json.prices; // [[ts, price],...]
 
@@ -1054,6 +1056,15 @@ async function fetchBig3Live(big3arr) {
         ? 50 + (40 - lastK) / 20 * 35   // 20-40 range
         : Math.max(10, 50 - (lastK-40)/60*40);
     const stochColor = lastK < 20 ? '#22c55e' : lastK < 40 ? '#f97316' : '#64748b';
+    // Count consecutive months K has been below 20
+    let monthsBelowOversold = 0;
+    for (let j = stochK.length - 1; j >= 0; j--) {
+      if ((stochK[j] ?? 50) < 20) monthsBelowOversold++;
+      else break;
+    }
+    const stochExtra = monthsBelowOversold > 0
+      ? `Month ${monthsBelowOversold} of oversold  ·  prior cycles: 3–6 months`
+      : null;
 
     // Hash Ribbons proxy: 30d vs 60d MA of price (price-based ribbon)
     const dailyPrices = prices.map(([,p]) => p);
@@ -1098,9 +1109,9 @@ async function fetchBig3Live(big3arr) {
     const soprSpark = makeSpark(fgLive, soprColor, 20);
 
     const liveData = [
-      { pct: Math.round(hrPct),   color: hrColor,   spark: hrSpark },
+      { pct: Math.round(hrPct),   color: hrColor,   spark: hrSpark, activeOverride: ratio > 1 },
       { pct: soprPct,             color: soprColor, spark: soprSpark, activeOverride: soprActive },
-      { pct: Math.round(stochPct),color: stochColor,spark: stochSpark },
+      { pct: Math.round(stochPct),color: stochColor,spark: stochSpark, activeOverride: lastK < 20, extra: stochExtra },
     ];
     renderBig3Cards(big3arr, liveData);
   } catch(e) {
@@ -2943,8 +2954,13 @@ function computeAlertState() {
   const floorTests = prices.filter(p => p <= cycleLow * 1.07).length;
   const timeSignal = bearWeek >= 44;
   const autoCount  = [rangeHeld, volComp, !!mvrvUp, floorTests >= 3, timeSignal].filter(Boolean).length;
-  const manualCount= ['funding','flows','volume'].filter(k => localStorage.getItem('apath_'+k)==='1').length;
-  const apathyScore = autoCount + manualCount;
+  // Use live API signals for funding/volume (same source as renderApathyMonitor UI)
+  // Fall back to manual localStorage toggle only if live data not yet loaded
+  const _al = window._apathyLive || {};
+  const fundingActive = _al.funding ? _al.funding.neutral : localStorage.getItem('apath_funding') === '1';
+  const volumeActive  = _al.volume  ? _al.volume.good    : localStorage.getItem('apath_volume')  === '1';
+  const flowsActive   = localStorage.getItem('apath_flows') === '1';
+  const apathyScore = autoCount + [fundingActive, flowsActive, volumeActive].filter(Boolean).length;
 
   // Action level
   let actionLevel = 'HOLD';
