@@ -1166,7 +1166,9 @@ async function fetchBig3Live(big3arr) {
     const liveFG    = fgLive[fgLive.length - 1] ?? 50;
     const prior3avg = fgLive.slice(-4, -1).reduce((a,b)=>a+b,0) / Math.max(1, Math.min(3, fgLive.slice(-4,-1).length));
     const wasInExtremeFear = fgLive.some(v => v <= 20);
-    const recovering = wasInExtremeFear && liveFG > prior3avg && liveFG >= 18;
+    // Recovery: must have LEFT extreme fear (≥20), not just ticked up within it.
+    // prior3avg < 20 ensures we were still in extreme fear recently, making the cross meaningful.
+    const recovering = wasInExtremeFear && liveFG >= 20 && prior3avg < 20 && liveFG > prior3avg;
     // pct: 0-65 = not yet in extreme fear; 65-80 = in capitulation zone; 85+ = recovering (trigger zone)
     let soprPct, soprColor, soprActive;
     if (recovering) {
@@ -1267,9 +1269,8 @@ function renderToday(d) {
     qualCard('MACD',   d.macd,  CLR[d.macdColor]||CLR.gray) +
     qualCard('200W MA', d.ma200, CLR[d.ma200Color]||CLR.gray);
 
-  // Macro — qual cards only (qualitative data)
+  // Macro — qual cards (ETF removed — now shown with more context in Shallow Bottom Watch)
   document.getElementById('macro-grid').innerHTML =
-    qualCard('ETF Flows',  d.etf, CLR[d.etfColor]||CLR.gray) +
     qualCard('DXY',        d.dxy, CLR[d.dxyColor]||CLR.gray) +
     qualCard('Global M2',  d.m2,  CLR[d.m2Color]||CLR.gray) +
     qualCard('Fed Policy', d.fed, CLR[d.fedColor]||CLR.gray);
@@ -1359,27 +1360,43 @@ async function fetchBTCDominance() {
 
     if (dom == null) throw new Error('no data');
 
-    // Rising BTC.D + falling ETH/BTC = capital in BTC = good signal
+    // Store rolling dominance history in localStorage (max 10 entries, 10-day window)
+    const domHistory = JSON.parse(localStorage.getItem('btc_dom_history') || '[]');
+    const nowTs = Date.now();
+    domHistory.push({ ts: nowTs, dom });
+    const trimmed = domHistory.filter(e => nowTs - e.ts < 10 * 24 * 60 * 60 * 1000).slice(-10);
+    localStorage.setItem('btc_dom_history', JSON.stringify(trimmed));
+
+    // Compare to 7-day-ago reading for directional signal (relative, not static threshold)
+    const weekAgoEntry = trimmed.find(e => nowTs - e.ts >= 6 * 24 * 60 * 60 * 1000);
+    const domWeekAgo   = weekAgoEntry?.dom ?? null;
+    const domTrend     = domWeekAgo != null ? dom - domWeekAgo : null; // + = rising, - = falling
+    const domRising    = domTrend != null && domTrend > 0.4;   // +0.4pp vs 7 days ago = rising
+    const domFalling   = domTrend != null && domTrend < -0.4;  // -0.4pp vs 7 days ago = falling
+
+    // Rising BTC.D + falling ETH/BTC = capital in BTC = good
     // Falling BTC.D + rising ETH/BTC = alt rotation = mid-cycle rally risk
     const altRotating = ethBtcChg != null && ethBtcChg > 3;
-    const btcDomRising = dom > 54; // historically >54% = BTC accumulation phase
+    const trendLabel  = domTrend != null
+      ? ` (${domTrend > 0 ? '+' : ''}${domTrend.toFixed(1)}pp vs 7d ago)`
+      : ' (no 7d history yet — reload daily to build trend)';
 
-    const color  = altRotating ? '#f97316' : btcDomRising ? '#22c55e' : '#f59e0b';
-    const badge  = altRotating ? '⚠️ Alt Rotation' : btcDomRising ? '✓ BTC Dominant' : '~ Watch';
+    const color  = altRotating || domFalling ? '#f97316' : domRising ? '#22c55e' : '#f59e0b';
+    const badge  = altRotating ? '⚠️ Alt Rotation' : domFalling ? '↓ Falling' : domRising ? '↑ Rising ✓' : '~ Flat';
     const ethLine = ethBtcChg != null
       ? `ETH/BTC 24h: ${ethBtcChg > 0 ? '+' : ''}${ethBtcChg.toFixed(2)}% ${ethBtcChg > 2 ? '(alts outperforming — caution)' : '(BTC holding ground ✓)'}`
       : '';
 
     card.outerHTML = shallowCard(
-      'BTC Dominance',
+      `BTC Dominance${trendLabel}`,
       `${dom.toFixed(1)}%`,
       color,
       ethLine,
-      altRotating
-        ? 'Alts outperforming BTC — mid-cycle rally risk. Do not deploy reserve until BTC.D stabilizes or rises.'
-        : btcDomRising
-          ? 'BTC dominant — capital flowing into BTC, not rotating to alts. Consistent with accumulation floor.'
-          : 'Dominance neutral. Monitor ETH/BTC ratio for early alt rotation signal.',
+      altRotating || domFalling
+        ? 'Alts outperforming / BTC.D falling — mid-cycle rally risk. Hold reserve until BTC.D stabilizes or turns up.'
+        : domRising
+          ? 'BTC dominance rising — capital flowing into BTC, not alts. Consistent with accumulation floor forming.'
+          : 'Dominance flat. Monitor daily — a sustained rise confirms no alt rotation risk.',
       badge
     );
   } catch(e) {
@@ -1393,57 +1410,44 @@ async function fetchBTCDominance() {
 }
 
 // =====================================================================
-// SHALLOW BOTTOM ALERT — fires when Range Hold + apathy signals confirm
-// at current price without needing lower. Different from price alerts.
+// SHALLOW BOTTOM ALERT — fires when Apathy Track 5+ AND range holding
+// at current price, without needing price to go lower.
+// Uses computeAlertState() for the correct apathy score — same as UI.
+// Persisted to localStorage with 7-day TTL to prevent spam on reload.
 // =====================================================================
-let _shallowAlertFired = false;
-
 function checkShallowBottomAlert() {
-  // Only check once per session to avoid spam
-  if (_shallowAlertFired) return;
+  // Respect 7-day TTL — don't fire again if already fired recently
+  const firedTs = parseInt(localStorage.getItem('btc_shallow_alert_fired') || '0');
+  if (firedTs && Date.now() - firedTs < 7 * 24 * 60 * 60 * 1000) return;
 
-  const d = HISTORY_DATA[HISTORY_DATA.length - 1] || {};
-  const _al = window._apathyLive || {};
-  const fundingOk = _al.funding ? _al.funding.neutral : false;
-  const volumeOk  = _al.volume  ? _al.volume.good    : false;
+  // Use computeAlertState() — same logic as renderApathyMonitor UI
+  const curr = typeof computeAlertState === 'function' ? computeAlertState() : null;
+  if (!curr) return;
 
-  // Auto-count from apathy monitor (MVRV, F&G, Stoch RSI auto signals)
-  // We re-derive from the stored apathy signals
-  const mvrvActive   = (d.mvrv != null && +d.mvrv < 1);
-  const fgActive     = window._fngHistory?.length
-    ? window._fngHistory[window._fngHistory.length - 1] < 20
-    : (d.fearGreed != null && +d.fearGreed < 20);
-  // Monthly Stoch: check from window._lastStochK if available
-  const stochActive  = window._lastStochK != null ? window._lastStochK < 20 : false;
+  const { apathyScore } = curr;
 
-  const autoCount = [mvrvActive, fgActive, stochActive].filter(Boolean).length;
-  const flowsOk   = localStorage.getItem('apath_flows') === '1';
-  const apathyScore = autoCount + [fundingOk, flowsOk, volumeOk].filter(Boolean).length;
-
-  // Range hold: price has been between 0.92–1.08x of a recent level for 3+ weeks
-  // Proxy: check if livePrice is within 8% of the 30-day trailing MVRV-implied floor
-  // Simpler proxy: livePrice is within 5% of the 3-week low in HISTORY_DATA
+  // Range hold: livePrice is within 8% above the 3-week low (price consolidating)
   const recentPrices = HISTORY_DATA.slice(-21).map(x => x.price).filter(Boolean);
-  const recentLow = recentPrices.length ? Math.min(...recentPrices) : null;
+  const recentLow    = recentPrices.length ? Math.min(...recentPrices) : null;
   const rangeHolding = recentLow && livePrice ? (livePrice - recentLow) / recentLow < 0.08 : false;
 
-  // Fire when: apathy 5+ AND range holding AND price hasn't gone to deep bottom levels
-  const priceIsShallow = livePrice && livePrice > 48000; // above the deep accumulation zone
+  // Only fire above $48K — below that, price level alerts handle deployment decisions
+  const priceIsShallow = livePrice && livePrice > 48000;
   const shouldFire = apathyScore >= 5 && rangeHolding && priceIsShallow;
 
   if (!shouldFire) return;
-  _shallowAlertFired = true;
+  localStorage.setItem('btc_shallow_alert_fired', Date.now().toString());
 
-  const curr = typeof computeAlertState === 'function' ? computeAlertState() : null;
   const alert = {
     level: 'warn',
     icon: '🎯',
-    title: `Shallow Bottom Signal — Price holding ${livePrice ? '$' + Math.round(livePrice).toLocaleString() : 'current level'}`,
+    title: `Shallow Bottom Signal — Price holding $${Math.round(livePrice).toLocaleString()}`,
     body: `Apathy Track ${apathyScore}/8 · Range holding · No new lows in 3 weeks\n\nThis pattern — consolidation at elevated price with extreme valuation readings — matches a shallow apathy bottom. Price may not reach $41–49K targets.`,
     action: 'Consider moving unfilled tranches UP to current zone and bumping DCA. Do not wait for lower prices that may not come.'
   };
 
-  if (curr) { addAlertToHistory([alert], curr); showAlertModal([alert], curr); }
+  addAlertToHistory([alert], curr);
+  showAlertModal([alert], curr);
 }
 
 // =====================================================================
@@ -3303,7 +3307,13 @@ function showAlertModal(alerts, curr) {
 }
 
 window.dismissAlerts = function() {
-  if (window._alertCurr) localStorage.setItem('btc_alert_dismissed', JSON.stringify({ actionLevel: window._alertCurr.actionLevel, midRally: window._alertCurr.midRally, big3Count: window._alertCurr.big3Count, classicScore: window._alertCurr.classicScore, apathyScore5: window._alertCurr.apathyScore >= 5 }));
+  if (window._alertCurr) localStorage.setItem('btc_alert_dismissed', JSON.stringify({
+    actionLevel:  window._alertCurr.actionLevel,
+    midRally:     window._alertCurr.midRally,
+    big3Count:    window._alertCurr.big3Count,
+    classicScore: window._alertCurr.classicScore,
+    apathyScore:  window._alertCurr.apathyScore   // store actual number, not boolean
+  }));
   document.getElementById('alert-modal').style.display = 'none';
 };
 
@@ -3326,12 +3336,18 @@ function checkAndShowAlerts() {
   addAlertToHistory(alerts, curr);
 
   // Suppress modal if already dismissed for same state
+  // Backward compat: old entries stored apathyScore5 (boolean), new ones store apathyScore (number)
+  const apathyMatch = dismissed && (
+    dismissed.apathyScore != null
+      ? dismissed.apathyScore === curr.apathyScore
+      : dismissed.apathyScore5 === (curr.apathyScore >= 5)
+  );
   const alreadySeen = dismissed &&
     dismissed.actionLevel  === curr.actionLevel &&
     dismissed.midRally     === curr.midRally &&
     dismissed.big3Count    === curr.big3Count &&
     dismissed.classicScore === curr.classicScore &&
-    dismissed.apathyScore5 === (curr.apathyScore >= 5);
+    apathyMatch;
   if (!alreadySeen) showAlertModal(alerts, curr);
 }
 
