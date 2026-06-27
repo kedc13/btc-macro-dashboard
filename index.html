@@ -2513,7 +2513,7 @@ function renderPlan() {
 
   // ── Next key milestone ───────────────────────────────────────────
   const w35Ms   = new Date(W35_DATE).getTime();
-  const w44Ms   = new Date(W44_DATE).getTime();
+  // w44Ms already declared above
   const daysToW35 = Math.max(0, Math.ceil((w35Ms - now.getTime()) / 86400000));
   const daysToW44 = Math.max(0, Math.ceil((w44Ms - now.getTime()) / 86400000));
   const milestone = daysToW35 > 0
