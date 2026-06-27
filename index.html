@@ -1029,8 +1029,8 @@ function renderBig3Cards(big3arr, liveData) {
 
 async function fetchBig3Live(big3arr) {
   try {
-    // Fetch ~400 days of daily prices for monthly grouping
-    const resp = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=400&interval=daily');
+    // Fetch ~960 days of daily prices for monthly grouping (need 31+ months for 14-period monthly Stoch RSI)
+    const resp = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=960&interval=daily');
     const json = await resp.json();
     const prices = json.prices; // [[ts, price],...]
 
@@ -1100,7 +1100,7 @@ async function fetchBig3Live(big3arr) {
     const liveData = [
       { pct: Math.round(hrPct),   color: hrColor,   spark: hrSpark },
       { pct: soprPct,             color: soprColor, spark: soprSpark, activeOverride: soprActive },
-      { pct: Math.round(stochPct),color: stochColor,spark: stochSpark },
+      { pct: Math.round(stochPct),color: stochColor,spark: stochSpark, activeOverride: lastK < 20 },
     ];
     renderBig3Cards(big3arr, liveData);
   } catch(e) {
