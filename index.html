@@ -775,7 +775,7 @@ function qualCard(label, value, color, sub='') {
 window._fngHistory = []; // shared with Big 3 SOPR card
 async function fetchLiveFG() {
   try {
-    const r = await fetch('https://api.alternative.me/fng/?limit=14');
+    const r = await fetch('https://api.alternative.me/fng/?limit=90');
     const d = await r.json();
     // Store history oldest→newest for Big 3 SOPR proxy
     window._fngHistory = d.data.slice().reverse().map(x => parseInt(x.value));
@@ -911,7 +911,7 @@ const BIG3_META = [
   { name:'Monthly Stoch RSI',
     tip:'Stochastic RSI on the monthly chart. Lines compressing below 20 = oversold. Pre-cross (K tightening) is the strongest signal. The actual cross lags but confirms direction.',
     proxySrc:'live',
-    triggerPct: 85, triggerLabel: 'Stoch K-line crosses below 20' },
+    triggerPct: 85, triggerLabel: 'Stoch K-line below 20 (oversold zone)' },
 ];
 
 function calcRSI(closes, period) {
@@ -1109,7 +1109,7 @@ async function fetchBig3Live(big3arr) {
     const soprSpark = makeSpark(fgLive, soprColor, 20);
 
     const liveData = [
-      { pct: Math.round(hrPct),   color: hrColor,   spark: hrSpark },
+      { pct: Math.round(hrPct),   color: hrColor,   spark: hrSpark, activeOverride: ratio > 1 },
       { pct: soprPct,             color: soprColor, spark: soprSpark, activeOverride: soprActive },
       { pct: Math.round(stochPct),color: stochColor,spark: stochSpark, activeOverride: lastK < 20, extra: stochExtra },
     ];
