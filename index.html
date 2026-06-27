@@ -2954,8 +2954,13 @@ function computeAlertState() {
   const floorTests = prices.filter(p => p <= cycleLow * 1.07).length;
   const timeSignal = bearWeek >= 44;
   const autoCount  = [rangeHeld, volComp, !!mvrvUp, floorTests >= 3, timeSignal].filter(Boolean).length;
-  const manualCount= ['funding','flows','volume'].filter(k => localStorage.getItem('apath_'+k)==='1').length;
-  const apathyScore = autoCount + manualCount;
+  // Use live API signals for funding/volume (same source as renderApathyMonitor UI)
+  // Fall back to manual localStorage toggle only if live data not yet loaded
+  const _al = window._apathyLive || {};
+  const fundingActive = _al.funding ? _al.funding.neutral : localStorage.getItem('apath_funding') === '1';
+  const volumeActive  = _al.volume  ? _al.volume.good    : localStorage.getItem('apath_volume')  === '1';
+  const flowsActive   = localStorage.getItem('apath_flows') === '1';
+  const apathyScore = autoCount + [fundingActive, flowsActive, volumeActive].filter(Boolean).length;
 
   // Action level
   let actionLevel = 'HOLD';
