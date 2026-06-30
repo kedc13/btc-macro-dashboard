@@ -3127,18 +3127,31 @@ switchTab('today');
 // =====================================================================
 
 async function fetchApathyLiveSignals() {
-  try {
-    // Funding rates — last 21 periods (8h each ≈ 7 days)
-    const fr = await fetch('https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&limit=21');
-    const fd = await fr.json();
-    if (Array.isArray(fd) && fd.length) {
-      const avg = fd.reduce((s, d) => s + parseFloat(d.fundingRate), 0) / fd.length;
-      window._apathyLive.funding = { avg, neutral: avg <= 0.0001 };
-    }
-  } catch(e) { window._apathyLive.funding = null; }
+  if (!window._apathyLive) window._apathyLive = {};
 
+  // Funding rates — Bybit (CORS-friendly) primary; fapi.binance CORS-blocked in artifact
   try {
-    // Volume character — 14 daily candles [o,h,l,c,vol in BTC]
+    const r = await fetch('https://api.bybit.com/v5/market/funding/history?category=linear&symbol=BTCUSDT&limit=21');
+    const d = await r.json();
+    const list = d?.result?.list;
+    if (Array.isArray(list) && list.length) {
+      const avg = list.reduce((s, x) => s + parseFloat(x.fundingRate), 0) / list.length;
+      window._apathyLive.funding = { avg, neutral: avg <= 0.0001 };
+    } else { throw new Error('empty'); }
+  } catch(e) {
+    try {
+      // Fallback: Bybit tickers (single current rate)
+      const r2 = await fetch('https://api.bybit.com/v5/market/tickers?category=linear&symbol=BTCUSDT');
+      const d2 = await r2.json();
+      const rate = parseFloat(d2?.result?.list?.[0]?.fundingRate);
+      if (!isNaN(rate)) {
+        window._apathyLive.funding = { avg: rate, neutral: rate <= 0.0001 };
+      } else { window._apathyLive.funding = { _failed: true }; }
+    } catch(e2) { window._apathyLive.funding = { _failed: true }; }
+  }
+
+  // Volume character — Binance spot klines (CORS-OK); Bybit as fallback
+  try {
     const kr = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=14');
     const kd = await kr.json();
     if (Array.isArray(kd) && kd.length >= 7) {
@@ -3147,8 +3160,22 @@ async function fetchApathyLiveSignals() {
       const avgUp  = upDays.length ? upDays.reduce((s,c) => s + parseFloat(c[5]), 0) / upDays.length : 0;
       const avgDn  = dnDays.length ? dnDays.reduce((s,c) => s + parseFloat(c[5]), 0) / dnDays.length : 0;
       window._apathyLive.volume = { avgUp, avgDn, good: avgDn > 0 && avgUp > avgDn * 1.15 };
-    }
-  } catch(e) { window._apathyLive.volume = null; }
+    } else { throw new Error('empty'); }
+  } catch(e) {
+    try {
+      // Fallback: Bybit daily klines [startTime, open, high, low, close, volume, turnover]
+      const r2 = await fetch('https://api.bybit.com/v5/market/kline?category=spot&symbol=BTCUSDT&interval=D&limit=14');
+      const d2 = await r2.json();
+      const rows = d2?.result?.list;
+      if (Array.isArray(rows) && rows.length >= 7) {
+        const upDays = rows.filter(c => parseFloat(c[4]) >= parseFloat(c[1]));
+        const dnDays = rows.filter(c => parseFloat(c[4]) <  parseFloat(c[1]));
+        const avgUp  = upDays.length ? upDays.reduce((s,c) => s + parseFloat(c[5]), 0) / upDays.length : 0;
+        const avgDn  = dnDays.length ? dnDays.reduce((s,c) => s + parseFloat(c[5]), 0) / dnDays.length : 0;
+        window._apathyLive.volume = { avgUp, avgDn, good: avgDn > 0 && avgUp > avgDn * 1.15 };
+      } else { window._apathyLive.volume = { _failed: true }; }
+    } catch(e2) { window._apathyLive.volume = { _failed: true }; }
+  }
 
   renderApathyMonitor();
 }
@@ -3206,29 +3233,29 @@ function renderApathyMonitor() {
       desc: floorHeld   ? `${floorTests} visits to $${Math.round(cycleLow).toLocaleString()} low — held each time` : `${floorTests}/3 floor tests · low $${Math.round(cycleLow).toLocaleString()}` },
     { key:'time',    label:'Week 44+ Window',       auto:true,  active:timeSignal,
       desc: timeSignal  ? `Week ${bearWeek} — inside historical bottom zone`                           : `Week ${bearWeek} — bottom window opens W44 (${44-bearWeek} wks away)` },
-    (()=>{ const f=(window._apathyLive||{}).funding; return {
+    (()=>{ const f=(window._apathyLive||{}).funding; const failed=f&&f._failed; return {
       key:'funding', label:'Funding Neutral/−',
-      auto:!!f, live:!!f,
-      active: f ? f.neutral : tog('funding'),
-      desc: f
-        ? (f.neutral
+      auto: !!f && !failed, live: !!f && !failed,
+      active: (f && !failed) ? f.neutral : tog('funding'),
+      desc: !f ? 'Loading from Bybit…'
+          : failed ? 'API unavailable — toggle manually if funding is neutral/negative'
+          : f.neutral
             ? `7-day avg funding ${(f.avg*100).toFixed(4)}% — neutral/negative ✓`
-            : `7-day avg funding ${(f.avg*100).toFixed(4)}% — elevated, longs still paying`)
-        : 'Loading from Binance…' };
+            : `7-day avg funding ${(f.avg*100).toFixed(4)}% — elevated, longs still paying` };
     })(),
     { key:'flows', label:'Exchange Outflows', auto:false, live:false, active:tog('flows'),
       desc: tog('flows')
         ? 'BTC net outflows confirmed — smart money accumulating'
         : 'Check CryptoQuant or Glassnode · flip on if net outflows sustained 10+ days' },
-    (()=>{ const v=(window._apathyLive||{}).volume; return {
+    (()=>{ const v=(window._apathyLive||{}).volume; const failed=v&&v._failed; return {
       key:'volume', label:'Volume Character',
-      auto:!!v, live:!!v,
-      active: v ? v.good : tog('volume'),
-      desc: v
-        ? (v.good
+      auto: !!v && !failed, live: !!v && !failed,
+      active: (v && !failed) ? v.good : tog('volume'),
+      desc: !v ? 'Loading from Binance…'
+          : failed ? 'API unavailable — toggle manually if up-day volume exceeds down-day'
+          : v.good
             ? `Up-day avg ${(v.avgUp/1000).toFixed(0)}K BTC vs down-day ${(v.avgDn/1000).toFixed(0)}K — buyers in control ✓`
-            : `Down-day avg ${(v.avgDn/1000).toFixed(0)}K BTC vs up-day ${(v.avgUp/1000).toFixed(0)}K — sellers still dominant`)
-        : 'Loading from Binance…' };
+            : `Down-day avg ${(v.avgDn/1000).toFixed(0)}K BTC vs up-day ${(v.avgUp/1000).toFixed(0)}K — sellers still dominant` };
     })(),
   ];
 
