@@ -495,8 +495,8 @@ const CHART_END  = '2027-04-01';  // Chart horizon
 // =====================================================================
 const PLAN = {
   totalBudget:    150000,
-  deployed:        23250,   // total deployed Jun 28 2026 (incl Jun 28 DCA $500)
-  dcaDeployed:      5250,   // DCA only: Jun 5 $750 + Jun 16–28 DCA buys
+  deployed:        24250,   // total deployed Jun 29 2026 (incl Jun 29 DCA $250 + $750)
+  dcaDeployed:      6250,   // DCA only: Jun 5 $750 + Jun 16–29 DCA buys
   trancheDeployed: 18000,   // tranche fills: Jun 2 $2K + Jun 3 $8K + Jun 5 $3K + Jun 25 $4K + Jun 25 $1K
   dcaBudget:       64000,   // allocated to weekly DCA
   trancheBudget:   86000,   // allocated to limit-order tranches
@@ -510,8 +510,8 @@ const PLAN = {
     { minPrice: 0,     label: 'Lump Sum',   color: '#22c55e', amount: null, perBuy: 'Lump sum',   action: 'HALT weekly DCA — redeploy remaining DCA budget as T7 tranche if Big 3 confirmed', big3Req: 2 },
   ],
   doubleDropPct:     0.09,
-  btcQty:       0.376843,  // total BTC acquired — updated Jun 28 2026
-  avgPrice:    61693,      // weighted avg cost basis — updated Jun 28 2026
+  btcQty:       0.393968,  // total BTC acquired — updated Jun 29 2026
+  avgPrice:    61549,      // weighted avg cost basis — updated Jun 29 2026
   buys: [
     { date: '2026-06-02', price: 67358,   qty: 0.02969,  label: 'Tranche $2K', type: 'tranche' },
     { date: '2026-06-03', price: 63201,   qty: 0.12658,  label: 'T1 $8K',      type: 'tranche' },
@@ -528,6 +528,8 @@ const PLAN = {
     { date: '2026-06-25', price: 58886,   qty: 0.008491, label: 'DCA $500',    type: 'dca'     },
     { date: '2026-06-25', price: 59901,   qty: 0.008347, label: 'DCA $500',    type: 'dca'     },
     { date: '2026-06-28', price: 59221,   qty: 0.008443, label: 'DCA $500',    type: 'dca'     },
+    { date: '2026-06-29', price: 58623,   qty: 0.004265, label: 'DCA $250',    type: 'dca'     },
+    { date: '2026-06-29', price: 58341,   qty: 0.01286,  label: 'DCA $750',    type: 'dca'     },
   ],
   tranches: [
     { price: 63201, label: 'T1', size:  8000, filled: true,  note: 'Filled Jun 3 @ $63,201' },
