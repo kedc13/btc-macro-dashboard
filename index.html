@@ -354,37 +354,54 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   <div id="big3-section" style="display:none;margin-bottom:20px">
     <div class="section-title">🎯 Big 3 Primary Triggers</div>
     <div class="grid-3" id="big3-grid"></div>
-    <!-- Weekly K/D Cycle Reversal Card -->
-    <div id="kd-card" style="margin-top:10px;background:#0d0d0d;border:1px solid #1e293b;border-radius:10px;padding:12px 14px;display:none">
+    <!-- Weekly K/D Cycle Reversal Card (auto-calculated from Binance weekly candles) -->
+    <div id="kd-card" style="margin-top:10px;background:#0d0d0d;border:1px solid #1e293b;border-radius:10px;padding:12px 14px">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-        <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em">Weekly Cycle Reversal (K=24 D=21 / RSI=155 Stoch=141)</span>
-        <span id="kd-status-badge" style="margin-left:auto;font-size:10px;border-radius:4px;padding:2px 8px;font-weight:700"></span>
+        <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em">Cycle Reversal Indicator</span>
+        <span style="font-size:9px;color:#334155">RSI(155) → Stoch(141) → K(24) → D(21) · Weekly</span>
+        <span id="kd-status-badge" style="margin-left:auto;font-size:10px;border-radius:4px;padding:2px 8px;font-weight:700">Loading…</span>
       </div>
-      <div style="display:flex;align-items:center;gap:14px">
+
+      <!-- Convergence zone alert — shown only when gap is tight -->
+      <div id="kd-convergence-alert" style="display:none;background:#0c1a0c;border:1px solid #166534;border-radius:7px;padding:8px 11px;margin-bottom:10px;font-size:11px;color:#4ade80;font-weight:600;line-height:1.5"></div>
+
+      <div style="display:flex;align-items:center;gap:16px">
         <div style="flex:1">
           <!-- K bar -->
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-            <span style="font-size:10px;color:#3b82f6;font-weight:700;width:14px">K</span>
-            <div style="flex:1;height:6px;background:#0f172a;border-radius:3px;overflow:hidden">
-              <div id="kd-k-bar" style="height:100%;border-radius:3px;background:#3b82f6;transition:width .5s"></div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+            <span style="font-size:10px;color:#3b82f6;font-weight:700;width:12px">K</span>
+            <div style="flex:1;height:5px;background:#0f172a;border-radius:3px;overflow:hidden">
+              <div id="kd-k-bar" style="height:100%;border-radius:3px;background:#3b82f6;transition:width .6s;width:0%"></div>
             </div>
-            <span id="kd-k-val" style="font-size:11px;color:#3b82f6;font-weight:700;width:36px;text-align:right"></span>
+            <span id="kd-k-val" style="font-size:12px;color:#3b82f6;font-weight:800;width:38px;text-align:right">—</span>
           </div>
           <!-- D bar -->
           <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:10px;color:#eab308;font-weight:700;width:14px">D</span>
-            <div style="flex:1;height:6px;background:#0f172a;border-radius:3px;overflow:hidden">
-              <div id="kd-d-bar" style="height:100%;border-radius:3px;background:#eab308;transition:width .5s"></div>
+            <span style="font-size:10px;color:#eab308;font-weight:700;width:12px">D</span>
+            <div style="flex:1;height:5px;background:#0f172a;border-radius:3px;overflow:hidden">
+              <div id="kd-d-bar" style="height:100%;border-radius:3px;background:#eab308;transition:width .6s;width:0%"></div>
             </div>
-            <span id="kd-d-val" style="font-size:11px;color:#eab308;font-weight:700;width:36px;text-align:right"></span>
+            <span id="kd-d-val" style="font-size:12px;color:#eab308;font-weight:800;width:38px;text-align:right">—</span>
           </div>
         </div>
-        <div style="text-align:center;min-width:80px">
-          <div id="kd-gap-val" style="font-size:18px;font-weight:800;color:#475569"></div>
-          <div style="font-size:9px;color:#334155;text-transform:uppercase;letter-spacing:.05em">gap to cross</div>
+
+        <!-- Gap display -->
+        <div style="text-align:center;min-width:72px;padding:6px 0">
+          <div id="kd-gap-val" style="font-size:22px;font-weight:900;color:#475569;line-height:1">—</div>
+          <div id="kd-gap-label" style="font-size:9px;color:#334155;text-transform:uppercase;letter-spacing:.05em;margin-top:2px">gap</div>
+          <div id="kd-trend" style="font-size:10px;margin-top:3px;color:#475569"></div>
+        </div>
+
+        <!-- Mini gap sparkline -->
+        <div style="min-width:64px">
+          <svg id="kd-spark" width="64" height="36" viewBox="0 0 64 36" style="display:block">
+            <text x="32" y="20" text-anchor="middle" font-size="9" fill="#334155">—</text>
+          </svg>
+          <div style="font-size:8px;color:#334155;text-align:center;margin-top:1px">gap history</div>
         </div>
       </div>
-      <div id="kd-note" style="margin-top:8px;font-size:10px;color:#475569;line-height:1.5;border-top:1px solid #111;padding-top:7px"></div>
+
+      <div id="kd-note" style="margin-top:8px;font-size:10px;color:#475569;line-height:1.5;border-top:1px solid #0f172a;padding-top:7px"></div>
     </div>
     <!-- Rally Caution Banner — shown/hidden by updateRallyCaution() -->
     <div id="rally-caution-banner" style="display:none;margin-top:10px;background:#1a0e00;border:1px solid #92400e;border-radius:10px;padding:12px 14px">
@@ -1332,42 +1349,7 @@ function updateRallyCaution() {
   const latest = HISTORY_DATA[HISTORY_DATA.length - 1] || {};
   const big3   = latest.big3 || 0;
 
-  // --- Always render K/D card regardless of Big 3 state ---
-  const kdCard  = document.getElementById('kd-card');
-  const wK      = parseFloat(latest.weeklyK);
-  const wD      = parseFloat(latest.weeklyD);
-  const hasKD   = !isNaN(wK) && !isNaN(wD);
-
-  if (kdCard && hasKD) {
-    kdCard.style.display = 'block';
-    document.getElementById('kd-k-bar').style.width = Math.min(wK, 100) + '%';
-    document.getElementById('kd-d-bar').style.width = Math.min(wD, 100) + '%';
-    document.getElementById('kd-k-val').textContent = wK.toFixed(2);
-    document.getElementById('kd-d-val').textContent = wD.toFixed(2);
-
-    const crossed  = wK > wD;
-    const gap      = Math.abs(wD - wK).toFixed(2);
-    const badge    = document.getElementById('kd-status-badge');
-    const gapEl    = document.getElementById('kd-gap-val');
-    const noteEl   = document.getElementById('kd-note');
-
-    if (crossed) {
-      badge.textContent = 'K > D ✓ CROSSED';
-      badge.style.cssText = 'margin-left:auto;font-size:10px;border-radius:4px;padding:2px 8px;font-weight:700;background:#14532d33;color:#4ade80';
-      gapEl.textContent  = '✓';
-      gapEl.style.color  = '#4ade80';
-      noteEl.textContent = 'Weekly K has crossed above D — cycle reversal confirmed on this indicator. BTC has not printed a genuine bottom without this cross in prior cycles.';
-    } else {
-      badge.textContent = 'K < D — NO CROSS';
-      badge.style.cssText = 'margin-left:auto;font-size:10px;border-radius:4px;padding:2px 8px;font-weight:700;background:#7f1d1d33;color:#f87171';
-      gapEl.textContent  = gap + ' pts';
-      gapEl.style.color  = '#64748b';
-      noteEl.textContent = `K needs to close ${gap} points before crossing D. BTC has historically never confirmed a genuine bottom without this weekly cross. Any Big 3 signals firing before this cross should be treated as a potential mid-cycle rally.`;
-    }
-  } else if (kdCard) {
-    kdCard.style.display = 'none';
-  }
-
+  // K/D card is now rendered by renderKDCard() called from fetchAndComputeKD()
   // Only evaluate caution banner when Big 3 has meaningful progress
   if (big3 < 2) { banner.style.display = 'none'; return; }
 
@@ -1413,13 +1395,18 @@ function updateRallyCaution() {
     detail: 'Genuine bottoms typically form at or below realized price'
   });
 
-  // Gate 5: Weekly K/D cross — hard requirement, always fails until crossed
-  if (hasKD && wK <= wD) gates.push({
-    label: `Weekly K (${wK.toFixed(2)}) still below D (${wD.toFixed(2)}) — gap ${(wD-wK).toFixed(2)} pts`,
-    detail: 'BTC has not confirmed a genuine bottom in any prior cycle without this weekly K>D cross'
-  });
+  // Gate 5: Weekly K/D — use live computed value if available, else fall back to logged
+  const kdSource = _kdLive || (latest.weeklyK != null ? { k: +latest.weeklyK, d: +latest.weeklyD, gap: latest.weeklyD - latest.weeklyK } : null);
+  const hasKD5   = kdSource && kdSource.k != null && kdSource.d != null;
+  if (hasKD5 && kdSource.k <= kdSource.d) {
+    const kd_gap = Math.abs(kdSource.gap || (kdSource.d - kdSource.k)).toFixed(1);
+    gates.push({
+      label: `Weekly K (${kdSource.k.toFixed(2)}) still below D (${kdSource.d.toFixed(2)}) — gap ${kd_gap} pts`,
+      detail: 'BTC has not confirmed a genuine bottom in any prior cycle without this weekly K>D cross. Gap narrowing below 3 is the real signal.'
+    });
+  }
 
-  const gateTotal  = hasKD ? 5 : 4;
+  const gateTotal  = hasKD5 ? 5 : 4;
   const failCount  = gates.length;
   const CAUTION_THRESHOLD = 2;
 
@@ -3768,6 +3755,200 @@ function checkAndShowAlerts() {
 
 // Run after all signals computed (slight delay lets live price settle)
 setTimeout(checkAndShowAlerts, 2000);
+
+// =====================================================================
+// WEEKLY CYCLE REVERSAL — AUTO CALCULATION
+// RSI(155) → Stoch(141) → K SMA(24) → D SMA(21) on weekly BTCUSDT candles
+// =====================================================================
+let _kdLive = null; // { k, d, gap, gapHistory[] }
+
+function _calcRSI(closes, period) {
+  const out = new Array(closes.length).fill(null);
+  if (closes.length <= period) return out;
+  let gains = 0, losses = 0;
+  for (let i = 1; i <= period; i++) {
+    const d = closes[i] - closes[i-1];
+    if (d > 0) gains += d; else losses -= d;
+  }
+  let ag = gains / period, al = losses / period;
+  out[period] = al === 0 ? 100 : 100 - 100 / (1 + ag / al);
+  for (let i = period + 1; i < closes.length; i++) {
+    const d = closes[i] - closes[i-1];
+    const g = d > 0 ? d : 0, l = d < 0 ? -d : 0;
+    ag = (ag * (period - 1) + g) / period;
+    al = (al * (period - 1) + l) / period;
+    out[i] = al === 0 ? 100 : 100 - 100 / (1 + ag / al);
+  }
+  return out;
+}
+
+function _calcStochOnSeries(series, period) {
+  const out = new Array(series.length).fill(null);
+  for (let i = period - 1; i < series.length; i++) {
+    const slice = series.slice(i - period + 1, i + 1).filter(v => v !== null);
+    if (slice.length < period) continue;
+    const lo = Math.min(...slice), hi = Math.max(...slice);
+    out[i] = hi === lo ? 0 : ((series[i] - lo) / (hi - lo)) * 100;
+  }
+  return out;
+}
+
+function _calcSMA(series, period) {
+  const out = new Array(series.length).fill(null);
+  for (let i = 0; i < series.length; i++) {
+    const slice = series.slice(Math.max(0, i - period + 1), i + 1).filter(v => v !== null);
+    if (slice.length < period) continue;
+    out[i] = slice.reduce((a, b) => a + b, 0) / period;
+  }
+  return out;
+}
+
+async function fetchAndComputeKD() {
+  // Check sessionStorage cache — recalculate at most once per hour
+  const cacheKey = 'btc_kd_v1_' + new Date().toISOString().slice(0, 13);
+  try {
+    const cached = sessionStorage.getItem(cacheKey);
+    if (cached) { _kdLive = JSON.parse(cached); renderKDCard(); return; }
+  } catch(e) {}
+
+  try {
+    // Fetch 500 weekly BTCUSDT candles — enough for RSI(155)+Stoch(141)+K(24)+D(21)
+    const resp = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1w&limit=500');
+    if (!resp.ok) throw new Error('Binance fetch failed');
+    const raw  = await resp.json();
+    const closes = raw.map(c => parseFloat(c[4]));
+
+    const rsiSeries   = _calcRSI(closes, 155);
+    const stochSeries = _calcStochOnSeries(rsiSeries, 141);
+    const kSeries     = _calcSMA(stochSeries, 24);
+    const dSeries     = _calcSMA(kSeries, 21);
+
+    // Extract last 16 non-null K/D pairs for gap history
+    const pairs = [];
+    for (let i = dSeries.length - 1; i >= 0 && pairs.length < 16; i--) {
+      if (kSeries[i] !== null && dSeries[i] !== null) {
+        pairs.unshift({ k: kSeries[i], d: dSeries[i], gap: dSeries[i] - kSeries[i] });
+      }
+    }
+
+    const last = pairs[pairs.length - 1] || {};
+    _kdLive = {
+      k:          last.k != null ? +last.k.toFixed(2) : null,
+      d:          last.d != null ? +last.d.toFixed(2) : null,
+      gap:        last.gap != null ? +last.gap.toFixed(2) : null,
+      gapHistory: pairs.map(p => +p.gap.toFixed(2))
+    };
+
+    try { sessionStorage.setItem(cacheKey, JSON.stringify(_kdLive)); } catch(e) {}
+    renderKDCard();
+    updateRallyCaution(); // re-run with live values
+  } catch(err) {
+    // Fall back to manually-logged value from HISTORY_DATA
+    const latest = HISTORY_DATA[HISTORY_DATA.length - 1] || {};
+    if (latest.weeklyK != null && latest.weeklyD != null) {
+      const k = parseFloat(latest.weeklyK), d = parseFloat(latest.weeklyD);
+      _kdLive = { k, d, gap: +(d - k).toFixed(2), gapHistory: [+(d - k).toFixed(2)], fallback: true };
+      renderKDCard();
+      updateRallyCaution();
+    }
+  }
+}
+
+function renderKDCard() {
+  if (!_kdLive) return;
+  const { k, d, gap, gapHistory, fallback } = _kdLive;
+  if (k == null || d == null) return;
+
+  const crossed = k > d;
+  const absGap  = Math.abs(gap);
+
+  // State thresholds
+  let state, stateColor, stateBg, stateBorder;
+  if (crossed)       { state = 'K > D — CROSSED';     stateColor = '#86efac'; stateBg = '#052e16'; stateBorder = '#166534'; }
+  else if (absGap < 3)  { state = '⚡ CONVERGENCE ZONE';  stateColor = '#fde68a'; stateBg = '#1c1200'; stateBorder = '#d97706'; }
+  else if (absGap < 7)  { state = '▲ APPROACHING';        stateColor = '#fdba74'; stateBg = '#1a0e00'; stateBorder = '#92400e'; }
+  else                   { state = 'BEAR PHASE';           stateColor = '#64748b'; stateBg = '#0d0d0d'; stateBorder = '#1e293b'; }
+
+  const badge = document.getElementById('kd-status-badge');
+  if (badge) {
+    badge.textContent = state + (fallback ? ' *' : '');
+    badge.style.cssText = `margin-left:auto;font-size:10px;border-radius:4px;padding:2px 8px;font-weight:700;background:${stateBg};color:${stateColor};border:1px solid ${stateBorder}`;
+  }
+
+  document.getElementById('kd-k-bar').style.width = Math.min(k, 100) + '%';
+  document.getElementById('kd-d-bar').style.width = Math.min(d, 100) + '%';
+  document.getElementById('kd-k-val').textContent = k.toFixed(2);
+  document.getElementById('kd-d-val').textContent = d.toFixed(2);
+
+  const gapEl = document.getElementById('kd-gap-val');
+  const gapLbl = document.getElementById('kd-gap-label');
+  if (crossed) {
+    gapEl.textContent  = '✓';
+    gapEl.style.color  = '#4ade80';
+    gapLbl.textContent = 'crossed';
+  } else {
+    gapEl.textContent  = absGap.toFixed(1);
+    gapEl.style.color  = absGap < 3 ? '#fbbf24' : absGap < 7 ? '#f97316' : '#475569';
+    gapLbl.textContent = 'gap pts';
+  }
+
+  // Trend arrow — is gap narrowing?
+  const trendEl = document.getElementById('kd-trend');
+  if (trendEl && gapHistory.length >= 2) {
+    const prev = gapHistory[gapHistory.length - 2];
+    const curr = gapHistory[gapHistory.length - 1];
+    const narrowing = curr < prev;
+    trendEl.textContent = narrowing ? '▼ narrowing' : '▲ widening';
+    trendEl.style.color = narrowing ? '#4ade80' : '#f87171';
+  }
+
+  // Gap sparkline SVG
+  const spark = document.getElementById('kd-spark');
+  if (spark && gapHistory.length > 1) {
+    const W = 64, H = 36, pad = 3;
+    const vals = gapHistory.slice(-12);
+    const minV = 0, maxV = Math.max(...vals, 5);
+    const pts  = vals.map((v, i) => {
+      const x = pad + (i / (vals.length - 1)) * (W - pad*2);
+      const y = H - pad - ((v - minV) / (maxV - minV)) * (H - pad*2);
+      return `${x},${y}`;
+    }).join(' ');
+    // Color line based on current state
+    const lineColor = absGap < 3 ? '#fbbf24' : absGap < 7 ? '#f97316' : '#3b82f6';
+    spark.innerHTML = `<polyline points="${pts}" fill="none" stroke="${lineColor}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="${64-pad}" cy="${36-pad-((gapHistory[gapHistory.length-1]-minV)/(maxV-minV))*(36-pad*2)}" r="2" fill="${lineColor}"/>`;
+  }
+
+  // Convergence alert
+  const alert = document.getElementById('kd-convergence-alert');
+  if (alert) {
+    if (!crossed && absGap < 3) {
+      alert.style.display = 'block';
+      alert.innerHTML = `⚡ <strong>CONVERGENCE ZONE</strong> — K and D are ${absGap.toFixed(1)} pts apart. Historically this tight spread has marked the actual cycle low. Price may be at or forming the bottom right now — highest conviction window for deployment.`;
+    } else if (!crossed && absGap < 7) {
+      alert.style.display = 'block';
+      alert.style.background = '#1a0e00';
+      alert.style.border = '1px solid #92400e';
+      alert.style.color = '#fdba74';
+      alert.innerHTML = `▲ <strong>APPROACHING</strong> — Gap narrowing to ${absGap.toFixed(1)} pts. Watch this weekly. When it drops below 3 the bottom convergence window opens.`;
+    } else {
+      alert.style.display = 'none';
+    }
+  }
+
+  // Note
+  const note = document.getElementById('kd-note');
+  if (note) {
+    if (crossed) {
+      note.textContent = 'K has crossed above D — the cycle low is confirmed and likely already printed. Remaining deployment should be gradual; best entries are typically at or before the cross.';
+    } else {
+      note.textContent = `Gap of ${absGap.toFixed(1)} pts remaining before K crosses D. The cycle low historically prints when K and D converge (gap < 3) — the cross itself is a lagging confirmation. ${fallback ? '(*Using last logged value — auto-calc unavailable)' : 'Values auto-calculated from Binance weekly candles.'}`;
+    }
+  }
+}
+
+// Kick off calculation after page loads
+setTimeout(fetchAndComputeKD, 1500);
 
 // =====================================================================
 // AI DAILY SUMMARY
