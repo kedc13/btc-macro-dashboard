@@ -354,6 +354,38 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   <div id="big3-section" style="display:none;margin-bottom:20px">
     <div class="section-title">🎯 Big 3 Primary Triggers</div>
     <div class="grid-3" id="big3-grid"></div>
+    <!-- Weekly K/D Cycle Reversal Card -->
+    <div id="kd-card" style="margin-top:10px;background:#0d0d0d;border:1px solid #1e293b;border-radius:10px;padding:12px 14px;display:none">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em">Weekly Cycle Reversal (K=24 D=21 / RSI=155 Stoch=141)</span>
+        <span id="kd-status-badge" style="margin-left:auto;font-size:10px;border-radius:4px;padding:2px 8px;font-weight:700"></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="flex:1">
+          <!-- K bar -->
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <span style="font-size:10px;color:#3b82f6;font-weight:700;width:14px">K</span>
+            <div style="flex:1;height:6px;background:#0f172a;border-radius:3px;overflow:hidden">
+              <div id="kd-k-bar" style="height:100%;border-radius:3px;background:#3b82f6;transition:width .5s"></div>
+            </div>
+            <span id="kd-k-val" style="font-size:11px;color:#3b82f6;font-weight:700;width:36px;text-align:right"></span>
+          </div>
+          <!-- D bar -->
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:10px;color:#eab308;font-weight:700;width:14px">D</span>
+            <div style="flex:1;height:6px;background:#0f172a;border-radius:3px;overflow:hidden">
+              <div id="kd-d-bar" style="height:100%;border-radius:3px;background:#eab308;transition:width .5s"></div>
+            </div>
+            <span id="kd-d-val" style="font-size:11px;color:#eab308;font-weight:700;width:36px;text-align:right"></span>
+          </div>
+        </div>
+        <div style="text-align:center;min-width:80px">
+          <div id="kd-gap-val" style="font-size:18px;font-weight:800;color:#475569"></div>
+          <div style="font-size:9px;color:#334155;text-transform:uppercase;letter-spacing:.05em">gap to cross</div>
+        </div>
+      </div>
+      <div id="kd-note" style="margin-top:8px;font-size:10px;color:#475569;line-height:1.5;border-top:1px solid #111;padding-top:7px"></div>
+    </div>
     <!-- Rally Caution Banner — shown/hidden by updateRallyCaution() -->
     <div id="rally-caution-banner" style="display:none;margin-top:10px;background:#1a0e00;border:1px solid #92400e;border-radius:10px;padding:12px 14px">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
@@ -521,7 +553,7 @@ const HISTORY_DATA = [
   {"date":"2026-06-28","price":60100,"mvrv":0.25,"puell":0.75,"fearGreed":36,"bottomConf":2,"signal":"STRONG_ACCUM","big3":0,"week":36,"phase":"ENTERING_WINDOW","etf":"$7.2B June total outflows; streak ended, small inflows returning (~$86M)","etfColor":"yellow","dxy":"~100.7, rising — highest since May 2025","dxyColor":"red","m2":"Contracting — Iran energy shock, CPI 4.2%, hawkish Fed environment","m2Color":"red","fed":"3.50–3.75%, hawkish Warsh era, possible hike priced Oct 2026","fedColor":"red","macd":"Bearish","macdColor":"orange","ma200":"~$62,457 — spot 3.9% below 200WMA (rare; first time this cycle)","ma200Color":"green","monthlyRsi":"~40","weeklyRsi":"~34","realizedPrice":"~$58–60K est","realizedDiff":"~0% vs spot","piCycle":"Clear"},
   {"date":"2026-06-29","price":59860,"mvrv":0.25,"puell":0.75,"fearGreed":36,"bottomConf":3,"signal":"STRONG_ACCUM","big3":1,"week":36,"phase":"ENTERING_WINDOW","etf":"~$8B June total outflows; $86M inflow Jun 26 — tentative streak end","etfColor":"red","dxy":"~100.7, rising — highest since May 2025","dxyColor":"red","m2":"Contracting — Iran energy shock, CPI 4.2%, hawkish environment","m2Color":"red","fed":"3.50–3.75%, hawkish dot plot, possible hike Oct 2026","fedColor":"red","macd":"Bearish — weekly negative, no bullish crossover","macdColor":"orange","ma200":"~$62,457 — spot 4.2% below 200WMA","ma200Color":"green","monthlyRsi":"~38","weeklyRsi":"~34","realizedPrice":"~$50K est","realizedDiff":"+19% vs spot","piCycle":"Clear"},
   {"date":"2026-06-30","price":59000,"mvrv":0.25,"puell":0.75,"fearGreed":15,"bottomConf":3,"signal":"EXTREME_ACCUM","big3":0,"week":36,"phase":"ENTERING_WINDOW","etf":"~$8B June total outflows; small mid-late June inflows — recovering","etfColor":"orange","dxy":"101.3, rising — hawkish FOMC, highest since May 2025","dxyColor":"red","m2":"Expanding +1.4% global (3-mo ending May); near-term hawkish headwind","m2Color":"yellow","fed":"3.50–3.75%, on hold w/ hawkish forward signals","fedColor":"orange","macd":"Bearish — weekly MACD negative","macdColor":"orange","ma200":"~$62,000 — spot 4.8% below 200WMA (first time below this cycle)","ma200Color":"green","monthlyRsi":"~37","weeklyRsi":"~34","realizedPrice":"~$62,000 est","realizedDiff":"-5% vs spot","piCycle":"Clear"},
-  {"date":"2026-07-01","price":58500,"mvrv":0.23,"puell":0.75,"fearGreed":11,"bottomConf":2,"signal":"EXTREME_ACCUM","big3":0,"week":37,"phase":"ENTERING_WINDOW","etf":"Record $4.5B net outflows in June 2026 — worst month since ETF launch","etfColor":"red","dxy":"~101.3, rising — highest since May 2025","dxyColor":"red","m2":"Modest global expansion +1.4–1.9% (3-mo)","m2Color":"yellow","fed":"Held 3.50–3.75%, hawkish dot plot, hike risk flagged","fedColor":"orange","macd":"Bearish — weekly negative, approaching first bullish cross since May 2025","macdColor":"orange","ma200":"~$62,000 — spot ~5.6% below 200WMA","ma200Color":"green","monthlyRsi":"~30","weeklyRsi":"~34","realizedPrice":"~$53,400 est","realizedDiff":"+9% vs spot","piCycle":"Clear"}
+  {"date":"2026-07-01","price":58500,"mvrv":0.23,"puell":0.75,"fearGreed":11,"bottomConf":2,"signal":"EXTREME_ACCUM","big3":0,"week":37,"phase":"ENTERING_WINDOW","etf":"Record $4.5B net outflows in June 2026 — worst month since ETF launch","etfColor":"red","dxy":"~101.3, rising — highest since May 2025","dxyColor":"red","m2":"Modest global expansion +1.4–1.9% (3-mo)","m2Color":"yellow","fed":"Held 3.50–3.75%, hawkish dot plot, hike risk flagged","fedColor":"orange","macd":"Bearish — weekly negative, approaching first bullish cross since May 2025","macdColor":"orange","ma200":"~$62,000 — spot ~5.6% below 200WMA","ma200Color":"green","monthlyRsi":"~30","weeklyRsi":"~34","realizedPrice":"~$53,400 est","realizedDiff":"+9% vs spot","piCycle":"Clear","weeklyK":8.52,"weeklyD":23.62}
 ];
 
 // =====================================================================
@@ -1300,7 +1332,43 @@ function updateRallyCaution() {
   const latest = HISTORY_DATA[HISTORY_DATA.length - 1] || {};
   const big3   = latest.big3 || 0;
 
-  // Only evaluate when Big 3 has meaningful progress
+  // --- Always render K/D card regardless of Big 3 state ---
+  const kdCard  = document.getElementById('kd-card');
+  const wK      = parseFloat(latest.weeklyK);
+  const wD      = parseFloat(latest.weeklyD);
+  const hasKD   = !isNaN(wK) && !isNaN(wD);
+
+  if (kdCard && hasKD) {
+    kdCard.style.display = 'block';
+    document.getElementById('kd-k-bar').style.width = Math.min(wK, 100) + '%';
+    document.getElementById('kd-d-bar').style.width = Math.min(wD, 100) + '%';
+    document.getElementById('kd-k-val').textContent = wK.toFixed(2);
+    document.getElementById('kd-d-val').textContent = wD.toFixed(2);
+
+    const crossed  = wK > wD;
+    const gap      = Math.abs(wD - wK).toFixed(2);
+    const badge    = document.getElementById('kd-status-badge');
+    const gapEl    = document.getElementById('kd-gap-val');
+    const noteEl   = document.getElementById('kd-note');
+
+    if (crossed) {
+      badge.textContent = 'K > D ✓ CROSSED';
+      badge.style.cssText = 'margin-left:auto;font-size:10px;border-radius:4px;padding:2px 8px;font-weight:700;background:#14532d33;color:#4ade80';
+      gapEl.textContent  = '✓';
+      gapEl.style.color  = '#4ade80';
+      noteEl.textContent = 'Weekly K has crossed above D — cycle reversal confirmed on this indicator. BTC has not printed a genuine bottom without this cross in prior cycles.';
+    } else {
+      badge.textContent = 'K < D — NO CROSS';
+      badge.style.cssText = 'margin-left:auto;font-size:10px;border-radius:4px;padding:2px 8px;font-weight:700;background:#7f1d1d33;color:#f87171';
+      gapEl.textContent  = gap + ' pts';
+      gapEl.style.color  = '#64748b';
+      noteEl.textContent = `K needs to close ${gap} points before crossing D. BTC has historically never confirmed a genuine bottom without this weekly cross. Any Big 3 signals firing before this cross should be treated as a potential mid-cycle rally.`;
+    }
+  } else if (kdCard) {
+    kdCard.style.display = 'none';
+  }
+
+  // Only evaluate caution banner when Big 3 has meaningful progress
   if (big3 < 2) { banner.style.display = 'none'; return; }
 
   const curPrice     = livePrice || latest.price || 0;
@@ -1308,7 +1376,7 @@ function updateRallyCaution() {
   const fearGreed    = parseInt(latest.fearGreed) || 50;
 
   // Parse realized price from string like "~$50K est" or number
-  let realizedPrice = 50000; // fallback
+  let realizedPrice = 50000;
   if (latest.realizedPrice) {
     const rp = String(latest.realizedPrice).replace(/[~$,Kk\s]/g,'');
     const rpNum = parseFloat(rp);
@@ -1345,12 +1413,19 @@ function updateRallyCaution() {
     detail: 'Genuine bottoms typically form at or below realized price'
   });
 
-  const failCount = gates.length;
-  const CAUTION_THRESHOLD = 2; // 2+ gates failing = caution active
+  // Gate 5: Weekly K/D cross — hard requirement, always fails until crossed
+  if (hasKD && wK <= wD) gates.push({
+    label: `Weekly K (${wK.toFixed(2)}) still below D (${wD.toFixed(2)}) — gap ${(wD-wK).toFixed(2)} pts`,
+    detail: 'BTC has not confirmed a genuine bottom in any prior cycle without this weekly K>D cross'
+  });
+
+  const gateTotal  = hasKD ? 5 : 4;
+  const failCount  = gates.length;
+  const CAUTION_THRESHOLD = 2;
 
   if (failCount >= CAUTION_THRESHOLD) {
     banner.style.display = 'block';
-    document.getElementById('rally-gate-count').textContent = `${failCount}/4 gates failing`;
+    document.getElementById('rally-gate-count').textContent = `${failCount}/${gateTotal} gates failing`;
     document.getElementById('rally-gate-list').innerHTML = gates.map(g =>
       `<div>• <strong>${g.label}</strong><br><span style="color:#a16207;font-size:10px">${g.detail}</span></div>`
     ).join('');
