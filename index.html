@@ -354,6 +354,18 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   <div id="big3-section" style="display:none;margin-bottom:20px">
     <div class="section-title">🎯 Big 3 Primary Triggers</div>
     <div class="grid-3" id="big3-grid"></div>
+    <!-- Rally Caution Banner — shown/hidden by updateRallyCaution() -->
+    <div id="rally-caution-banner" style="display:none;margin-top:10px;background:#1a0e00;border:1px solid #92400e;border-radius:10px;padding:12px 14px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <span style="font-size:14px">⚠</span>
+        <span style="font-size:12px;font-weight:700;color:#f59e0b;letter-spacing:.02em">RALLY CAUTION ACTIVE</span>
+        <span id="rally-gate-count" style="margin-left:auto;font-size:10px;background:#92400e33;color:#fbbf24;border-radius:4px;padding:2px 7px;font-weight:700"></span>
+      </div>
+      <div id="rally-gate-list" style="font-size:11px;color:#d97706;line-height:1.7;margin-bottom:7px"></div>
+      <div style="font-size:11px;color:#92400e;border-top:1px solid #92400e55;padding-top:7px;line-height:1.5">
+        Big 3 advancing during rally conditions. <strong style="color:#fbbf24">Hold remaining dry powder</strong> — tranche limit orders only. Do not accelerate DCA or unlock additional deployment until bear conditions are re-confirmed.
+      </div>
+    </div>
   </div>
 
   <!-- hidden action-text anchor kept for renderToday() compat -->
@@ -913,6 +925,7 @@ function updatePriceDisplay(price) {
   if (el) el.innerHTML = '$' + Math.round(price).toLocaleString() + ' <span class="live-badge" style="font-size:8px;vertical-align:middle">LIVE</span>';
   // Check price level alerts on every price update (throttled internally to 1/min)
   if (typeof checkPriceAlerts === 'function') checkPriceAlerts(price);
+  if (typeof updateRallyCaution === 'function') updateRallyCaution();
 }
 
 function startLivePriceWS() {
@@ -1278,6 +1291,75 @@ async function fetchBig3Live(big3arr) {
 }
 
 // =====================================================================
+// RALLY CAUTION SYSTEM
+// Fires when Big3 >= 2 but supporting conditions suggest bear rally not genuine bottom
+function updateRallyCaution() {
+  const banner = document.getElementById('rally-caution-banner');
+  if (!banner) return;
+
+  const latest = HISTORY_DATA[HISTORY_DATA.length - 1] || {};
+  const big3   = latest.big3 || 0;
+
+  // Only evaluate when Big 3 has meaningful progress
+  if (big3 < 2) { banner.style.display = 'none'; return; }
+
+  const curPrice     = livePrice || latest.price || 0;
+  const mvrv         = parseFloat(latest.mvrv) || 0;
+  const fearGreed    = parseInt(latest.fearGreed) || 50;
+
+  // Parse realized price from string like "~$50K est" or number
+  let realizedPrice = 50000; // fallback
+  if (latest.realizedPrice) {
+    const rp = String(latest.realizedPrice).replace(/[~$,Kk\s]/g,'');
+    const rpNum = parseFloat(rp);
+    if (!isNaN(rpNum)) realizedPrice = rpNum < 1000 ? rpNum * 1000 : rpNum;
+  }
+
+  // Parse 200WMA from string like "~$62,457 — spot 4.2% below 200WMA"
+  let wma200 = 0;
+  if (latest.ma200) {
+    const wm = String(latest.ma200).replace(/[~$,\s]/g,'').match(/\d+/);
+    if (wm) wma200 = parseFloat(wm[0]);
+  }
+
+  // Gate checks (fail = rally condition present)
+  const gates = [];
+
+  if (mvrv > 0.5) gates.push({
+    label: `MVRV Z-Score ${mvrv} (need < 0.5)`,
+    detail: 'Price has recovered enough that MVRV is leaving deep bear territory'
+  });
+
+  if (fearGreed > 40) gates.push({
+    label: `Fear & Greed ${fearGreed} (need < 40)`,
+    detail: 'Sentiment has normalized — genuine bottoms see F&G < 40'
+  });
+
+  if (wma200 && curPrice > wma200) gates.push({
+    label: `Price $${curPrice.toLocaleString()} above 200WMA $${wma200.toLocaleString()}`,
+    detail: '200-week MA should act as resistance during a rally, not support'
+  });
+
+  if (realizedPrice && curPrice > realizedPrice * 1.20) gates.push({
+    label: `Price ${Math.round((curPrice/realizedPrice-1)*100)}% above realized price (~$${Math.round(realizedPrice/1000)}K)`,
+    detail: 'Genuine bottoms typically form at or below realized price'
+  });
+
+  const failCount = gates.length;
+  const CAUTION_THRESHOLD = 2; // 2+ gates failing = caution active
+
+  if (failCount >= CAUTION_THRESHOLD) {
+    banner.style.display = 'block';
+    document.getElementById('rally-gate-count').textContent = `${failCount}/4 gates failing`;
+    document.getElementById('rally-gate-list').innerHTML = gates.map(g =>
+      `<div>• <strong>${g.label}</strong><br><span style="color:#a16207;font-size:10px">${g.detail}</span></div>`
+    ).join('');
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+// =====================================================================
 function renderToday(d) {
   document.getElementById('sig-dot').style.background = CLR[d.signalDotColor]||CLR.gray;
   document.getElementById('sig-text').textContent = d.signal||'—';
@@ -1287,6 +1369,7 @@ function renderToday(d) {
   const pb=document.getElementById('hdr-phase'); pb.textContent=d.phase||'—'; pb.className='phase-badge '+phaseClass(d.phase);
   document.getElementById('action-text').textContent = d.action||'—';
   if(d.big3&&d.big3.length){ document.getElementById('big3-section').style.display=''; renderBig3Cards(d.big3, null); fetchBig3Live(d.big3); }
+  updateRallyCaution();
   const ct=parseInt((d.bottomConf||'0/8').split('/')[0])||0;
   document.getElementById('conf-count').textContent=d.bottomConf||'0/8';
   document.getElementById('conf-pips').innerHTML=Array.from({length:8},(_,i)=>`<div class="conf-pip${i<ct?' active':''}"></div>`).join('');
