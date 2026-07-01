@@ -570,7 +570,7 @@ const HISTORY_DATA = [
   {"date":"2026-06-28","price":60100,"mvrv":0.25,"puell":0.75,"fearGreed":36,"bottomConf":2,"signal":"STRONG_ACCUM","big3":0,"week":36,"phase":"ENTERING_WINDOW","etf":"$7.2B June total outflows; streak ended, small inflows returning (~$86M)","etfColor":"yellow","dxy":"~100.7, rising — highest since May 2025","dxyColor":"red","m2":"Contracting — Iran energy shock, CPI 4.2%, hawkish Fed environment","m2Color":"red","fed":"3.50–3.75%, hawkish Warsh era, possible hike priced Oct 2026","fedColor":"red","macd":"Bearish","macdColor":"orange","ma200":"~$62,457 — spot 3.9% below 200WMA (rare; first time this cycle)","ma200Color":"green","monthlyRsi":"~40","weeklyRsi":"~34","realizedPrice":"~$58–60K est","realizedDiff":"~0% vs spot","piCycle":"Clear"},
   {"date":"2026-06-29","price":59860,"mvrv":0.25,"puell":0.75,"fearGreed":36,"bottomConf":3,"signal":"STRONG_ACCUM","big3":1,"week":36,"phase":"ENTERING_WINDOW","etf":"~$8B June total outflows; $86M inflow Jun 26 — tentative streak end","etfColor":"red","dxy":"~100.7, rising — highest since May 2025","dxyColor":"red","m2":"Contracting — Iran energy shock, CPI 4.2%, hawkish environment","m2Color":"red","fed":"3.50–3.75%, hawkish dot plot, possible hike Oct 2026","fedColor":"red","macd":"Bearish — weekly negative, no bullish crossover","macdColor":"orange","ma200":"~$62,457 — spot 4.2% below 200WMA","ma200Color":"green","monthlyRsi":"~38","weeklyRsi":"~34","realizedPrice":"~$50K est","realizedDiff":"+19% vs spot","piCycle":"Clear"},
   {"date":"2026-06-30","price":59000,"mvrv":0.25,"puell":0.75,"fearGreed":15,"bottomConf":3,"signal":"EXTREME_ACCUM","big3":0,"week":36,"phase":"ENTERING_WINDOW","etf":"~$8B June total outflows; small mid-late June inflows — recovering","etfColor":"orange","dxy":"101.3, rising — hawkish FOMC, highest since May 2025","dxyColor":"red","m2":"Expanding +1.4% global (3-mo ending May); near-term hawkish headwind","m2Color":"yellow","fed":"3.50–3.75%, on hold w/ hawkish forward signals","fedColor":"orange","macd":"Bearish — weekly MACD negative","macdColor":"orange","ma200":"~$62,000 — spot 4.8% below 200WMA (first time below this cycle)","ma200Color":"green","monthlyRsi":"~37","weeklyRsi":"~34","realizedPrice":"~$62,000 est","realizedDiff":"-5% vs spot","piCycle":"Clear"},
-  {"date":"2026-07-01","price":58500,"mvrv":0.23,"puell":0.75,"fearGreed":11,"bottomConf":2,"signal":"EXTREME_ACCUM","big3":0,"week":37,"phase":"ENTERING_WINDOW","etf":"Record $4.5B net outflows in June 2026 — worst month since ETF launch","etfColor":"red","dxy":"~101.3, rising — highest since May 2025","dxyColor":"red","m2":"Modest global expansion +1.4–1.9% (3-mo)","m2Color":"yellow","fed":"Held 3.50–3.75%, hawkish dot plot, hike risk flagged","fedColor":"orange","macd":"Bearish — weekly negative, approaching first bullish cross since May 2025","macdColor":"orange","ma200":"~$62,000 — spot ~5.6% below 200WMA","ma200Color":"green","monthlyRsi":"~30","weeklyRsi":"~34","realizedPrice":"~$53,400 est","realizedDiff":"+9% vs spot","piCycle":"Clear","weeklyK":8.52,"weeklyD":23.62}
+  {"date":"2026-07-01","price":58500,"mvrv":0.23,"puell":0.75,"fearGreed":11,"bottomConf":2,"signal":"EXTREME_ACCUM","big3":0,"week":37,"phase":"ENTERING_WINDOW","etf":"Record $4.5B net outflows in June 2026 — worst month since ETF launch","etfColor":"red","dxy":"~101.3, rising — highest since May 2025","dxyColor":"red","m2":"Modest global expansion +1.4–1.9% (3-mo)","m2Color":"yellow","fed":"Held 3.50–3.75%, hawkish dot plot, hike risk flagged","fedColor":"orange","macd":"Bearish — weekly negative, approaching first bullish cross since May 2025","macdColor":"orange","ma200":"~$62,000 — spot ~5.6% below 200WMA","ma200Color":"green","monthlyRsi":"~30","weeklyRsi":"~34","realizedPrice":"~$53,400 est","realizedPriceNum":53400,"realizedDiff":"+9% vs spot","piCycle":"Clear","weeklyK":8.52,"weeklyD":23.62,"soprStreak":0}
 ];
 
 // =====================================================================
@@ -605,23 +605,23 @@ const PLAN = {
   btcQty:       0.393968,  // total BTC acquired — updated Jun 29 2026
   avgPrice:    61549,      // weighted avg cost basis — updated Jun 29 2026
   buys: [
-    { date: '2026-06-02', price: 67358,   qty: 0.02969,  label: 'Tranche $2K', type: 'tranche' },
-    { date: '2026-06-03', price: 63201,   qty: 0.12658,  label: 'T1 $8K',      type: 'tranche' },
-    { date: '2026-06-05', price: 61214,   qty: 0.01225,  label: 'DCA $750',    type: 'dca'     },
-    { date: '2026-06-05', price: 59800,   qty: 0.05017,  label: 'T2 $3K',      type: 'tranche' },
-    { date: '2026-06-16', price: 65557,   qty: 0.007627,  label: 'DCA $500',    type: 'dca'     },
-    { date: '2026-06-17', price: 64952,   qty: 0.00769776, label: 'DCA $500',  type: 'dca'     },
-    { date: '2026-06-18', price: 62578,   qty: 0.00799,  label: 'DCA $500',    type: 'dca'     },
-    { date: '2026-06-22', price: 63691,   qty: 0.00785,  label: 'DCA $500',    type: 'dca'     },
-    { date: '2026-06-23', price: 62315,   qty: 0.008024, label: 'DCA $500',    type: 'dca'     },
-    { date: '2026-06-24', price: 61215,   qty: 0.008168, label: 'DCA $500',    type: 'dca'     },
-    { date: '2026-06-25', price: 59622,   qty: 0.01677,  label: 'T3b $1K',     type: 'tranche' },
-    { date: '2026-06-25', price: 58168,   qty: 0.06877,  label: 'T3a $4K',     type: 'tranche' },
-    { date: '2026-06-25', price: 58886,   qty: 0.008491, label: 'DCA $500',    type: 'dca'     },
-    { date: '2026-06-25', price: 59901,   qty: 0.008347, label: 'DCA $500',    type: 'dca'     },
-    { date: '2026-06-28', price: 59221,   qty: 0.008443, label: 'DCA $500',    type: 'dca'     },
-    { date: '2026-06-29', price: 58623,   qty: 0.004265, label: 'DCA $250',    type: 'dca'     },
-    { date: '2026-06-29', price: 58341,   qty: 0.01286,  label: 'DCA $750',    type: 'dca'     },
+    { date: '2026-06-02', price: 67358,   qty: 0.02969,    label: 'Tranche $2K', type: 'tranche', signal: 'STRONG_ACCUM', big3: 1, bottomConf: 3 },
+    { date: '2026-06-03', price: 63201,   qty: 0.12658,    label: 'T1 $8K',      type: 'tranche', signal: 'WATCH',        big3: 0, bottomConf: 1 },
+    { date: '2026-06-05', price: 61214,   qty: 0.01225,    label: 'DCA $750',    type: 'dca',     signal: 'WATCH',        big3: 0, bottomConf: 2 },
+    { date: '2026-06-05', price: 59800,   qty: 0.05017,    label: 'T2 $3K',      type: 'tranche', signal: 'WATCH',        big3: 0, bottomConf: 2 },
+    { date: '2026-06-16', price: 65557,   qty: 0.007627,   label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
+    { date: '2026-06-17', price: 64952,   qty: 0.00769776, label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
+    { date: '2026-06-18', price: 62578,   qty: 0.00799,    label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 3 },
+    { date: '2026-06-22', price: 63691,   qty: 0.00785,    label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 1, bottomConf: 3 },
+    { date: '2026-06-23', price: 62315,   qty: 0.008024,   label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 3 },
+    { date: '2026-06-24', price: 61215,   qty: 0.008168,   label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
+    { date: '2026-06-25', price: 59622,   qty: 0.01677,    label: 'T3b $1K',     type: 'tranche', signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
+    { date: '2026-06-25', price: 58168,   qty: 0.06877,    label: 'T3a $4K',     type: 'tranche', signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
+    { date: '2026-06-25', price: 58886,   qty: 0.008491,   label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
+    { date: '2026-06-25', price: 59901,   qty: 0.008347,   label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
+    { date: '2026-06-28', price: 59221,   qty: 0.008443,   label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
+    { date: '2026-06-29', price: 58623,   qty: 0.004265,   label: 'DCA $250',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 1, bottomConf: 3 },
+    { date: '2026-06-29', price: 58341,   qty: 0.01286,    label: 'DCA $750',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 1, bottomConf: 3 },
   ],
   tranches: [
     { price: 63201, label: 'T1', size:  8000, filled: true,  note: 'Filled Jun 3 @ $63,201' },
@@ -1357,13 +1357,14 @@ function updateRallyCaution() {
   const mvrv         = parseFloat(latest.mvrv) || 0;
   const fearGreed    = parseInt(latest.fearGreed) || 50;
 
-  // Parse realized price from string like "~$50K est" or number
-  let realizedPrice = 50000;
-  if (latest.realizedPrice) {
+  // FIX 3: Realized price — numeric field first, string parse as fallback
+  let realizedPrice = latest.realizedPriceNum || 0;
+  if (!realizedPrice && latest.realizedPrice) {
     const rp = String(latest.realizedPrice).replace(/[~$,Kk\s]/g,'');
     const rpNum = parseFloat(rp);
     if (!isNaN(rpNum)) realizedPrice = rpNum < 1000 ? rpNum * 1000 : rpNum;
   }
+  if (!realizedPrice) realizedPrice = 50000; // ultimate fallback
 
   // Parse 200WMA from string like "~$62,457 — spot 4.2% below 200WMA"
   let wma200 = 0;
@@ -1406,7 +1407,24 @@ function updateRallyCaution() {
     });
   }
 
-  const gateTotal  = hasKD5 ? 5 : 4;
+  // FIX 1: SOPR streak gate — warn if SOPR just crossed (1 week) vs sustained (2+ weeks)
+  const soprStreak = latest.soprStreak ?? null;
+  if (soprStreak !== null && soprStreak === 1) {
+    gates.push({
+      label: `SOPR streak: 1 week above 1.0 (need 2+ weeks)`,
+      detail: 'SOPR crossed above 1.0 but only for 1 week — historically can be noise in a bear rally. Needs a second consecutive week to confirm genuine recovery.'
+    });
+  }
+
+  // FIX 2: Funding rate gate — positive funding during Big 3 advance = rally signal
+  const gateTotal  = hasKD5 ? (soprStreak === 1 ? 7 : 6) : (soprStreak === 1 ? 6 : 5);
+  if (_fundingRate !== null && _fundingRate > 0.0005) {
+    gates.push({
+      label: `Perp funding rate +${(_fundingRate * 100).toFixed(3)}% — longs paying heavy premium`,
+      detail: 'Positive funding means traders are bullish and paying to hold longs. Genuine bottoms show flat or negative funding as shorts dominate.'
+    });
+  }
+
   const failCount  = gates.length;
   const CAUTION_THRESHOLD = 2;
 
@@ -3760,7 +3778,22 @@ setTimeout(checkAndShowAlerts, 2000);
 // WEEKLY CYCLE REVERSAL — AUTO CALCULATION
 // RSI(155) → Stoch(141) → K SMA(24) → D SMA(21) on weekly BTCUSDT candles
 // =====================================================================
-let _kdLive = null; // { k, d, gap, gapHistory[] }
+let _kdLive      = null; // { k, d, gap, gapHistory[] }
+let _fundingRate = null; // raw decimal from Bybit, e.g. 0.0001 = 0.01%
+
+async function fetchFundingRate() {
+  try {
+    const resp = await fetch('https://api.bybit.com/v5/market/tickers?category=linear&symbol=BTCUSDT');
+    if (!resp.ok) throw new Error('Bybit funding fetch failed');
+    const data = await resp.json();
+    const fr = parseFloat(data?.result?.list?.[0]?.fundingRate);
+    if (!isNaN(fr)) {
+      _fundingRate = fr;
+      updateRallyCaution(); // re-evaluate with live funding rate
+    }
+  } catch(e) { /* silently skip — funding rate gate omitted if unavailable */ }
+}
+setTimeout(fetchFundingRate, 2000);
 
 function _calcRSI(closes, period) {
   const out = new Array(closes.length).fill(null);
