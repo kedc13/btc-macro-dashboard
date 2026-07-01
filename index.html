@@ -1421,16 +1421,10 @@ function updateRallyCaution() {
     });
   }
 
-  // 300 DMA gate — if Big 3 fires but price is well above 300 DMA, not deep bear enough
-  if (_dma300 && _dma300.pctFromPrice !== null && _dma300.pctFromPrice > 25) {
-    gates.push({
-      label: `Price ${_dma300.pctFromPrice.toFixed(1)}% above 300 DMA ($${_dma300.value.toLocaleString()})`,
-      detail: 'Genuine BTC cycle bottoms occur at or below the 300-day moving average. Being this far above it during a Big 3 advance suggests a rally, not the real bottom.'
-    });
-  }
+  // 300 DMA is a standalone buy signal — not a rally filter. See dma300-card.
 
   // FIX 2: Funding rate gate — positive funding during Big 3 advance = rally signal
-  const gateTotal  = hasKD5 ? (soprStreak === 1 ? 8 : 7) : (soprStreak === 1 ? 7 : 6);
+  const gateTotal  = hasKD5 ? (soprStreak === 1 ? 7 : 6) : (soprStreak === 1 ? 6 : 5);
   if (_fundingRate !== null && _fundingRate > 0.0005) {
     gates.push({
       label: `Perp funding rate +${(_fundingRate * 100).toFixed(3)}% — longs paying heavy premium`,
