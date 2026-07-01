@@ -3803,55 +3803,92 @@ function _calcSMA(series, period) {
   return out;
 }
 
+// Run the full K/D pipeline on an array of close prices
+function _computeKDFromCloses(closes) {
+  const rsiSeries   = _calcRSI(closes, 155);
+  const stochSeries = _calcStochOnSeries(rsiSeries, 141);
+  const kSeries     = _calcSMA(stochSeries, 24);
+  const dSeries     = _calcSMA(kSeries, 21);
+  const pairs = [];
+  for (let i = dSeries.length - 1; i >= 0 && pairs.length < 16; i--) {
+    if (kSeries[i] !== null && dSeries[i] !== null) {
+      pairs.unshift({ k: kSeries[i], d: dSeries[i], gap: dSeries[i] - kSeries[i] });
+    }
+  }
+  const last = pairs[pairs.length - 1] || {};
+  return {
+    k: last.k != null ? +last.k.toFixed(2) : null,
+    d: last.d != null ? +last.d.toFixed(2) : null,
+    gap: last.gap != null ? +last.gap.toFixed(2) : null,
+    gapHistory: pairs.map(p => +p.gap.toFixed(2))
+  };
+}
+
+async function _fetchBinanceCloses() {
+  const resp = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1w&limit=500');
+  if (!resp.ok) throw new Error('Binance fetch failed');
+  const raw = await resp.json();
+  return raw.map(c => parseFloat(c[4]));
+}
+
+async function _fetchKrakenCloses() {
+  // Kraken weekly interval = 10080 minutes; returns up to 720 candles (~13.8 yrs)
+  const resp = await fetch('https://api.kraken.com/0/public/OHLC?pair=XBTUSD&interval=10080');
+  if (!resp.ok) throw new Error('Kraken fetch failed');
+  const data = await resp.json();
+  if (data.error && data.error.length) throw new Error(data.error[0]);
+  const pairKey = Object.keys(data.result).find(k => k !== 'last');
+  return data.result[pairKey].map(c => parseFloat(c[4]));
+}
+
 async function fetchAndComputeKD() {
   // Check sessionStorage cache — recalculate at most once per hour
-  const cacheKey = 'btc_kd_v1_' + new Date().toISOString().slice(0, 13);
+  const cacheKey = 'btc_kd_v2_' + new Date().toISOString().slice(0, 13);
   try {
     const cached = sessionStorage.getItem(cacheKey);
     if (cached) { _kdLive = JSON.parse(cached); renderKDCard(); return; }
   } catch(e) {}
 
-  try {
-    // Fetch 500 weekly BTCUSDT candles — enough for RSI(155)+Stoch(141)+K(24)+D(21)
-    const resp = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1w&limit=500');
-    if (!resp.ok) throw new Error('Binance fetch failed');
-    const raw  = await resp.json();
-    const closes = raw.map(c => parseFloat(c[4]));
+  // Fire both requests in parallel
+  const [binanceResult, krakenResult] = await Promise.allSettled([
+    _fetchBinanceCloses().then(closes => _computeKDFromCloses(closes)),
+    _fetchKrakenCloses().then(closes  => _computeKDFromCloses(closes))
+  ]);
 
-    const rsiSeries   = _calcRSI(closes, 155);
-    const stochSeries = _calcStochOnSeries(rsiSeries, 141);
-    const kSeries     = _calcSMA(stochSeries, 24);
-    const dSeries     = _calcSMA(kSeries, 21);
+  const binance = binanceResult.status === 'fulfilled' ? binanceResult.value : null;
+  const kraken  = krakenResult.status  === 'fulfilled' ? krakenResult.value  : null;
 
-    // Extract last 16 non-null K/D pairs for gap history
-    const pairs = [];
-    for (let i = dSeries.length - 1; i >= 0 && pairs.length < 16; i--) {
-      if (kSeries[i] !== null && dSeries[i] !== null) {
-        pairs.unshift({ k: kSeries[i], d: dSeries[i], gap: dSeries[i] - kSeries[i] });
-      }
-    }
-
-    const last = pairs[pairs.length - 1] || {};
-    _kdLive = {
-      k:          last.k != null ? +last.k.toFixed(2) : null,
-      d:          last.d != null ? +last.d.toFixed(2) : null,
-      gap:        last.gap != null ? +last.gap.toFixed(2) : null,
-      gapHistory: pairs.map(p => +p.gap.toFixed(2))
-    };
-
-    try { sessionStorage.setItem(cacheKey, JSON.stringify(_kdLive)); } catch(e) {}
-    renderKDCard();
-    updateRallyCaution(); // re-run with live values
-  } catch(err) {
-    // Fall back to manually-logged value from HISTORY_DATA
+  if (!binance && !kraken) {
+    // Both failed — fall back to manually-logged value
     const latest = HISTORY_DATA[HISTORY_DATA.length - 1] || {};
     if (latest.weeklyK != null && latest.weeklyD != null) {
       const k = parseFloat(latest.weeklyK), d = parseFloat(latest.weeklyD);
       _kdLive = { k, d, gap: +(d - k).toFixed(2), gapHistory: [+(d - k).toFixed(2)], fallback: true };
-      renderKDCard();
-      updateRallyCaution();
     }
+  } else {
+    // Use Binance as primary (or Kraken if Binance failed)
+    const primary = binance || kraken;
+    // Cross-validation: compare K and D between sources
+    let xval = null;
+    if (binance && kraken) {
+      const kDiff = Math.abs(binance.k - kraken.k);
+      const dDiff = Math.abs(binance.d - kraken.d);
+      const confirmed = kDiff < 2 && dDiff < 2;
+      xval = {
+        krakenK: kraken.k,
+        krakenD: kraken.d,
+        krakenGap: kraken.gap,
+        kDiff: +kDiff.toFixed(2),
+        dDiff: +dDiff.toFixed(2),
+        confirmed
+      };
+    }
+    _kdLive = { ...primary, xval, fallback: false };
   }
+
+  try { sessionStorage.setItem(cacheKey, JSON.stringify(_kdLive)); } catch(e) {}
+  renderKDCard();
+  updateRallyCaution();
 }
 
 function renderKDCard() {
@@ -3936,13 +3973,25 @@ function renderKDCard() {
     }
   }
 
-  // Note
+  // Cross-validation row
   const note = document.getElementById('kd-note');
   if (note) {
+    const xval = _kdLive?.xval;
+    let xvalHtml = '';
+    if (xval) {
+      if (xval.confirmed) {
+        xvalHtml = `<span style="color:#4ade80;font-weight:700">✓ Kraken confirmed</span> — K ${xval.krakenK} / D ${xval.krakenD} (Δ ${xval.kDiff} pts). Both sources agree — high confidence.`;
+      } else {
+        xvalHtml = `<span style="color:#fbbf24;font-weight:700">⚠ Divergence</span> — Kraken K ${xval.krakenK} / D ${xval.krakenD} (K diff ${xval.kDiff}, D diff ${xval.dDiff}). Check TradingView manually.`;
+      }
+    } else if (!fallback) {
+      xvalHtml = '<span style="color:#475569">Kraken cross-validation unavailable</span>';
+    }
+
     if (crossed) {
-      note.textContent = 'K has crossed above D — the cycle low is confirmed and likely already printed. Remaining deployment should be gradual; best entries are typically at or before the cross.';
+      note.innerHTML = `K has crossed above D — cycle low confirmed and likely already printed. Best entries were at convergence. ${xvalHtml ? '<br>' + xvalHtml : ''}`;
     } else {
-      note.textContent = `Gap of ${absGap.toFixed(1)} pts remaining before K crosses D. The cycle low historically prints when K and D converge (gap < 3) — the cross itself is a lagging confirmation. ${fallback ? '(*Using last logged value — auto-calc unavailable)' : 'Values auto-calculated from Binance weekly candles.'}`;
+      note.innerHTML = `Gap ${absGap.toFixed(1)} pts to cross. Cycle low historically prints at convergence (gap &lt; 3) — cross is lagging. ${fallback ? '<em>*Using last logged value</em>' : 'Binance weekly candles.'} ${xvalHtml ? '<br>' + xvalHtml : ''}`;
     }
   }
 }
