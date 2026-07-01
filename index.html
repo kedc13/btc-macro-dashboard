@@ -327,6 +327,21 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <div id="alert-sidebar-body" style="flex:1;overflow-y:auto;padding:12px"></div>
   </div>
 
+  <!-- ===== DEPLOYMENT POSTURE ===== -->
+  <div id="posture-wrap" style="margin-bottom:8px">
+    <div id="posture-card" style="border-radius:12px;border:1px solid #1e293b;overflow:hidden;background:#0d0d0d">
+      <div style="padding:11px 14px 10px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em">Deployment Posture</span>
+          <span id="posture-badge" style="font-size:11px;font-weight:800;border-radius:5px;padding:3px 10px;letter-spacing:.03em"></span>
+          <span id="posture-week-kd" style="margin-left:auto;font-size:10px;color:#334155"></span>
+        </div>
+        <div id="posture-action" style="font-size:12px;font-weight:600;line-height:1.5;margin-bottom:6px"></div>
+        <div id="posture-detail" style="font-size:11px;color:#475569;line-height:1.6;border-top:1px solid #0f172a;padding-top:6px"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- ===== AI DAILY SUMMARY ===== -->
   <div id="ai-summary-wrap" style="margin-bottom:8px">
     <div style="background:#0d0d0d;border:1px solid #1e293b;border-radius:12px;overflow:hidden">
@@ -1457,6 +1472,7 @@ function renderToday(d) {
   document.getElementById('action-text').textContent = d.action||'—';
   if(d.big3&&d.big3.length){ document.getElementById('big3-section').style.display=''; renderBig3Cards(d.big3, null); fetchBig3Live(d.big3); }
   updateRallyCaution();
+  updateDeploymentPosture();
   const ct=parseInt((d.bottomConf||'0/8').split('/')[0])||0;
   document.getElementById('conf-count').textContent=d.bottomConf||'0/8';
   document.getElementById('conf-pips').innerHTML=Array.from({length:8},(_,i)=>`<div class="conf-pip${i<ct?' active':''}"></div>`).join('');
@@ -3796,7 +3812,8 @@ async function fetchFundingRate() {
     const fr = parseFloat(data?.result?.list?.[0]?.fundingRate);
     if (!isNaN(fr)) {
       _fundingRate = fr;
-      updateRallyCaution(); // re-evaluate with live funding rate
+      updateRallyCaution();
+      updateDeploymentPosture();
     }
   } catch(e) { /* silently skip — funding rate gate omitted if unavailable */ }
 }
@@ -4031,6 +4048,7 @@ async function fetchAndComputeKD() {
   try { sessionStorage.setItem(cacheKey, JSON.stringify(_kdLive)); } catch(e) {}
   renderKDCard();
   updateRallyCaution();
+  updateDeploymentPosture();
 }
 
 function renderKDCard() {
@@ -4138,6 +4156,89 @@ function renderKDCard() {
   }
 }
 
+// =====================================================================
+// DEPLOYMENT POSTURE — synthesizes week + K/D gap + signal + Big 3
+// into a single actionable read updated on every render
+// =====================================================================
+function updateDeploymentPosture() {
+  const card   = document.getElementById('posture-card');
+  const badge  = document.getElementById('posture-badge');
+  const action = document.getElementById('posture-action');
+  const detail = document.getElementById('posture-detail');
+  const meta   = document.getElementById('posture-week-kd');
+  if (!card) return;
+
+  const latest    = HISTORY_DATA[HISTORY_DATA.length - 1] || {};
+  const bearWeek  = Math.max(1, Math.floor((Date.now() - new Date(ATH_DATE).getTime()) / (7*86400000)) + 1);
+  const signal    = latest.signal || 'WATCH';
+  const big3      = latest.big3 || 0;
+  const kdGap     = _kdLive ? Math.abs(_kdLive.gap || 0) : (latest.weeklyD - latest.weeklyK || 99);
+  const kdCrossed = _kdLive ? (_kdLive.k > _kdLive.d) : false;
+  const fearGreed = parseInt(latest.fearGreed) || 50;
+
+  // Signal strength score (0–4)
+  const sigScore = { EXTREME_ACCUM: 4, STRONG_ACCUM: 3, ACCUM_BOTTOM: 3,
+                     WATCH: 1, NEUTRAL: 1, ELEVATED: 0, EUPHORIC: 0 }[signal] || 1;
+
+  // Determine posture
+  let posture, borderColor, badgeStyle, actionText, detailText;
+
+  const inBottomWindow = bearWeek >= 44;
+  const kdConverging   = kdGap < 5;
+  const kdApproaching  = kdGap < 10;
+
+  if (kdCrossed || (kdConverging && big3 >= 2 && sigScore >= 3)) {
+    // MAX CONVICTION — K/D converged or crossed, multiple confirmations
+    posture     = 'MAX CONVICTION';
+    borderColor = '#16a34a';
+    badgeStyle  = 'background:#052e16;color:#4ade80;border:1px solid #16a34a';
+    actionText  = 'Deploy remaining T6–T7 reserves. This is the cycle low window.';
+    detailText  = `K/D ${kdCrossed ? 'has crossed' : `gap ${kdGap.toFixed(1)} pts — convergence zone`}. Big 3 at ${big3}/3. Signal: ${signal}. Historically this confluence marks the actual cycle low. Size up remaining tranches, consider unlocking T7 reserve budget.`;
+
+  } else if ((inBottomWindow || kdApproaching) && big3 >= 1 && sigScore >= 3) {
+    // AGGRESSIVE — bottom window + multiple signals aligning
+    posture     = 'AGGRESSIVE';
+    borderColor = '#d97706';
+    badgeStyle  = 'background:#1c1200;color:#fbbf24;border:1px solid #d97706';
+    actionText  = 'Increase DCA size. Pull limit orders up if price stabilises. Watch for K/D gap to narrow below 5.';
+    detailText  = `Week ${bearWeek}${inBottomWindow ? ' — inside historical bottom window' : ''}. K/D gap ${kdGap.toFixed(1)} pts${kdApproaching ? ' (approaching convergence)' : ''}. Big 3 ${big3}/3. Signal ${signal}. Conditions are aligning — size up DCA and be ready to act on T4–T5 tranches.`;
+
+  } else if (sigScore >= 3 && bearWeek >= 35) {
+    // ACTIVE — strong indicators but timing not there yet
+    posture     = 'ACTIVE';
+    borderColor = '#2563eb';
+    badgeStyle  = 'background:#0c1529;color:#60a5fa;border:1px solid #2563eb';
+    actionText  = 'Full DCA cadence on STRONG_ACCUM or better. Let limit orders sit. Do not chase price.';
+    detailText  = `Week ${bearWeek} — entering window. K/D gap ${kdGap.toFixed(1)} pts still wide. Signal ${signal}, Big 3 ${big3}/3. Deploy DCA at current levels. Tranches should only fill via limit orders at pre-set prices — no manual deployment yet.`;
+
+  } else if (sigScore >= 2) {
+    // PATIENT — in bear but conditions not strong enough yet
+    posture     = 'PATIENT';
+    borderColor = '#475569';
+    badgeStyle  = 'background:#0f172a;color:#94a3b8;border:1px solid #475569';
+    actionText  = 'Minimum DCA only on STRONG_ACCUM. Tranches on limit orders only. Preserve dry powder.';
+    detailText  = `Week ${bearWeek}. Signal ${signal} — not yet at threshold for active deployment. K/D gap ${kdGap.toFixed(1)} pts. Big 3 ${big3}/3. The best prices and confirmation signals are likely still ahead. Patience protects your averaging power.`;
+
+  } else {
+    // HOLD — weak/neutral signal
+    posture     = 'HOLD';
+    borderColor = '#7f1d1d';
+    badgeStyle  = 'background:#1a0000;color:#f87171;border:1px solid #7f1d1d';
+    actionText  = 'Pause DCA. Signal too weak. Wait for STRONG_ACCUM or better before deploying.';
+    detailText  = `Signal is ${signal} — below deployment threshold. Deploying capital here risks buying before the real accumulation zone. Let the indicators come to you.`;
+  }
+
+  card.style.borderColor = borderColor;
+  badge.textContent = posture;
+  badge.style.cssText = badgeStyle + ';font-size:11px;font-weight:800;border-radius:5px;padding:3px 10px;letter-spacing:.03em';
+  action.textContent = actionText;
+  action.style.color = badgeStyle.match(/color:([^;]+)/)?.[1] || '#94a3b8';
+  detail.textContent = detailText;
+  if (meta) meta.textContent = `Wk ${bearWeek} · K/D gap ${kdGap.toFixed(1)} · Big3 ${big3}/3`;
+}
+
+// Called after signals load and after K/D calc completes
+// =====================================================================
 // Kick off calculation after page loads
 setTimeout(fetchAndComputeKD, 1500);
 
