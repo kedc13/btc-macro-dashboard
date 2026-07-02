@@ -4249,8 +4249,18 @@ function updateDeploymentPosture() {
 // =====================================================================
 // Kick off calculation after page loads
 setTimeout(fetchAndComputeKD, 1500);
-// Safety net: render posture from manual data if K/D hasn't resolved in 3s
-setTimeout(() => { if (!_kdLive) updateDeploymentPosture(); }, 3000);
+// Safety net: render K/D + posture from manual data if APIs haven't resolved in 3s
+setTimeout(() => {
+  if (!_kdLive) {
+    const _fb = HISTORY_DATA[HISTORY_DATA.length - 1] || {};
+    if (_fb.weeklyK != null && _fb.weeklyD != null) {
+      const k = parseFloat(_fb.weeklyK), d = parseFloat(_fb.weeklyD);
+      _kdLive = { k, d, gap: +(d - k).toFixed(2), gapHistory: [+(d - k).toFixed(2)], fallback: true };
+      renderKDCard();
+    }
+    updateDeploymentPosture();
+  }
+}, 3000);
 
 // =====================================================================
 // AI DAILY SUMMARY
