@@ -238,6 +238,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .loading { display: flex; align-items: center; justify-content: center; height: 200px; color: #555; font-size: 14px; }
 .error-msg { background: #1a0000; border: 1px solid #440000; border-radius: 10px; padding: 14px; color: #f87171; font-size: 13px; }
 .chart-note { font-size: 10px; color: #444; font-style: italic; margin-top: 8px; }
+@keyframes aiDot { 0%,80%,100% { opacity:.15; transform:scale(.7) } 40% { opacity:1; transform:scale(1) } }
+.ai-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:#3b82f6; animation:aiDot 1.2s ease-in-out infinite; }
+.ai-dot:nth-child(1) { animation-delay:0s }
+.ai-dot:nth-child(2) { animation-delay:.2s }
+.ai-dot:nth-child(3) { animation-delay:.4s }
 </style>
 </head>
 <body>
@@ -322,9 +327,118 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <div id="alert-sidebar-body" style="flex:1;overflow-y:auto;padding:12px"></div>
   </div>
 
-  <div id="big3-section" style="display:none;margin-bottom:20px">
+  <!-- ===== DEPLOYMENT POSTURE ===== -->
+  <div id="posture-wrap" style="margin-bottom:8px">
+    <div id="posture-card" style="border-radius:12px;border:1px solid #2563eb;overflow:hidden;background:#0d0d0d">
+      <div style="padding:11px 14px 10px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em">Deployment Posture</span>
+          <span id="posture-badge" style="font-size:11px;font-weight:800;border-radius:5px;padding:3px 10px;letter-spacing:.03em;background:#0c1529;color:#60a5fa;border:1px solid #2563eb">ACTIVE</span>
+          <span id="posture-week-kd" style="margin-left:auto;font-size:10px;color:#334155">Wk 37 · K/D gap 15.1 · Big3 0/3</span>
+        </div>
+        <div id="posture-action" style="font-size:12px;font-weight:600;line-height:1.5;margin-bottom:6px;color:#60a5fa">Full DCA cadence on STRONG_ACCUM or better. Let limit orders sit. Do not chase price.</div>
+        <div id="posture-detail" style="font-size:11px;color:#475569;line-height:1.6;border-top:1px solid #0f172a;padding-top:6px">Week 37 — entering window. K/D gap 15.1 pts still wide. Signal STRONG_ACCUM, Big 3 0/3. Deploy DCA at current levels. Tranches should only fill via limit orders at pre-set prices — no manual deployment yet.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== AI DAILY SUMMARY ===== -->
+  <div id="ai-summary-wrap" style="margin-bottom:8px">
+    <div style="background:#0d0d0d;border:1px solid #1e293b;border-radius:12px;overflow:hidden">
+      <div onclick="window._aiToggle()" style="display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;user-select:none">
+        <span style="font-size:13px;opacity:.7">✦</span>
+        <span style="font-size:12px;font-weight:700;color:#cbd5e1;flex:1;letter-spacing:.01em">AI Daily Summary</span>
+        <span id="ai-sum-ts" style="font-size:10px;color:#334155"></span>
+        <button id="ai-sum-refresh" onclick="event.stopPropagation();generateAISummary(true)"
+          style="background:none;border:1px solid #1e293b;border-radius:6px;color:#475569;font-size:10px;font-weight:600;padding:3px 9px;cursor:pointer"
+          onmouseover="this.style.color='#94a3b8'" onmouseout="this.style.color='#475569'">↺ Refresh</button>
+        <span id="ai-sum-chev" style="color:#334155;font-size:11px;transition:transform .2s">▾</span>
+      </div>
+      <div id="ai-sum-body" style="border-top:1px solid #111;padding:12px 15px 14px">
+        <div id="ai-sum-loader" style="display:none;align-items:center;gap:10px;padding:4px 0">
+          <div style="display:flex;gap:5px" id="ai-sum-dots">
+            <span class="ai-dot"></span><span class="ai-dot"></span><span class="ai-dot"></span>
+          </div>
+          <span style="font-size:11px;color:#334155;letter-spacing:.04em">Analyzing indicators…</span>
+        </div>
+        <div id="ai-sum-text" style="font-size:12px;line-height:1.75;color:#94a3b8;white-space:pre-wrap;display:block">Signal is Strong Accumulation at $61,650 in Week 37 of the bear — Entering Window phase. MVRV Z-Score at 0.23 puts us in extreme accumulation territory, with the Puell Multiple at 0.75 and Fear &amp; Greed at 36. Monthly RSI ~30 (historic extreme oversold) and weekly RSI ~34 are both deeply oversold. Spot is ~$60K — price testing/reclaiming 200WMA.
+
+Big 3 stands at 0/3. No Big 3 triggers have fired yet. Bottom confirmation is at 2/8 — early stages with most indicators still pending. ETF outflows persist (~$296M Jul 1, $4.5B June total). DXY ~101.3 (15-month high) and the Fed holding at 3.50–3.75% with hawkish tone remain the primary macro headwinds.
+
+Portfolio: $24,250 deployed of $150,000 total — 0.394 BTC at avg $61,549. Next unfilled tranche is T4a at $56,512. Key watch item: SOPR recovering and holding above 1.0 would advance Big 3 to 1/3 and is the most actionable near-term trigger. If BTC reclaims 200WMA ($60K) on weekly close, that upgrades the posture signal.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="big3-section" style="display:block;margin-bottom:20px">
     <div class="section-title">🎯 Big 3 Primary Triggers</div>
     <div class="grid-3" id="big3-grid"></div>
+    <!-- Weekly K/D Cycle Reversal Card (auto-calculated from Binance weekly candles) -->
+    <div id="kd-card" style="margin-top:10px;background:#0d0d0d;border:1px solid #1e293b;border-radius:10px;padding:12px 14px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em">Cycle Reversal Indicator</span>
+        <span style="font-size:9px;color:#334155">RSI(155) → Stoch(141) → K(24) → D(21) · Weekly</span>
+        <span id="kd-status-badge" style="margin-left:auto;font-size:10px;border-radius:4px;padding:2px 8px;font-weight:700;background:#0d0d0d;color:#64748b;border:1px solid #1e293b">BEAR PHASE *</span>
+      </div>
+
+      <!-- Convergence zone alert — shown only when gap is tight -->
+      <div id="kd-convergence-alert" style="display:none;background:#0c1a0c;border:1px solid #166534;border-radius:7px;padding:8px 11px;margin-bottom:10px;font-size:11px;color:#4ade80;font-weight:600;line-height:1.5"></div>
+
+      <div style="display:flex;align-items:center;gap:16px">
+        <div style="flex:1">
+          <!-- K bar -->
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+            <span style="font-size:10px;color:#3b82f6;font-weight:700;width:12px">K</span>
+            <div style="flex:1;height:5px;background:#0f172a;border-radius:3px;overflow:hidden">
+              <div id="kd-k-bar" style="height:100%;border-radius:3px;background:#3b82f6;transition:width .6s;width:8.52%"></div>
+            </div>
+            <span id="kd-k-val" style="font-size:12px;color:#3b82f6;font-weight:800;width:38px;text-align:right">8.52</span>
+          </div>
+          <!-- D bar -->
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:10px;color:#eab308;font-weight:700;width:12px">D</span>
+            <div style="flex:1;height:5px;background:#0f172a;border-radius:3px;overflow:hidden">
+              <div id="kd-d-bar" style="height:100%;border-radius:3px;background:#eab308;transition:width .6s;width:23.62%"></div>
+            </div>
+            <span id="kd-d-val" style="font-size:12px;color:#eab308;font-weight:800;width:38px;text-align:right">23.62</span>
+          </div>
+        </div>
+
+        <!-- Gap display -->
+        <div style="text-align:center;min-width:72px;padding:6px 0">
+          <div id="kd-gap-val" style="font-size:22px;font-weight:900;color:#475569;line-height:1">15.1</div>
+          <div id="kd-gap-label" style="font-size:9px;color:#334155;text-transform:uppercase;letter-spacing:.05em;margin-top:2px">gap pts</div>
+          <div id="kd-trend" style="font-size:10px;margin-top:3px;color:#475569">▲ widening</div>
+        </div>
+
+        <!-- Mini gap sparkline -->
+        <div style="min-width:64px">
+          <svg id="kd-spark" width="64" height="36" viewBox="0 0 64 36" style="display:block">
+            <text x="32" y="20" text-anchor="middle" font-size="9" fill="#334155">—</text>
+          </svg>
+          <div style="font-size:8px;color:#334155;text-align:center;margin-top:1px">gap history</div>
+        </div>
+      </div>
+
+      <div id="kd-note" style="margin-top:8px;font-size:10px;color:#475569;line-height:1.5;border-top:1px solid #0f172a;padding-top:7px"></div>
+    </div>
+    <!-- 300 DMA Card — rendered by render300DMA() -->
+    <div id="dma300-card" style="margin-top:10px;background:#0d0d0d;border:1px solid #1e293b;border-radius:10px;padding:12px 14px;min-height:60px">
+      <div style="font-size:11px;color:#475569">300 DMA: calculating via API… <span style="color:#334155">· Check TradingView if unavailable</span></div>
+    </div>
+
+    <!-- Rally Caution Banner — shown/hidden by updateRallyCaution() -->
+    <div id="rally-caution-banner" style="display:none;margin-top:10px;background:#1a0e00;border:1px solid #92400e;border-radius:10px;padding:12px 14px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <span style="font-size:14px">⚠</span>
+        <span style="font-size:12px;font-weight:700;color:#f59e0b;letter-spacing:.02em">RALLY CAUTION ACTIVE</span>
+        <span id="rally-gate-count" style="margin-left:auto;font-size:10px;background:#92400e33;color:#fbbf24;border-radius:4px;padding:2px 7px;font-weight:700"></span>
+      </div>
+      <div id="rally-gate-list" style="font-size:11px;color:#d97706;line-height:1.7;margin-bottom:7px"></div>
+      <div style="font-size:11px;color:#92400e;border-top:1px solid #92400e55;padding-top:7px;line-height:1.5">
+        Big 3 advancing during rally conditions. <strong style="color:#fbbf24">Hold remaining dry powder</strong> — tranche limit orders only. Do not accelerate DCA or unlock additional deployment until bear conditions are re-confirmed.
+      </div>
+    </div>
   </div>
 
   <!-- hidden action-text anchor kept for renderToday() compat -->
@@ -475,7 +589,13 @@ const HISTORY_DATA = [
   {"date":"2026-06-23","price":62250,"mvrv":0.36,"puell":0.75,"fearGreed":23,"bottomConf":3,"signal":"STRONG_ACCUM","big3":0,"week":36,"phase":"ENTERING_WINDOW","etf":"Recovering — MTD -$2.1B; IBIT inflows returning, outflow streak broken","etfColor":"yellow","dxy":"~100.7, strengthening post-FOMC hawkish surprise","dxyColor":"red","m2":"Expanding globally; near-term mixed on Fed hawkish reversal","m2Color":"yellow","fed":"3.50–3.75%, dot plot hawkish, possible hike Oct 2026","fedColor":"red","macd":"Bearish (histogram -11.86, curling toward zero)","macdColor":"yellow","ma200":"~$61,800 — holding above after $59.1K June low","ma200Color":"green","monthlyRsi":"~47","weeklyRsi":"~42","realizedPrice":"~$60–63K est","realizedDiff":"+0–4% vs spot","piCycle":"Clear"},
   {"date":"2026-06-24","price":62650,"mvrv":0.36,"puell":0.75,"fearGreed":24,"bottomConf":2,"signal":"STRONG_ACCUM","big3":0,"week":36,"phase":"ENTERING_WINDOW","etf":"-$5.4B June total; late stabilization, $86M inflow Fri","etfColor":"yellow","dxy":"~100.7, rising — 2-yr high post-hawkish FOMC","dxyColor":"red","m2":"Contracting — Iran energy shock, CPI 4.2%, hawkish environment","m2Color":"red","fed":"3.50–3.75%, hawkish posture, possible hike Oct 2026","fedColor":"red","macd":"Bearish","macdColor":"orange","ma200":"~$62.5K — BTC testing / at 200WMA","ma200Color":"green","monthlyRsi":"~50","weeklyRsi":"~34","realizedPrice":"~$54K est","realizedDiff":"+16% vs spot","piCycle":"Clear"},
   {"date":"2026-06-25","price":61274,"mvrv":0.36,"puell":0.75,"fearGreed":17,"bottomConf":2,"signal":"STRONG_ACCUM","big3":0,"week":36,"phase":"ENTERING_WINDOW","etf":"Stabilizing — $5.4B June outflows; small inflows just returning","etfColor":"yellow","dxy":"~100.7, new high since May 2025, hawkish FOMC surge","dxyColor":"red","m2":"Contracting — hawkish Fed, rising DXY environment","m2Color":"red","fed":"3.50–3.75%, hawkish dot plot, possible hike Oct 2026","fedColor":"red","macd":"Bearish","macdColor":"orange","ma200":"~$62,457 — BTC testing below 200WMA (intraday low $59,334)","ma200Color":"green","monthlyRsi":"~49.7","weeklyRsi":"~34","realizedPrice":"~$58K est","realizedDiff":"+5% vs spot","piCycle":"Clear"},
-  {"date":"2026-06-26","price":59400,"mvrv":0.25,"puell":0.75,"fearGreed":22,"bottomConf":3,"signal":"STRONG_ACCUM","big3":0,"week":36,"phase":"ENTERING_WINDOW","etf":"$5.4B June outflows; $86M Fri inflow — early recovery signal","etfColor":"red","dxy":"~100.58, rising — highest since May 2025","dxyColor":"red","m2":"Contracting — hawkish Fed, elevated DXY environment","m2Color":"red","fed":"3.50–3.75%, hawkish dot plot, possible hike Oct 2026","fedColor":"red","macd":"Bearish","macdColor":"orange","ma200":"~$62,457 — BTC broken below 200WMA for first time this cycle","ma200Color":"green","monthlyRsi":"~47","weeklyRsi":"~34","realizedPrice":"~$57,500 est","realizedDiff":"+3% vs spot","piCycle":"Clear"}
+  {"date":"2026-06-26","price":59400,"mvrv":0.25,"puell":0.75,"fearGreed":22,"bottomConf":3,"signal":"STRONG_ACCUM","big3":0,"week":36,"phase":"ENTERING_WINDOW","etf":"$5.4B June outflows; $86M Fri inflow — early recovery signal","etfColor":"red","dxy":"~100.58, rising — highest since May 2025","dxyColor":"red","m2":"Contracting — hawkish Fed, elevated DXY environment","m2Color":"red","fed":"3.50–3.75%, hawkish dot plot, possible hike Oct 2026","fedColor":"red","macd":"Bearish","macdColor":"orange","ma200":"~$62,457 — BTC broken below 200WMA for first time this cycle","ma200Color":"green","monthlyRsi":"~47","weeklyRsi":"~34","realizedPrice":"~$57,500 est","realizedDiff":"+3% vs spot","piCycle":"Clear"},
+  {"date":"2026-06-27","price":60237,"mvrv":0.25,"puell":0.75,"fearGreed":36,"bottomConf":1,"signal":"STRONG_ACCUM","big3":0,"week":36,"phase":"ENTERING_WINDOW","etf":"$5.4B June outflows; late recovery signs — $86M inflow Jun 26","etfColor":"red","dxy":"~100.58, rising — highest since May 2025, hawkish FOMC","dxyColor":"red","m2":"Modest global expansion +1.44% (3-mo ending Apr); near-term hawkish headwind","m2Color":"yellow","fed":"3.50–3.75%, hawkish dot plot, 9/18 FOMC members projecting hike","fedColor":"red","macd":"Bearish — weekly negative, no bullish crossover","macdColor":"orange","ma200":"~$62,457 — spot 3.6% below 200WMA","ma200Color":"green","monthlyRsi":"~40","weeklyRsi":"~34","realizedPrice":"~$56K est","realizedDiff":"+7% vs spot","piCycle":"Clear"},
+  {"date":"2026-06-28","price":60100,"mvrv":0.25,"puell":0.75,"fearGreed":36,"bottomConf":2,"signal":"STRONG_ACCUM","big3":0,"week":36,"phase":"ENTERING_WINDOW","etf":"$7.2B June total outflows; streak ended, small inflows returning (~$86M)","etfColor":"yellow","dxy":"~100.7, rising — highest since May 2025","dxyColor":"red","m2":"Contracting — Iran energy shock, CPI 4.2%, hawkish Fed environment","m2Color":"red","fed":"3.50–3.75%, hawkish Warsh era, possible hike priced Oct 2026","fedColor":"red","macd":"Bearish","macdColor":"orange","ma200":"~$62,457 — spot 3.9% below 200WMA (rare; first time this cycle)","ma200Color":"green","monthlyRsi":"~40","weeklyRsi":"~34","realizedPrice":"~$58–60K est","realizedDiff":"~0% vs spot","piCycle":"Clear"},
+  {"date":"2026-06-29","price":59860,"mvrv":0.25,"puell":0.75,"fearGreed":36,"bottomConf":3,"signal":"STRONG_ACCUM","big3":1,"week":36,"phase":"ENTERING_WINDOW","etf":"~$8B June total outflows; $86M inflow Jun 26 — tentative streak end","etfColor":"red","dxy":"~100.7, rising — highest since May 2025","dxyColor":"red","m2":"Contracting — Iran energy shock, CPI 4.2%, hawkish environment","m2Color":"red","fed":"3.50–3.75%, hawkish dot plot, possible hike Oct 2026","fedColor":"red","macd":"Bearish — weekly negative, no bullish crossover","macdColor":"orange","ma200":"~$62,457 — spot 4.2% below 200WMA","ma200Color":"green","monthlyRsi":"~38","weeklyRsi":"~34","realizedPrice":"~$50K est","realizedDiff":"+19% vs spot","piCycle":"Clear"},
+  {"date":"2026-06-30","price":59000,"mvrv":0.25,"puell":0.75,"fearGreed":15,"bottomConf":3,"signal":"EXTREME_ACCUM","big3":0,"week":36,"phase":"ENTERING_WINDOW","etf":"~$8B June total outflows; small mid-late June inflows — recovering","etfColor":"orange","dxy":"101.3, rising — hawkish FOMC, highest since May 2025","dxyColor":"red","m2":"Expanding +1.4% global (3-mo ending May); near-term hawkish headwind","m2Color":"yellow","fed":"3.50–3.75%, on hold w/ hawkish forward signals","fedColor":"orange","macd":"Bearish — weekly MACD negative","macdColor":"orange","ma200":"~$62,000 — spot 4.8% below 200WMA (first time below this cycle)","ma200Color":"green","monthlyRsi":"~37","weeklyRsi":"~34","realizedPrice":"~$62,000 est","realizedDiff":"-5% vs spot","piCycle":"Clear"},
+  {"date":"2026-07-01","price":58500,"mvrv":0.23,"puell":0.75,"fearGreed":11,"bottomConf":2,"signal":"EXTREME_ACCUM","big3":0,"week":37,"phase":"ENTERING_WINDOW","etf":"Record $4.5B net outflows in June 2026 — worst month since ETF launch","etfColor":"red","dxy":"~101.3, rising — highest since May 2025","dxyColor":"red","m2":"Modest global expansion +1.4–1.9% (3-mo)","m2Color":"yellow","fed":"Held 3.50–3.75%, hawkish dot plot, hike risk flagged","fedColor":"orange","macd":"Bearish — weekly negative, approaching first bullish cross since May 2025","macdColor":"orange","ma200":"~$62,000 — spot ~5.6% below 200WMA","ma200Color":"green","monthlyRsi":"~30","weeklyRsi":"~34","realizedPrice":"~$53,400 est","realizedPriceNum":53400,"realizedDiff":"+9% vs spot","piCycle":"Clear","weeklyK":8.52,"weeklyD":23.62,"soprStreak":0},
+  {"date":"2026-07-02","price":61650,"mvrv":0.23,"puell":0.75,"fearGreed":36,"bottomConf":2,"signal":"STRONG_ACCUM","big3":0,"week":37,"phase":"ENTERING_WINDOW","etf":"Outflows persist — ~$296M net outflow Jul 1, ~$4.5B June total","etfColor":"red","dxy":"~101.3, 15-month high, rising","dxyColor":"red","m2":"Global M2 +1.38% (3-mo), modestly expanding","m2Color":"yellow","fed":"Held 3.50–3.75% (Jun 17), hawkish tone, hike risk flagged","fedColor":"red","macd":"Bearish — weekly negative, no bullish crossover yet","macdColor":"orange","ma200":"~$60,000 — price testing/reclaiming 200WMA","ma200Color":"green","monthlyRsi":"~30 (historic extreme oversold)","weeklyRsi":"~34","realizedPrice":"~$53,800 est","realizedPriceNum":53800,"realizedDiff":"+14.5% vs spot","piCycle":"Clear","weeklyK":8.52,"weeklyD":23.62,"soprStreak":0}
 ];
 
 // =====================================================================
@@ -492,9 +612,9 @@ const CHART_END  = '2027-04-01';  // Chart horizon
 // =====================================================================
 const PLAN = {
   totalBudget:    150000,
-  deployed:        22750,   // total deployed Jun 25 2026 (incl Jun 25 10:31pm DCA)
-  dcaDeployed:      5750,   // DCA only: Jun 5 $750 + Jun 16–25 DCA buys
-  trancheDeployed: 17000,   // tranche fills: Jun 2 $2K + Jun 3 $8K + Jun 5 $3K + Jun 25 T3 $4K
+  deployed:        24250,   // total deployed Jun 29 2026 (incl Jun 29 DCA $250 + $750)
+  dcaDeployed:      6250,   // DCA only: Jun 5 $750 + Jun 16–29 DCA buys
+  trancheDeployed: 18000,   // tranche fills: Jun 2 $2K + Jun 3 $8K + Jun 5 $3K + Jun 25 $4K + Jun 25 $1K
   dcaBudget:       64000,   // allocated to weekly DCA
   trancheBudget:   86000,   // allocated to limit-order tranches
   dcaWeekly:        1500,   // standard: 3 × $500/wk Sun / Tue / Thu
@@ -507,23 +627,26 @@ const PLAN = {
     { minPrice: 0,     label: 'Lump Sum',   color: '#22c55e', amount: null, perBuy: 'Lump sum',   action: 'HALT weekly DCA — redeploy remaining DCA budget as T7 tranche if Big 3 confirmed', big3Req: 2 },
   ],
   doubleDropPct:     0.09,
-  btcQty:       0.3684,    // total BTC acquired — updated Jun 25 2026 10:31pm
-  avgPrice:    61749,      // weighted avg cost basis — updated Jun 25 2026 10:31pm
+  btcQty:       0.393968,  // total BTC acquired — updated Jun 29 2026
+  avgPrice:    61549,      // weighted avg cost basis — updated Jun 29 2026
   buys: [
-    { date: '2026-06-02', price: 67358,   qty: 0.02969,  label: 'Tranche $2K', type: 'tranche' },
-    { date: '2026-06-03', price: 63201,   qty: 0.12658,  label: 'T1 $8K',      type: 'tranche' },
-    { date: '2026-06-05', price: 61214,   qty: 0.01225,  label: 'DCA $750',    type: 'dca'     },
-    { date: '2026-06-05', price: 59800,   qty: 0.05017,  label: 'T2 $3K',      type: 'tranche' },
-    { date: '2026-06-16', price: 65557,   qty: 0.007627,  label: 'DCA $500',    type: 'dca'     },
-    { date: '2026-06-17', price: 64952,   qty: 0.00769776, label: 'DCA $500',  type: 'dca'     },
-    { date: '2026-06-18', price: 62578,   qty: 0.00799,  label: 'DCA $500',    type: 'dca'     },
-    { date: '2026-06-22', price: 63691,   qty: 0.00785,  label: 'DCA $500',    type: 'dca'     },
-    { date: '2026-06-23', price: 62315,   qty: 0.008024, label: 'DCA $500',    type: 'dca'     },
-    { date: '2026-06-24', price: 61215,   qty: 0.008168, label: 'DCA $500',    type: 'dca'     },
-    { date: '2026-06-25', price: 59622,   qty: 0.01677,  label: 'DCA $1K',     type: 'dca'     },
-    { date: '2026-06-25', price: 58168,   qty: 0.06877,  label: 'T3 $4K',      type: 'tranche' },
-    { date: '2026-06-25', price: 58886,   qty: 0.008491, label: 'DCA $500',    type: 'dca'     },
-    { date: '2026-06-25', price: 59901,   qty: 0.008347, label: 'DCA $500',    type: 'dca'     },
+    { date: '2026-06-02', price: 67358,   qty: 0.02969,    label: 'Tranche $2K', type: 'tranche', signal: 'STRONG_ACCUM', big3: 1, bottomConf: 3 },
+    { date: '2026-06-03', price: 63201,   qty: 0.12658,    label: 'T1 $8K',      type: 'tranche', signal: 'WATCH',        big3: 0, bottomConf: 1 },
+    { date: '2026-06-05', price: 61214,   qty: 0.01225,    label: 'DCA $750',    type: 'dca',     signal: 'WATCH',        big3: 0, bottomConf: 2 },
+    { date: '2026-06-05', price: 59800,   qty: 0.05017,    label: 'T2 $3K',      type: 'tranche', signal: 'WATCH',        big3: 0, bottomConf: 2 },
+    { date: '2026-06-16', price: 65557,   qty: 0.007627,   label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
+    { date: '2026-06-17', price: 64952,   qty: 0.00769776, label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
+    { date: '2026-06-18', price: 62578,   qty: 0.00799,    label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 3 },
+    { date: '2026-06-22', price: 63691,   qty: 0.00785,    label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 1, bottomConf: 3 },
+    { date: '2026-06-23', price: 62315,   qty: 0.008024,   label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 3 },
+    { date: '2026-06-24', price: 61215,   qty: 0.008168,   label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
+    { date: '2026-06-25', price: 59622,   qty: 0.01677,    label: 'T3b $1K',     type: 'tranche', signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
+    { date: '2026-06-25', price: 58168,   qty: 0.06877,    label: 'T3a $4K',     type: 'tranche', signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
+    { date: '2026-06-25', price: 58886,   qty: 0.008491,   label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
+    { date: '2026-06-25', price: 59901,   qty: 0.008347,   label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
+    { date: '2026-06-28', price: 59221,   qty: 0.008443,   label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
+    { date: '2026-06-29', price: 58623,   qty: 0.004265,   label: 'DCA $250',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 1, bottomConf: 3 },
+    { date: '2026-06-29', price: 58341,   qty: 0.01286,    label: 'DCA $750',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 1, bottomConf: 3 },
   ],
   tranches: [
     { price: 63201, label: 'T1', size:  8000, filled: true,  note: 'Filled Jun 3 @ $63,201' },
@@ -876,6 +999,7 @@ function updatePriceDisplay(price) {
   if (el) el.innerHTML = '$' + Math.round(price).toLocaleString() + ' <span class="live-badge" style="font-size:8px;vertical-align:middle">LIVE</span>';
   // Check price level alerts on every price update (throttled internally to 1/min)
   if (typeof checkPriceAlerts === 'function') checkPriceAlerts(price);
+  if (typeof updateRallyCaution === 'function') updateRallyCaution();
 }
 
 function startLivePriceWS() {
@@ -1241,6 +1365,108 @@ async function fetchBig3Live(big3arr) {
 }
 
 // =====================================================================
+// RALLY CAUTION SYSTEM
+// Fires when Big3 >= 2 but supporting conditions suggest bear rally not genuine bottom
+function updateRallyCaution() {
+  const banner = document.getElementById('rally-caution-banner');
+  if (!banner) return;
+
+  const latest = HISTORY_DATA[HISTORY_DATA.length - 1] || {};
+  const big3   = latest.big3 || 0;
+
+  // K/D card is now rendered by renderKDCard() called from fetchAndComputeKD()
+  // Only evaluate caution banner when Big 3 has meaningful progress
+  if (big3 < 2) { banner.style.display = 'none'; return; }
+
+  const curPrice     = livePrice || latest.price || 0;
+  const mvrv         = parseFloat(latest.mvrv) || 0;
+  const fearGreed    = parseInt(latest.fearGreed) || 50;
+
+  // FIX 3: Realized price — numeric field first, string parse as fallback
+  let realizedPrice = latest.realizedPriceNum || 0;
+  if (!realizedPrice && latest.realizedPrice) {
+    const rp = String(latest.realizedPrice).replace(/[~$,Kk\s]/g,'');
+    const rpNum = parseFloat(rp);
+    if (!isNaN(rpNum)) realizedPrice = rpNum < 1000 ? rpNum * 1000 : rpNum;
+  }
+  if (!realizedPrice) realizedPrice = 50000; // ultimate fallback
+
+  // Parse 200WMA from string like "~$62,457 — spot 4.2% below 200WMA"
+  let wma200 = 0;
+  if (latest.ma200) {
+    const wm = String(latest.ma200).replace(/[~$,\s]/g,'').match(/\d+/);
+    if (wm) wma200 = parseFloat(wm[0]);
+  }
+
+  // Gate checks (fail = rally condition present)
+  const gates = [];
+
+  if (mvrv > 0.5) gates.push({
+    label: `MVRV Z-Score ${mvrv} (need < 0.5)`,
+    detail: 'Price has recovered enough that MVRV is leaving deep bear territory'
+  });
+
+  if (fearGreed > 40) gates.push({
+    label: `Fear & Greed ${fearGreed} (need < 40)`,
+    detail: 'Sentiment has normalized — genuine bottoms see F&G < 40'
+  });
+
+  if (wma200 && curPrice > wma200) gates.push({
+    label: `Price $${curPrice.toLocaleString()} above 200WMA $${wma200.toLocaleString()}`,
+    detail: '200-week MA should act as resistance during a rally, not support'
+  });
+
+  if (realizedPrice && curPrice > realizedPrice * 1.20) gates.push({
+    label: `Price ${Math.round((curPrice/realizedPrice-1)*100)}% above realized price (~$${Math.round(realizedPrice/1000)}K)`,
+    detail: 'Genuine bottoms typically form at or below realized price'
+  });
+
+  // Gate 5: Weekly K/D — use live computed value if available, else fall back to logged
+  const kdSource = _kdLive || (latest.weeklyK != null ? { k: +latest.weeklyK, d: +latest.weeklyD, gap: latest.weeklyD - latest.weeklyK } : null);
+  const hasKD5   = kdSource && kdSource.k != null && kdSource.d != null;
+  if (hasKD5 && kdSource.k <= kdSource.d) {
+    const kd_gap = Math.abs(kdSource.gap || (kdSource.d - kdSource.k)).toFixed(1);
+    gates.push({
+      label: `Weekly K (${kdSource.k.toFixed(2)}) still below D (${kdSource.d.toFixed(2)}) — gap ${kd_gap} pts`,
+      detail: 'BTC has not confirmed a genuine bottom in any prior cycle without this weekly K>D cross. Gap narrowing below 3 is the real signal.'
+    });
+  }
+
+  // FIX 1: SOPR streak gate — warn if SOPR just crossed (1 week) vs sustained (2+ weeks)
+  const soprStreak = latest.soprStreak ?? null;
+  if (soprStreak !== null && soprStreak === 1) {
+    gates.push({
+      label: `SOPR streak: 1 week above 1.0 (need 2+ weeks)`,
+      detail: 'SOPR crossed above 1.0 but only for 1 week — historically can be noise in a bear rally. Needs a second consecutive week to confirm genuine recovery.'
+    });
+  }
+
+  // 300 DMA is a standalone buy signal — not a rally filter. See dma300-card.
+
+  // FIX 2: Funding rate gate — positive funding during Big 3 advance = rally signal
+  const gateTotal  = hasKD5 ? (soprStreak === 1 ? 7 : 6) : (soprStreak === 1 ? 6 : 5);
+  if (_fundingRate !== null && _fundingRate > 0.0005) {
+    gates.push({
+      label: `Perp funding rate +${(_fundingRate * 100).toFixed(3)}% — longs paying heavy premium`,
+      detail: 'Positive funding means traders are bullish and paying to hold longs. Genuine bottoms show flat or negative funding as shorts dominate.'
+    });
+  }
+
+  const failCount  = gates.length;
+  const CAUTION_THRESHOLD = 2;
+
+  if (failCount >= CAUTION_THRESHOLD) {
+    banner.style.display = 'block';
+    document.getElementById('rally-gate-count').textContent = `${failCount}/${gateTotal} gates failing`;
+    document.getElementById('rally-gate-list').innerHTML = gates.map(g =>
+      `<div>• <strong>${g.label}</strong><br><span style="color:#a16207;font-size:10px">${g.detail}</span></div>`
+    ).join('');
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+// =====================================================================
 function renderToday(d) {
   document.getElementById('sig-dot').style.background = CLR[d.signalDotColor]||CLR.gray;
   document.getElementById('sig-text').textContent = d.signal||'—';
@@ -1250,6 +1476,8 @@ function renderToday(d) {
   const pb=document.getElementById('hdr-phase'); pb.textContent=d.phase||'—'; pb.className='phase-badge '+phaseClass(d.phase);
   document.getElementById('action-text').textContent = d.action||'—';
   if(d.big3&&d.big3.length){ document.getElementById('big3-section').style.display=''; renderBig3Cards(d.big3, null); fetchBig3Live(d.big3); }
+  updateRallyCaution();
+  updateDeploymentPosture();
   const ct=parseInt((d.bottomConf||'0/8').split('/')[0])||0;
   document.getElementById('conf-count').textContent=d.bottomConf||'0/8';
   document.getElementById('conf-pips').innerHTML=Array.from({length:8},(_,i)=>`<div class="conf-pip${i<ct?' active':''}"></div>`).join('');
@@ -3121,18 +3349,31 @@ switchTab('today');
 // =====================================================================
 
 async function fetchApathyLiveSignals() {
-  try {
-    // Funding rates — last 21 periods (8h each ≈ 7 days)
-    const fr = await fetch('https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&limit=21');
-    const fd = await fr.json();
-    if (Array.isArray(fd) && fd.length) {
-      const avg = fd.reduce((s, d) => s + parseFloat(d.fundingRate), 0) / fd.length;
-      window._apathyLive.funding = { avg, neutral: avg <= 0.0001 };
-    }
-  } catch(e) { window._apathyLive.funding = null; }
+  if (!window._apathyLive) window._apathyLive = {};
 
+  // Funding rates — Bybit (CORS-friendly) primary; fapi.binance CORS-blocked in artifact
   try {
-    // Volume character — 14 daily candles [o,h,l,c,vol in BTC]
+    const r = await fetch('https://api.bybit.com/v5/market/funding/history?category=linear&symbol=BTCUSDT&limit=21');
+    const d = await r.json();
+    const list = d?.result?.list;
+    if (Array.isArray(list) && list.length) {
+      const avg = list.reduce((s, x) => s + parseFloat(x.fundingRate), 0) / list.length;
+      window._apathyLive.funding = { avg, neutral: avg <= 0.0001 };
+    } else { throw new Error('empty'); }
+  } catch(e) {
+    try {
+      // Fallback: Bybit tickers (single current rate)
+      const r2 = await fetch('https://api.bybit.com/v5/market/tickers?category=linear&symbol=BTCUSDT');
+      const d2 = await r2.json();
+      const rate = parseFloat(d2?.result?.list?.[0]?.fundingRate);
+      if (!isNaN(rate)) {
+        window._apathyLive.funding = { avg: rate, neutral: rate <= 0.0001 };
+      } else { window._apathyLive.funding = { _failed: true }; }
+    } catch(e2) { window._apathyLive.funding = { _failed: true }; }
+  }
+
+  // Volume character — Binance spot klines (CORS-OK); Bybit as fallback
+  try {
     const kr = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=14');
     const kd = await kr.json();
     if (Array.isArray(kd) && kd.length >= 7) {
@@ -3141,8 +3382,22 @@ async function fetchApathyLiveSignals() {
       const avgUp  = upDays.length ? upDays.reduce((s,c) => s + parseFloat(c[5]), 0) / upDays.length : 0;
       const avgDn  = dnDays.length ? dnDays.reduce((s,c) => s + parseFloat(c[5]), 0) / dnDays.length : 0;
       window._apathyLive.volume = { avgUp, avgDn, good: avgDn > 0 && avgUp > avgDn * 1.15 };
-    }
-  } catch(e) { window._apathyLive.volume = null; }
+    } else { throw new Error('empty'); }
+  } catch(e) {
+    try {
+      // Fallback: Bybit daily klines [startTime, open, high, low, close, volume, turnover]
+      const r2 = await fetch('https://api.bybit.com/v5/market/kline?category=spot&symbol=BTCUSDT&interval=D&limit=14');
+      const d2 = await r2.json();
+      const rows = d2?.result?.list;
+      if (Array.isArray(rows) && rows.length >= 7) {
+        const upDays = rows.filter(c => parseFloat(c[4]) >= parseFloat(c[1]));
+        const dnDays = rows.filter(c => parseFloat(c[4]) <  parseFloat(c[1]));
+        const avgUp  = upDays.length ? upDays.reduce((s,c) => s + parseFloat(c[5]), 0) / upDays.length : 0;
+        const avgDn  = dnDays.length ? dnDays.reduce((s,c) => s + parseFloat(c[5]), 0) / dnDays.length : 0;
+        window._apathyLive.volume = { avgUp, avgDn, good: avgDn > 0 && avgUp > avgDn * 1.15 };
+      } else { window._apathyLive.volume = { _failed: true }; }
+    } catch(e2) { window._apathyLive.volume = { _failed: true }; }
+  }
 
   renderApathyMonitor();
 }
@@ -3200,29 +3455,29 @@ function renderApathyMonitor() {
       desc: floorHeld   ? `${floorTests} visits to $${Math.round(cycleLow).toLocaleString()} low — held each time` : `${floorTests}/3 floor tests · low $${Math.round(cycleLow).toLocaleString()}` },
     { key:'time',    label:'Week 44+ Window',       auto:true,  active:timeSignal,
       desc: timeSignal  ? `Week ${bearWeek} — inside historical bottom zone`                           : `Week ${bearWeek} — bottom window opens W44 (${44-bearWeek} wks away)` },
-    (()=>{ const f=(window._apathyLive||{}).funding; return {
+    (()=>{ const f=(window._apathyLive||{}).funding; const failed=f&&f._failed; return {
       key:'funding', label:'Funding Neutral/−',
-      auto:!!f, live:!!f,
-      active: f ? f.neutral : tog('funding'),
-      desc: f
-        ? (f.neutral
+      auto: !!f && !failed, live: !!f && !failed,
+      active: (f && !failed) ? f.neutral : tog('funding'),
+      desc: !f ? 'Loading from Bybit…'
+          : failed ? 'API unavailable — toggle manually if funding is neutral/negative'
+          : f.neutral
             ? `7-day avg funding ${(f.avg*100).toFixed(4)}% — neutral/negative ✓`
-            : `7-day avg funding ${(f.avg*100).toFixed(4)}% — elevated, longs still paying`)
-        : 'Loading from Binance…' };
+            : `7-day avg funding ${(f.avg*100).toFixed(4)}% — elevated, longs still paying` };
     })(),
     { key:'flows', label:'Exchange Outflows', auto:false, live:false, active:tog('flows'),
       desc: tog('flows')
         ? 'BTC net outflows confirmed — smart money accumulating'
         : 'Check CryptoQuant or Glassnode · flip on if net outflows sustained 10+ days' },
-    (()=>{ const v=(window._apathyLive||{}).volume; return {
+    (()=>{ const v=(window._apathyLive||{}).volume; const failed=v&&v._failed; return {
       key:'volume', label:'Volume Character',
-      auto:!!v, live:!!v,
-      active: v ? v.good : tog('volume'),
-      desc: v
-        ? (v.good
+      auto: !!v && !failed, live: !!v && !failed,
+      active: (v && !failed) ? v.good : tog('volume'),
+      desc: !v ? 'Loading from Binance…'
+          : failed ? 'API unavailable — toggle manually if up-day volume exceeds down-day'
+          : v.good
             ? `Up-day avg ${(v.avgUp/1000).toFixed(0)}K BTC vs down-day ${(v.avgDn/1000).toFixed(0)}K — buyers in control ✓`
-            : `Down-day avg ${(v.avgDn/1000).toFixed(0)}K BTC vs up-day ${(v.avgUp/1000).toFixed(0)}K — sellers still dominant`)
-        : 'Loading from Binance…' };
+            : `Down-day avg ${(v.avgDn/1000).toFixed(0)}K BTC vs up-day ${(v.avgUp/1000).toFixed(0)}K — sellers still dominant` };
     })(),
   ];
 
@@ -3546,6 +3801,674 @@ function checkAndShowAlerts() {
 
 // Run after all signals computed (slight delay lets live price settle)
 setTimeout(checkAndShowAlerts, 2000);
+
+// =====================================================================
+// WEEKLY CYCLE REVERSAL — AUTO CALCULATION
+// RSI(155) → Stoch(141) → K SMA(24) → D SMA(21) on weekly BTCUSDT candles
+// =====================================================================
+var _kdLive      = null; // { k, d, gap, gapHistory[] } — var so it's hoisted (accessed before declaration by renderToday)
+var _fundingRate = null; // raw decimal from Bybit, e.g. 0.0001 = 0.01%
+
+async function fetchFundingRate() {
+  try {
+    const resp = await fetch('https://api.bybit.com/v5/market/tickers?category=linear&symbol=BTCUSDT');
+    if (!resp.ok) throw new Error('Bybit funding fetch failed');
+    const data = await resp.json();
+    const fr = parseFloat(data?.result?.list?.[0]?.fundingRate);
+    if (!isNaN(fr)) {
+      _fundingRate = fr;
+      updateRallyCaution();
+      updateDeploymentPosture();
+    }
+  } catch(e) { /* silently skip — funding rate gate omitted if unavailable */ }
+}
+setTimeout(fetchFundingRate, 2000);
+
+// =====================================================================
+// 300 DMA — AUTO CALCULATION FROM BINANCE DAILY CANDLES
+// When price touches the 300 DMA after a bear decline = historically near cycle bottom
+// =====================================================================
+let _dma300 = null; // { value, pctFromPrice, state }
+
+async function fetchAndCompute300DMA() {
+  const cacheKey = 'btc_dma300_v1_' + new Date().toISOString().slice(0, 13);
+  try {
+    const cached = sessionStorage.getItem(cacheKey);
+    if (cached) { _dma300 = JSON.parse(cached); render300DMA(); return; }
+  } catch(e) {}
+
+  try {
+    // 320 daily candles — 300 for SMA + 20 buffer
+    const resp = await _fetchWithTimeout('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=320');
+    if (!resp.ok) throw new Error('Binance daily fetch failed');
+    const raw    = await resp.json();
+    const closes = raw.map(c => parseFloat(c[4]));
+
+    // Simple 300-day SMA
+    const last300 = closes.slice(-300);
+    const dma = last300.reduce((a, b) => a + b, 0) / last300.length;
+
+    const curPrice   = livePrice || (HISTORY_DATA[HISTORY_DATA.length - 1]?.price) || 0;
+    const pctFromDMA = curPrice && dma ? ((curPrice - dma) / dma) * 100 : null;
+
+    // State: at (<= 5% above DMA), below (price < DMA), or above
+    let state;
+    if (pctFromDMA === null)       state = 'unknown';
+    else if (pctFromDMA <= -5)     state = 'below';      // price well below 300 DMA
+    else if (pctFromDMA <= 5)      state = 'at';         // price AT the 300 DMA — historic buy zone
+    else if (pctFromDMA <= 25)     state = 'approaching';
+    else                           state = 'above';       // well above — not bottom territory
+
+    _dma300 = { value: Math.round(dma), pctFromPrice: pctFromDMA !== null ? +pctFromDMA.toFixed(1) : null, state };
+    try { sessionStorage.setItem(cacheKey, JSON.stringify(_dma300)); } catch(e) {}
+    render300DMA();
+    updateRallyCaution();
+  } catch(err) {
+    // Show fallback state — don't leave "Loading 300 DMA..." forever
+    const el = document.getElementById('dma300-card');
+    if (el) el.innerHTML = '<div style="font-size:11px;color:#334155;padding:10px 14px">300 DMA unavailable — API unreachable. Check manually: price vs 300-day SMA on TradingView.</div>';
+  }
+}
+
+function render300DMA() {
+  if (!_dma300) return;
+  const el = document.getElementById('dma300-card');
+  if (!el) return;
+
+  const { value, pctFromPrice, state } = _dma300;
+  const curPrice = livePrice || (HISTORY_DATA[HISTORY_DATA.length-1]?.price) || 0;
+  const pct      = pctFromPrice;
+
+  let borderColor, badgeColor, badgeBg, badgeText, noteText, alertHtml = '';
+
+  if (state === 'at') {
+    borderColor = '#16a34a'; badgeColor = '#4ade80'; badgeBg = '#052e16';
+    badgeText   = '⚡ AT 300 DMA — BOTTOM ZONE';
+    alertHtml   = `<div style="background:#0c1a0c;border:1px solid #166534;border-radius:7px;padding:8px 11px;margin-bottom:9px;font-size:11px;color:#4ade80;font-weight:600;line-height:1.5">⚡ <strong>AT THE 300 DMA</strong> — Price touching the 300-day moving average. Historically this marks the cycle bottom zone for BTC. This is a confirmed BUY NOW signal.</div>`;
+    noteText    = `Price $${curPrice.toLocaleString()} is within 5% of the 300 DMA ($${value.toLocaleString()}). When BTC reaches this level after a bear cycle it confirms you are far from the top and near or at the bottom.`;
+  } else if (state === 'below') {
+    borderColor = '#7f1d1d'; badgeColor = '#f87171'; badgeBg = '#1a0000';
+    badgeText   = `${Math.abs(pct).toFixed(1)}% BELOW 300 DMA`;
+    noteText    = `Price $${curPrice.toLocaleString()} is ${Math.abs(pct).toFixed(1)}% below the 300 DMA ($${value.toLocaleString()}). Deep bear territory — below the 300-day average. Recovery back to the 300 DMA would mark a significant milestone.`;
+  } else if (state === 'approaching') {
+    borderColor = '#92400e'; badgeColor = '#fbbf24'; badgeBg = '#1c1200';
+    badgeText   = `${pct.toFixed(1)}% above 300 DMA`;
+    noteText    = `Price $${curPrice.toLocaleString()} is ${pct.toFixed(1)}% above the 300 DMA ($${value.toLocaleString()}). Approaching the long-term average — if price declines toward this level, historically a significant buy zone.`;
+  } else {
+    borderColor = '#1e293b'; badgeColor = '#64748b'; badgeBg = '#0d0d0d';
+    badgeText   = `${pct !== null ? pct.toFixed(1)+'% above' : '—'} 300 DMA`;
+    noteText    = `300 DMA: $${value.toLocaleString()}. Price is well above the long-term average — not yet in historical bottom territory.`;
+  }
+
+  el.style.borderColor = borderColor;
+  el.innerHTML = `
+    ${alertHtml}
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em">300-Day Moving Average</span>
+      <span style="margin-left:auto;font-size:10px;border-radius:4px;padding:2px 8px;font-weight:700;background:${badgeBg};color:${badgeColor};border:1px solid ${borderColor}">${badgeText}</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:8px">
+      <div style="flex:1">
+        <div style="font-size:22px;font-weight:900;color:${badgeColor}">$${value.toLocaleString()}</div>
+        <div style="font-size:9px;color:#334155;text-transform:uppercase;letter-spacing:.05em;margin-top:2px">300 DMA value</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:18px;font-weight:800;color:${badgeColor}">${pct !== null ? (pct > 0 ? '+' : '') + pct.toFixed(1) + '%' : '—'}</div>
+        <div style="font-size:9px;color:#334155;text-transform:uppercase;letter-spacing:.05em;margin-top:2px">price vs DMA</div>
+      </div>
+      <div style="flex:1">
+        <div style="height:5px;background:#0f172a;border-radius:3px;overflow:hidden;margin-bottom:3px">
+          <div style="height:100%;border-radius:3px;background:${badgeColor};width:${Math.min(100, Math.max(0, 100 - (pct || 0)))  }%;transition:width .5s"></div>
+        </div>
+        <div style="font-size:9px;color:#334155">proximity to 300 DMA</div>
+      </div>
+    </div>
+    <div style="font-size:10px;color:#475569;line-height:1.5;border-top:1px solid #0f172a;padding-top:7px">${noteText} <span style="color:#334155">· Auto-calculated from Binance daily candles.</span></div>`;
+}
+
+setTimeout(fetchAndCompute300DMA, 500);
+
+function _calcRSI(closes, period) {
+  const out = new Array(closes.length).fill(null);
+  if (closes.length <= period) return out;
+  let gains = 0, losses = 0;
+  for (let i = 1; i <= period; i++) {
+    const d = closes[i] - closes[i-1];
+    if (d > 0) gains += d; else losses -= d;
+  }
+  let ag = gains / period, al = losses / period;
+  out[period] = al === 0 ? 100 : 100 - 100 / (1 + ag / al);
+  for (let i = period + 1; i < closes.length; i++) {
+    const d = closes[i] - closes[i-1];
+    const g = d > 0 ? d : 0, l = d < 0 ? -d : 0;
+    ag = (ag * (period - 1) + g) / period;
+    al = (al * (period - 1) + l) / period;
+    out[i] = al === 0 ? 100 : 100 - 100 / (1 + ag / al);
+  }
+  return out;
+}
+
+function _calcStochOnSeries(series, period) {
+  const out = new Array(series.length).fill(null);
+  for (let i = period - 1; i < series.length; i++) {
+    const slice = series.slice(i - period + 1, i + 1).filter(v => v !== null);
+    if (slice.length < period) continue;
+    const lo = Math.min(...slice), hi = Math.max(...slice);
+    out[i] = hi === lo ? 0 : ((series[i] - lo) / (hi - lo)) * 100;
+  }
+  return out;
+}
+
+function _calcSMA(series, period) {
+  const out = new Array(series.length).fill(null);
+  for (let i = 0; i < series.length; i++) {
+    const slice = series.slice(Math.max(0, i - period + 1), i + 1).filter(v => v !== null);
+    if (slice.length < period) continue;
+    out[i] = slice.reduce((a, b) => a + b, 0) / period;
+  }
+  return out;
+}
+
+// Run the full K/D pipeline on an array of close prices
+function _computeKDFromCloses(closes) {
+  const rsiSeries   = _calcRSI(closes, 155);
+  const stochSeries = _calcStochOnSeries(rsiSeries, 141);
+  const kSeries     = _calcSMA(stochSeries, 24);
+  const dSeries     = _calcSMA(kSeries, 21);
+  const pairs = [];
+  for (let i = dSeries.length - 1; i >= 0 && pairs.length < 16; i--) {
+    if (kSeries[i] !== null && dSeries[i] !== null) {
+      pairs.unshift({ k: kSeries[i], d: dSeries[i], gap: dSeries[i] - kSeries[i] });
+    }
+  }
+  const last = pairs[pairs.length - 1] || {};
+  return {
+    k: last.k != null ? +last.k.toFixed(2) : null,
+    d: last.d != null ? +last.d.toFixed(2) : null,
+    gap: last.gap != null ? +last.gap.toFixed(2) : null,
+    gapHistory: pairs.map(p => +p.gap.toFixed(2))
+  };
+}
+
+function _fetchWithTimeout(url, ms = 5000) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  return fetch(url, { signal: ctrl.signal }).finally(() => clearTimeout(timer));
+}
+
+async function _fetchBinanceCloses() {
+  const resp = await _fetchWithTimeout('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1w&limit=500');
+  if (!resp.ok) throw new Error('Binance fetch failed');
+  const raw = await resp.json();
+  return raw.map(c => parseFloat(c[4]));
+}
+
+async function _fetchKrakenCloses() {
+  // Kraken weekly interval = 10080 minutes; returns up to 720 candles (~13.8 yrs)
+  const resp = await _fetchWithTimeout('https://api.kraken.com/0/public/OHLC?pair=XBTUSD&interval=10080');
+  if (!resp.ok) throw new Error('Kraken fetch failed');
+  const data = await resp.json();
+  if (data.error && data.error.length) throw new Error(data.error[0]);
+  const pairKey = Object.keys(data.result).find(k => k !== 'last');
+  return data.result[pairKey].map(c => parseFloat(c[4]));
+}
+
+async function fetchAndComputeKD() {
+  // Check sessionStorage cache — recalculate at most once per hour
+  const cacheKey = 'btc_kd_v2_' + new Date().toISOString().slice(0, 13);
+  try {
+    const cached = sessionStorage.getItem(cacheKey);
+    if (cached) { _kdLive = JSON.parse(cached); renderKDCard(); return; }
+  } catch(e) {}
+
+  // Fire both requests in parallel
+  const [binanceResult, krakenResult] = await Promise.allSettled([
+    _fetchBinanceCloses().then(closes => _computeKDFromCloses(closes)),
+    _fetchKrakenCloses().then(closes  => _computeKDFromCloses(closes))
+  ]);
+
+  const binance = binanceResult.status === 'fulfilled' ? binanceResult.value : null;
+  const kraken  = krakenResult.status  === 'fulfilled' ? krakenResult.value  : null;
+
+  if (!binance && !kraken) {
+    // Both failed — fall back to manually-logged value
+    const latest = HISTORY_DATA[HISTORY_DATA.length - 1] || {};
+    if (latest.weeklyK != null && latest.weeklyD != null) {
+      const k = parseFloat(latest.weeklyK), d = parseFloat(latest.weeklyD);
+      _kdLive = { k, d, gap: +(d - k).toFixed(2), gapHistory: [+(d - k).toFixed(2)], fallback: true };
+    }
+  } else {
+    // Use Binance as primary (or Kraken if Binance failed)
+    const primary = binance || kraken;
+    // Cross-validation: compare K and D between sources
+    let xval = null;
+    if (binance && kraken) {
+      const kDiff = Math.abs(binance.k - kraken.k);
+      const dDiff = Math.abs(binance.d - kraken.d);
+      const confirmed = kDiff < 2 && dDiff < 2;
+      xval = {
+        krakenK: kraken.k,
+        krakenD: kraken.d,
+        krakenGap: kraken.gap,
+        kDiff: +kDiff.toFixed(2),
+        dDiff: +dDiff.toFixed(2),
+        confirmed
+      };
+    }
+    _kdLive = { ...primary, xval, fallback: false };
+  }
+
+  try { sessionStorage.setItem(cacheKey, JSON.stringify(_kdLive)); } catch(e) {}
+  renderKDCard();
+  updateRallyCaution();
+  updateDeploymentPosture();
+}
+
+function renderKDCard() {
+  if (!_kdLive) return;
+  const { k, d, gap, gapHistory, fallback } = _kdLive;
+  if (k == null || d == null) return;
+
+  const crossed = k > d;
+  const absGap  = Math.abs(gap);
+
+  // State thresholds
+  let state, stateColor, stateBg, stateBorder;
+  if (crossed)       { state = 'K > D — CROSSED';     stateColor = '#86efac'; stateBg = '#052e16'; stateBorder = '#166534'; }
+  else if (absGap < 3)  { state = '⚡ CONVERGENCE ZONE';  stateColor = '#fde68a'; stateBg = '#1c1200'; stateBorder = '#d97706'; }
+  else if (absGap < 7)  { state = '▲ APPROACHING';        stateColor = '#fdba74'; stateBg = '#1a0e00'; stateBorder = '#92400e'; }
+  else                   { state = 'BEAR PHASE';           stateColor = '#64748b'; stateBg = '#0d0d0d'; stateBorder = '#1e293b'; }
+
+  const badge = document.getElementById('kd-status-badge');
+  if (badge) {
+    badge.textContent = state + (fallback ? ' *' : '');
+    badge.style.cssText = `margin-left:auto;font-size:10px;border-radius:4px;padding:2px 8px;font-weight:700;background:${stateBg};color:${stateColor};border:1px solid ${stateBorder}`;
+  }
+
+  document.getElementById('kd-k-bar').style.width = Math.min(k, 100) + '%';
+  document.getElementById('kd-d-bar').style.width = Math.min(d, 100) + '%';
+  document.getElementById('kd-k-val').textContent = k.toFixed(2);
+  document.getElementById('kd-d-val').textContent = d.toFixed(2);
+
+  const gapEl = document.getElementById('kd-gap-val');
+  const gapLbl = document.getElementById('kd-gap-label');
+  if (crossed) {
+    gapEl.textContent  = '✓';
+    gapEl.style.color  = '#4ade80';
+    gapLbl.textContent = 'crossed';
+  } else {
+    gapEl.textContent  = absGap.toFixed(1);
+    gapEl.style.color  = absGap < 3 ? '#fbbf24' : absGap < 7 ? '#f97316' : '#475569';
+    gapLbl.textContent = 'gap pts';
+  }
+
+  // Trend arrow — is gap narrowing?
+  const trendEl = document.getElementById('kd-trend');
+  if (trendEl && gapHistory.length >= 2) {
+    const prev = gapHistory[gapHistory.length - 2];
+    const curr = gapHistory[gapHistory.length - 1];
+    const narrowing = curr < prev;
+    trendEl.textContent = narrowing ? '▼ narrowing' : '▲ widening';
+    trendEl.style.color = narrowing ? '#4ade80' : '#f87171';
+  }
+
+  // Gap sparkline SVG
+  const spark = document.getElementById('kd-spark');
+  if (spark && gapHistory.length > 1) {
+    const W = 64, H = 36, pad = 3;
+    const vals = gapHistory.slice(-12);
+    const minV = 0, maxV = Math.max(...vals, 5);
+    const pts  = vals.map((v, i) => {
+      const x = pad + (i / (vals.length - 1)) * (W - pad*2);
+      const y = H - pad - ((v - minV) / (maxV - minV)) * (H - pad*2);
+      return `${x},${y}`;
+    }).join(' ');
+    // Color line based on current state
+    const lineColor = absGap < 3 ? '#fbbf24' : absGap < 7 ? '#f97316' : '#3b82f6';
+    spark.innerHTML = `<polyline points="${pts}" fill="none" stroke="${lineColor}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="${64-pad}" cy="${36-pad-((gapHistory[gapHistory.length-1]-minV)/(maxV-minV))*(36-pad*2)}" r="2" fill="${lineColor}"/>`;
+  }
+
+  // Convergence alert
+  const alert = document.getElementById('kd-convergence-alert');
+  if (alert) {
+    if (!crossed && absGap < 3) {
+      alert.style.display = 'block';
+      alert.innerHTML = `⚡ <strong>CONVERGENCE ZONE</strong> — K and D are ${absGap.toFixed(1)} pts apart. Historically this tight spread has marked the actual cycle low. Price may be at or forming the bottom right now — highest conviction window for deployment.`;
+    } else if (!crossed && absGap < 7) {
+      alert.style.display = 'block';
+      alert.style.background = '#1a0e00';
+      alert.style.border = '1px solid #92400e';
+      alert.style.color = '#fdba74';
+      alert.innerHTML = `▲ <strong>APPROACHING</strong> — Gap narrowing to ${absGap.toFixed(1)} pts. Watch this weekly. When it drops below 3 the bottom convergence window opens.`;
+    } else {
+      alert.style.display = 'none';
+    }
+  }
+
+  // Cross-validation row
+  const note = document.getElementById('kd-note');
+  if (note) {
+    const xval = _kdLive?.xval;
+    let xvalHtml = '';
+    if (xval) {
+      if (xval.confirmed) {
+        xvalHtml = `<span style="color:#4ade80;font-weight:700">✓ Kraken confirmed</span> — K ${xval.krakenK} / D ${xval.krakenD} (Δ ${xval.kDiff} pts). Both sources agree — high confidence.`;
+      } else {
+        xvalHtml = `<span style="color:#fbbf24;font-weight:700">⚠ Divergence</span> — Kraken K ${xval.krakenK} / D ${xval.krakenD} (K diff ${xval.kDiff}, D diff ${xval.dDiff}). Check TradingView manually.`;
+      }
+    } else if (!fallback) {
+      xvalHtml = '<span style="color:#475569">Kraken cross-validation unavailable</span>';
+    }
+
+    if (crossed) {
+      note.innerHTML = `K has crossed above D — cycle low confirmed and likely already printed. Best entries were at convergence. ${xvalHtml ? '<br>' + xvalHtml : ''}`;
+    } else {
+      note.innerHTML = `Gap ${absGap.toFixed(1)} pts to cross. Cycle low historically prints at convergence (gap &lt; 3) — cross is lagging. ${fallback ? '<em>*Using last logged value</em>' : 'Binance weekly candles.'} ${xvalHtml ? '<br>' + xvalHtml : ''}`;
+    }
+  }
+}
+
+// =====================================================================
+// DEPLOYMENT POSTURE — synthesizes week + K/D gap + signal + Big 3
+// into a single actionable read updated on every render
+// =====================================================================
+function updateDeploymentPosture() {
+  const card   = document.getElementById('posture-card');
+  const badge  = document.getElementById('posture-badge');
+  const action = document.getElementById('posture-action');
+  const detail = document.getElementById('posture-detail');
+  const meta   = document.getElementById('posture-week-kd');
+  if (!card || !badge || !action || !detail) {
+    console.error('[posture] missing elements', { card: !!card, badge: !!badge, action: !!action, detail: !!detail });
+    return;
+  }
+
+  const latest    = HISTORY_DATA[HISTORY_DATA.length - 1] || {};
+  const bearWeek  = Math.max(1, Math.floor((Date.now() - new Date(ATH_DATE).getTime()) / (7*86400000)) + 1);
+  const signal    = latest.signal || 'WATCH';
+  const big3      = latest.big3 || 0;
+  const kdGap     = _kdLive ? Math.abs(_kdLive.gap || 0) : (latest.weeklyD - latest.weeklyK || 99);
+  const kdCrossed = _kdLive ? (_kdLive.k > _kdLive.d) : false;
+  const fearGreed = parseInt(latest.fearGreed) || 50;
+
+  // Signal strength score (0–4)
+  const sigScore = { EXTREME_ACCUM: 4, STRONG_ACCUM: 3, ACCUM_BOTTOM: 3,
+                     WATCH: 1, NEUTRAL: 1, ELEVATED: 0, EUPHORIC: 0 }[signal] || 1;
+
+  // Determine posture
+  let posture, borderColor, badgeStyle, actionText, detailText;
+
+  const inBottomWindow = bearWeek >= 44;
+  const kdConverging   = kdGap < 5;
+  const kdApproaching  = kdGap < 10;
+
+  if (kdCrossed || (kdConverging && big3 >= 2 && sigScore >= 3)) {
+    // MAX CONVICTION — K/D converged or crossed, multiple confirmations
+    posture     = 'MAX CONVICTION';
+    borderColor = '#16a34a';
+    badgeStyle  = 'background:#052e16;color:#4ade80;border:1px solid #16a34a';
+    actionText  = 'Deploy remaining T6–T7 reserves. This is the cycle low window.';
+    detailText  = `K/D ${kdCrossed ? 'has crossed' : `gap ${kdGap.toFixed(1)} pts — convergence zone`}. Big 3 at ${big3}/3. Signal: ${signal}. Historically this confluence marks the actual cycle low. Size up remaining tranches, consider unlocking T7 reserve budget.`;
+
+  } else if ((inBottomWindow || kdApproaching) && big3 >= 1 && sigScore >= 3) {
+    // AGGRESSIVE — bottom window + multiple signals aligning
+    posture     = 'AGGRESSIVE';
+    borderColor = '#d97706';
+    badgeStyle  = 'background:#1c1200;color:#fbbf24;border:1px solid #d97706';
+    actionText  = 'Increase DCA size. Pull limit orders up if price stabilises. Watch for K/D gap to narrow below 5.';
+    detailText  = `Week ${bearWeek}${inBottomWindow ? ' — inside historical bottom window' : ''}. K/D gap ${kdGap.toFixed(1)} pts${kdApproaching ? ' (approaching convergence)' : ''}. Big 3 ${big3}/3. Signal ${signal}. Conditions are aligning — size up DCA and be ready to act on T4–T5 tranches.`;
+
+  } else if (sigScore >= 3 && bearWeek >= 35) {
+    // ACTIVE — strong indicators but timing not there yet
+    posture     = 'ACTIVE';
+    borderColor = '#2563eb';
+    badgeStyle  = 'background:#0c1529;color:#60a5fa;border:1px solid #2563eb';
+    actionText  = 'Full DCA cadence on STRONG_ACCUM or better. Let limit orders sit. Do not chase price.';
+    detailText  = `Week ${bearWeek} — entering window. K/D gap ${kdGap.toFixed(1)} pts still wide. Signal ${signal}, Big 3 ${big3}/3. Deploy DCA at current levels. Tranches should only fill via limit orders at pre-set prices — no manual deployment yet.`;
+
+  } else if (sigScore >= 2) {
+    // PATIENT — in bear but conditions not strong enough yet
+    posture     = 'PATIENT';
+    borderColor = '#475569';
+    badgeStyle  = 'background:#0f172a;color:#94a3b8;border:1px solid #475569';
+    actionText  = 'Minimum DCA only on STRONG_ACCUM. Tranches on limit orders only. Preserve dry powder.';
+    detailText  = `Week ${bearWeek}. Signal ${signal} — not yet at threshold for active deployment. K/D gap ${kdGap.toFixed(1)} pts. Big 3 ${big3}/3. The best prices and confirmation signals are likely still ahead. Patience protects your averaging power.`;
+
+  } else {
+    // HOLD — weak/neutral signal
+    posture     = 'HOLD';
+    borderColor = '#7f1d1d';
+    badgeStyle  = 'background:#1a0000;color:#f87171;border:1px solid #7f1d1d';
+    actionText  = 'Pause DCA. Signal too weak. Wait for STRONG_ACCUM or better before deploying.';
+    detailText  = `Signal is ${signal} — below deployment threshold. Deploying capital here risks buying before the real accumulation zone. Let the indicators come to you.`;
+  }
+
+  card.style.borderColor = borderColor;
+  badge.textContent = posture;
+  badge.style.cssText = badgeStyle + ';font-size:11px;font-weight:800;border-radius:5px;padding:3px 10px;letter-spacing:.03em';
+  action.textContent = actionText;
+  action.style.color = badgeStyle.match(/color:([^;]+)/)?.[1] || '#94a3b8';
+  detail.textContent = detailText;
+  if (meta) meta.textContent = `Wk ${bearWeek} · K/D gap ${kdGap.toFixed(1)} · Big3 ${big3}/3`;
+}
+
+// Called after signals load and after K/D calc completes
+// =====================================================================
+
+// ── IMMEDIATE render from manual data — no API wait ──────────────────
+// Runs synchronously so Today tab always shows something on load.
+// fetchAndComputeKD() will override with live data when it resolves.
+(function _initFromManualData() {
+  try {
+    // Search backwards for most recent entry that has weeklyK/weeklyD
+    const _fb = [...HISTORY_DATA].reverse().find(e => e.weeklyK != null && e.weeklyD != null) || {};
+    if (_fb.weeklyK != null && _fb.weeklyD != null) {
+      const k = parseFloat(_fb.weeklyK), d = parseFloat(_fb.weeklyD);
+      _kdLive = { k, d, gap: +(d - k).toFixed(2), gapHistory: [+(d - k).toFixed(2)], fallback: true };
+      renderKDCard();
+    }
+    updateDeploymentPosture();
+  } catch(e) { console.error('[initFromManualData]', e); }
+})();
+
+// Kick off live calculation in background — overrides manual data when done
+setTimeout(fetchAndComputeKD, 1500);
+
+// =====================================================================
+// AI DAILY SUMMARY
+// =====================================================================
+const _AI_SUM_KEY = 'btc_ai_sum_v2';
+let _aiSumOpen = true;
+
+window._aiToggle = function() {
+  _aiSumOpen = !_aiSumOpen;
+  document.getElementById('ai-sum-body').style.display = _aiSumOpen ? '' : 'none';
+  document.getElementById('ai-sum-chev').style.transform = _aiSumOpen ? '' : 'rotate(-90deg)';
+};
+
+async function generateAISummary(force) {
+  const today    = new Date().toISOString().slice(0, 10);
+  const cacheKey = _AI_SUM_KEY + '_' + today;
+  const textEl   = document.getElementById('ai-sum-text');
+  const tsEl     = document.getElementById('ai-sum-ts');
+
+  if (!force) {
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) { _renderAISum(cached, true); return; }
+    } catch(e) {}
+  }
+
+  const coworkAvailable = typeof window.cowork?.askClaude === 'function';
+
+  // Only show loader if cowork AI is actually available — otherwise skip straight to template
+  if (coworkAvailable) {
+    const loaderEl = document.getElementById('ai-sum-loader');
+    if (loaderEl) loaderEl.style.display = 'flex';
+    textEl.style.display = 'none';
+    textEl.textContent = '';
+    tsEl.textContent   = '';
+  }
+
+  // On GitHub Pages (no Cowork runtime), fall back to the template-based summary
+  if (!coworkAvailable) {
+    try {
+      const tmpl = _buildTemplateSummary();
+      try { localStorage.setItem(cacheKey, tmpl); } catch(e) {}
+      _renderAISum(tmpl, false);
+    } catch(e2) {
+      const loader = document.getElementById('ai-sum-loader');
+      if (loader) loader.style.display = 'none';
+      textEl.style.display = 'block';
+      textEl.style.color = '#475569';
+      textEl.textContent = 'Summary unavailable — open in Claude desktop for AI summaries.';
+    }
+    return;
+  }
+
+  const latest   = HISTORY_DATA[HISTORY_DATA.length - 1] || {};
+  const prev     = HISTORY_DATA[HISTORY_DATA.length - 2] || {};
+  const bearWeek = Math.max(1, Math.floor((Date.now() - new Date(ATH_DATE).getTime()) / (7*86400000)) + 1);
+  const nextT    = PLAN.tranches.find(t => !t.filled);
+  const curPrice = livePrice || latest.price || 0;
+
+  // What changed vs yesterday
+  const changes = [];
+  const big3Delta = (latest.big3 || 0) - (prev.big3 || 0);
+  const confDelta = (latest.bottomConf || 0) - (prev.bottomConf || 0);
+  const pDelta    = latest.price && prev.price ? latest.price - prev.price : null;
+  if (big3Delta > 0) changes.push(`Big 3 advanced to ${latest.big3}/3`);
+  if (big3Delta < 0) changes.push(`Big 3 retreated to ${latest.big3}/3`);
+  if (confDelta > 0) changes.push(`Bottom conf improved to ${latest.bottomConf}/9`);
+  if (confDelta < 0) changes.push(`Bottom conf dropped to ${latest.bottomConf}/9`);
+  if (pDelta !== null) changes.push(`Price ${pDelta >= 0 ? '+' : ''}$${Math.round(pDelta).toLocaleString()} vs yesterday`);
+
+  // MVRV trend
+  const mv7  = HISTORY_DATA.length >= 7  ? HISTORY_DATA.slice(-4).map(d => +d.mvrv).filter(n => !isNaN(n)) : [];
+  const mv7p = HISTORY_DATA.length >= 14 ? HISTORY_DATA.slice(-7,-3).map(d => +d.mvrv).filter(n => !isNaN(n)) : [];
+  const mvrvTrend = mv7.length && mv7p.length
+    ? (mv7.reduce((a,b)=>a+b,0)/mv7.length > mv7p.reduce((a,b)=>a+b,0)/mv7p.length ? 'rising' : 'falling')
+    : 'unknown';
+
+  const ctx = {
+    date: today, bearWeek, phase: latest.phase, signal: latest.signal,
+    currentPrice: curPrice,
+    mvrv: latest.mvrv, mvrvTrend,
+    puell: latest.puell, fearGreed: latest.fearGreed,
+    big3: latest.big3 || 0, bottomConf: latest.bottomConf || 0,
+    weeklyRsi: latest.weeklyRsi, monthlyRsi: latest.monthlyRsi,
+    realizedPrice: latest.realizedPrice, realizedDiff: latest.realizedDiff,
+    ma200: latest.ma200, piCycle: latest.piCycle,
+    etf: latest.etf, dxy: latest.dxy, m2: latest.m2, fed: latest.fed, macd: latest.macd,
+    changesVsYesterday: changes.length ? changes.join('; ') : 'no major changes',
+    totalDeployed: PLAN.deployed, totalBudget: PLAN.totalBudget,
+    dcaDeployed: PLAN.dcaDeployed, dcaRemaining: PLAN.dcaBudget - PLAN.dcaDeployed,
+    trancheDeployed: PLAN.trancheDeployed, trancheRemaining: PLAN.trancheBudget - PLAN.trancheDeployed,
+    btcQty: PLAN.btcQty, avgCost: PLAN.avgPrice,
+    spotVsAvg: PLAN.avgPrice ? ((curPrice / PLAN.avgPrice - 1) * 100).toFixed(1) + '%' : 'N/A',
+    nextTranche: nextT ? `${nextT.label} @ $${nextT.price.toLocaleString()} (${nextT.note})` : 'All filled',
+  };
+
+  const prompt = `You are a concise Bitcoin macro analyst summarizing a personal investment dashboard. Write exactly 3 short paragraphs — no headers, no bullet points, no markdown, no bold text, no asterisks. Plain prose only. Keep total under 200 words.
+
+Paragraph 1 — Signal and indicators: Current signal (${ctx.signal}), price ($${ctx.currentPrice?.toLocaleString()}), what MVRV ${ctx.mvrv} (${ctx.mvrvTrend}), Puell ${ctx.puell}, and Fear/Greed ${ctx.fearGreed} tell us today. Bear phase is Week ${ctx.bearWeek} (${ctx.phase}). Note what changed vs yesterday: ${ctx.changesVsYesterday}.
+
+Paragraph 2 — Big 3 and bottom confirmation: Big 3 is ${ctx.big3}/3. Bottom confirmation is ${ctx.bottomConf}/9. State what has fired and what is still waiting. Then one sentence on macro backdrop: ETF flows (${ctx.etf}), DXY (${ctx.dxy}), Fed (${ctx.fed}).
+
+Paragraph 3 — Portfolio and next watch item: $${ctx.totalDeployed?.toLocaleString()} deployed of $${ctx.totalBudget?.toLocaleString()} total budget. ${ctx.btcQty} BTC at avg cost $${ctx.avgCost?.toLocaleString()}, spot is ${ctx.spotVsAvg} vs avg. Next unfilled tranche: ${ctx.nextTranche}. End with one specific thing to watch in the next 2-3 days that would change the signal or trigger an action.`;
+
+  try {
+    const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 15000));
+    const result = await Promise.race([window.cowork.askClaude(prompt, [JSON.stringify(ctx)]), timeout]);
+    const text = typeof result === 'string' ? result
+      : (result?.content?.[0]?.text || result?.text || JSON.stringify(result));
+    try { localStorage.setItem(cacheKey, text); } catch(e) {}
+    _renderAISum(text, false);
+  } catch(e) {
+    // askClaude failed or timed out — fall back to template summary
+    try {
+      const tmpl = _buildTemplateSummary();
+      try { localStorage.setItem(cacheKey, tmpl); } catch(e2) {}
+      _renderAISum(tmpl, false);
+    } catch(e3) {
+      const loader = document.getElementById('ai-sum-loader');
+      if (loader) loader.style.display = 'none';
+      textEl.style.display = 'block';
+      textEl.style.color = '#475569';
+      textEl.textContent = 'Could not generate summary — try refreshing.';
+    }
+  }
+}
+
+function _renderAISum(text, fromCache) {
+  const loader = document.getElementById('ai-sum-loader');
+  if (loader) loader.style.display = 'none';
+  const el = document.getElementById('ai-sum-text');
+  el.style.display = 'block';
+  el.style.color   = '#94a3b8';
+  el.textContent   = text;
+  document.getElementById('ai-sum-ts').textContent = fromCache
+    ? `Cached · ${new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'})}`
+    : `Generated ${new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}`;
+}
+
+function _buildTemplateSummary() {
+  const latest   = HISTORY_DATA[HISTORY_DATA.length - 1] || {};
+  const prev     = HISTORY_DATA[HISTORY_DATA.length - 2] || {};
+  const curPrice = livePrice || latest.price || 0;
+  const bearWeek = Math.max(1, Math.floor((Date.now() - new Date(ATH_DATE).getTime()) / (7*86400000)) + 1);
+  const nextT    = PLAN.tranches.find(t => !t.filled);
+  const big3     = latest.big3 || 0;
+  const conf     = latest.bottomConf || 0;
+
+  const SIG = { EXTREME_ACCUM:'Extreme Accumulation', STRONG_ACCUM:'Strong Accumulation',
+    ACCUM_BOTTOM:'Accumulate — Bottom Confirmation', WATCH:'Watch', NEUTRAL:'Neutral',
+    ELEVATED:'Elevated Risk', EUPHORIC:'Euphoric Risk' };
+  const PHS = { EARLY_BEAR:'Early Bear', ENTERING_WINDOW:'Entering Window',
+    BOTTOM_WINDOW:'Bottom Window', EXTENDED:'Extended Bear' };
+  const B3  = ['No Big 3 triggers have fired yet.',
+    'Hash Ribbons has fired — one of three primary triggers confirmed, with SOPR Recovery and Monthly Stoch RSI still pending.',
+    'Hash Ribbons and SOPR Recovery have both fired — two of three primary triggers confirmed.',
+    'All three Big 3 primary triggers have fired — maximum conviction deployment signal.'];
+
+  const pDelta   = latest.price && prev.price ? latest.price - prev.price : null;
+  const pChange  = pDelta != null ? ` (${pDelta >= 0 ? '+' : ''}$${Math.round(pDelta).toLocaleString()} vs yesterday)` : '';
+  const mvrvZone = latest.mvrv < 0.3 ? 'extreme accumulation territory' : latest.mvrv < 0.5
+    ? 'strong accumulation territory' : latest.mvrv < 1.2 ? 'watch zone' : 'elevated territory';
+  const confCtx  = conf < 2 ? 'early stages with most indicators still pending'
+    : conf < 4 ? 'building gradually with key signals still to confirm'
+    : conf < 6 ? 'meaningful progress approaching the action threshold' : 'strong confirmation with multiple signals aligned';
+  const spotVsAvg = PLAN.avgPrice && curPrice
+    ? `${((curPrice / PLAN.avgPrice - 1) * 100).toFixed(1)}%` : null;
+  const pnl = spotVsAvg ? `, currently ${parseFloat(spotVsAvg) >= 0 ? '+' : ''}${spotVsAvg} vs avg cost` : '';
+
+  const p1 = `Signal is ${SIG[latest.signal] || latest.signal || '—'} at $${curPrice.toLocaleString()}${pChange}, in Week ${bearWeek} of the bear — ${PHS[latest.phase] || latest.phase || '—'} phase. MVRV Z-Score at ${latest.mvrv} puts us in ${mvrvZone}, with the Puell Multiple at ${latest.puell} and Fear & Greed at ${latest.fearGreed}. Monthly RSI is ${latest.monthlyRsi || 'N/A'} and weekly RSI ${latest.weeklyRsi || 'N/A'}, both deeply oversold. Spot is ${latest.ma200 || 'testing the 200-week moving average'}.`;
+
+  const p2 = `Big 3 stands at ${big3}/3. ${B3[Math.min(big3, 3)]} Bottom confirmation is at ${conf}/9 — ${confCtx}. On the macro side: ${latest.etf || 'ETF flows mixed'}. DXY ${latest.dxy || 'N/A'} and the Fed at ${latest.fed || 'N/A'} remain the primary headwinds alongside a ${latest.macd || 'bearish'} weekly MACD.`;
+
+  const p3 = `Portfolio sits at $${PLAN.deployed?.toLocaleString()} deployed of $${PLAN.totalBudget?.toLocaleString()} total budget — ${PLAN.btcQty} BTC at avg $${PLAN.avgPrice?.toLocaleString()}${pnl}. ${nextT ? `Next unfilled tranche is ${nextT.label} at $${nextT.price.toLocaleString()}.` : 'All tranches filled.'} The key watch item is SOPR recovering and holding above 1.0 — that advances Big 3 to ${Math.min(big3 + 1, 3)}/3 and is the most actionable near-term trigger to monitor.`;
+
+  return [p1, p2, p3].join('\n\n');
+}
+
+// Show template summary immediately — AI will upgrade it if available
+let _aiTemplateShown = false;
+try { _renderAISum(_buildTemplateSummary(), false); _aiTemplateShown = true; } catch(e) { console.error('[aiTemplate]', e); }
+// Then attempt AI summary in background (only if cowork runtime available)
+setTimeout(() => generateAISummary(false), 3500);
+
+// ── Safety net: re-render posture + AI template after 1.5s ───────────────────
+// Catches any race where async ops cleared elements before sync render completed.
+setTimeout(() => {
+  try { updateDeploymentPosture(); } catch(e) { console.error('[posture-safety]', e); }
+  try {
+    const aiText = document.getElementById('ai-sum-text');
+    if (aiText && !aiText.textContent.trim()) {
+      _renderAISum(_buildTemplateSummary(), false);
+    }
+  } catch(e) { console.error('[aiText-safety]', e); }
+}, 1500);
 </script>
 
 <!-- ALERT MODAL -->
