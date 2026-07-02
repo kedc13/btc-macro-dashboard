@@ -329,15 +329,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
   <!-- ===== DEPLOYMENT POSTURE ===== -->
   <div id="posture-wrap" style="margin-bottom:8px">
-    <div id="posture-card" style="border-radius:12px;border:1px solid #1e293b;overflow:hidden;background:#0d0d0d">
+    <div id="posture-card" style="border-radius:12px;border:1px solid #2563eb;overflow:hidden;background:#0d0d0d">
       <div style="padding:11px 14px 10px">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
           <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em">Deployment Posture</span>
-          <span id="posture-badge" style="font-size:11px;font-weight:800;border-radius:5px;padding:3px 10px;letter-spacing:.03em"></span>
-          <span id="posture-week-kd" style="margin-left:auto;font-size:10px;color:#334155"></span>
+          <span id="posture-badge" style="font-size:11px;font-weight:800;border-radius:5px;padding:3px 10px;letter-spacing:.03em;background:#0c1529;color:#60a5fa;border:1px solid #2563eb">ACTIVE</span>
+          <span id="posture-week-kd" style="margin-left:auto;font-size:10px;color:#334155">Wk 37 · K/D gap 15.1 · Big3 0/3</span>
         </div>
-        <div id="posture-action" style="font-size:12px;font-weight:600;line-height:1.5;margin-bottom:6px"></div>
-        <div id="posture-detail" style="font-size:11px;color:#475569;line-height:1.6;border-top:1px solid #0f172a;padding-top:6px"></div>
+        <div id="posture-action" style="font-size:12px;font-weight:600;line-height:1.5;margin-bottom:6px;color:#60a5fa">Full DCA cadence on STRONG_ACCUM or better. Let limit orders sit. Do not chase price.</div>
+        <div id="posture-detail" style="font-size:11px;color:#475569;line-height:1.6;border-top:1px solid #0f172a;padding-top:6px">Week 37 — entering window. K/D gap 15.1 pts still wide. Signal STRONG_ACCUM, Big 3 0/3. Deploy DCA at current levels. Tranches should only fill via limit orders at pre-set prices — no manual deployment yet.</div>
       </div>
     </div>
   </div>
@@ -355,18 +355,22 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
         <span id="ai-sum-chev" style="color:#334155;font-size:11px;transition:transform .2s">▾</span>
       </div>
       <div id="ai-sum-body" style="border-top:1px solid #111;padding:12px 15px 14px">
-        <div id="ai-sum-loader" style="display:flex;align-items:center;gap:10px;padding:4px 0">
+        <div id="ai-sum-loader" style="display:none;align-items:center;gap:10px;padding:4px 0">
           <div style="display:flex;gap:5px" id="ai-sum-dots">
             <span class="ai-dot"></span><span class="ai-dot"></span><span class="ai-dot"></span>
           </div>
           <span style="font-size:11px;color:#334155;letter-spacing:.04em">Analyzing indicators…</span>
         </div>
-        <div id="ai-sum-text" style="font-size:12px;line-height:1.75;color:#64748b;white-space:pre-wrap;display:none"></div>
+        <div id="ai-sum-text" style="font-size:12px;line-height:1.75;color:#94a3b8;white-space:pre-wrap;display:block">Signal is Strong Accumulation at $61,650 in Week 37 of the bear — Entering Window phase. MVRV Z-Score at 0.23 puts us in extreme accumulation territory, with the Puell Multiple at 0.75 and Fear &amp; Greed at 36. Monthly RSI ~30 (historic extreme oversold) and weekly RSI ~34 are both deeply oversold. Spot is ~$60K — price testing/reclaiming 200WMA.
+
+Big 3 stands at 0/3. No Big 3 triggers have fired yet. Bottom confirmation is at 2/8 — early stages with most indicators still pending. ETF outflows persist (~$296M Jul 1, $4.5B June total). DXY ~101.3 (15-month high) and the Fed holding at 3.50–3.75% with hawkish tone remain the primary macro headwinds.
+
+Portfolio: $24,250 deployed of $150,000 total — 0.394 BTC at avg $61,549. Next unfilled tranche is T4a at $56,512. Key watch item: SOPR recovering and holding above 1.0 would advance Big 3 to 1/3 and is the most actionable near-term trigger. If BTC reclaims 200WMA ($60K) on weekly close, that upgrades the posture signal.</div>
       </div>
     </div>
   </div>
 
-  <div id="big3-section" style="display:none;margin-bottom:20px">
+  <div id="big3-section" style="display:block;margin-bottom:20px">
     <div class="section-title">🎯 Big 3 Primary Triggers</div>
     <div class="grid-3" id="big3-grid"></div>
     <!-- Weekly K/D Cycle Reversal Card (auto-calculated from Binance weekly candles) -->
@@ -374,7 +378,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
         <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em">Cycle Reversal Indicator</span>
         <span style="font-size:9px;color:#334155">RSI(155) → Stoch(141) → K(24) → D(21) · Weekly</span>
-        <span id="kd-status-badge" style="margin-left:auto;font-size:10px;border-radius:4px;padding:2px 8px;font-weight:700">Loading…</span>
+        <span id="kd-status-badge" style="margin-left:auto;font-size:10px;border-radius:4px;padding:2px 8px;font-weight:700;background:#0d0d0d;color:#64748b;border:1px solid #1e293b">BEAR PHASE *</span>
       </div>
 
       <!-- Convergence zone alert — shown only when gap is tight -->
@@ -386,25 +390,25 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
             <span style="font-size:10px;color:#3b82f6;font-weight:700;width:12px">K</span>
             <div style="flex:1;height:5px;background:#0f172a;border-radius:3px;overflow:hidden">
-              <div id="kd-k-bar" style="height:100%;border-radius:3px;background:#3b82f6;transition:width .6s;width:0%"></div>
+              <div id="kd-k-bar" style="height:100%;border-radius:3px;background:#3b82f6;transition:width .6s;width:8.52%"></div>
             </div>
-            <span id="kd-k-val" style="font-size:12px;color:#3b82f6;font-weight:800;width:38px;text-align:right">—</span>
+            <span id="kd-k-val" style="font-size:12px;color:#3b82f6;font-weight:800;width:38px;text-align:right">8.52</span>
           </div>
           <!-- D bar -->
           <div style="display:flex;align-items:center;gap:8px">
             <span style="font-size:10px;color:#eab308;font-weight:700;width:12px">D</span>
             <div style="flex:1;height:5px;background:#0f172a;border-radius:3px;overflow:hidden">
-              <div id="kd-d-bar" style="height:100%;border-radius:3px;background:#eab308;transition:width .6s;width:0%"></div>
+              <div id="kd-d-bar" style="height:100%;border-radius:3px;background:#eab308;transition:width .6s;width:23.62%"></div>
             </div>
-            <span id="kd-d-val" style="font-size:12px;color:#eab308;font-weight:800;width:38px;text-align:right">—</span>
+            <span id="kd-d-val" style="font-size:12px;color:#eab308;font-weight:800;width:38px;text-align:right">23.62</span>
           </div>
         </div>
 
         <!-- Gap display -->
         <div style="text-align:center;min-width:72px;padding:6px 0">
-          <div id="kd-gap-val" style="font-size:22px;font-weight:900;color:#475569;line-height:1">—</div>
-          <div id="kd-gap-label" style="font-size:9px;color:#334155;text-transform:uppercase;letter-spacing:.05em;margin-top:2px">gap</div>
-          <div id="kd-trend" style="font-size:10px;margin-top:3px;color:#475569"></div>
+          <div id="kd-gap-val" style="font-size:22px;font-weight:900;color:#475569;line-height:1">15.1</div>
+          <div id="kd-gap-label" style="font-size:9px;color:#334155;text-transform:uppercase;letter-spacing:.05em;margin-top:2px">gap pts</div>
+          <div id="kd-trend" style="font-size:10px;margin-top:3px;color:#475569">▲ widening</div>
         </div>
 
         <!-- Mini gap sparkline -->
@@ -420,7 +424,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     </div>
     <!-- 300 DMA Card — rendered by render300DMA() -->
     <div id="dma300-card" style="margin-top:10px;background:#0d0d0d;border:1px solid #1e293b;border-radius:10px;padding:12px 14px;min-height:60px">
-      <div style="font-size:11px;color:#334155">Loading 300 DMA…</div>
+      <div style="font-size:11px;color:#475569">300 DMA: calculating via API… <span style="color:#334155">· Check TradingView if unavailable</span></div>
     </div>
 
     <!-- Rally Caution Banner — shown/hidden by updateRallyCaution() -->
@@ -591,7 +595,7 @@ const HISTORY_DATA = [
   {"date":"2026-06-29","price":59860,"mvrv":0.25,"puell":0.75,"fearGreed":36,"bottomConf":3,"signal":"STRONG_ACCUM","big3":1,"week":36,"phase":"ENTERING_WINDOW","etf":"~$8B June total outflows; $86M inflow Jun 26 — tentative streak end","etfColor":"red","dxy":"~100.7, rising — highest since May 2025","dxyColor":"red","m2":"Contracting — Iran energy shock, CPI 4.2%, hawkish environment","m2Color":"red","fed":"3.50–3.75%, hawkish dot plot, possible hike Oct 2026","fedColor":"red","macd":"Bearish — weekly negative, no bullish crossover","macdColor":"orange","ma200":"~$62,457 — spot 4.2% below 200WMA","ma200Color":"green","monthlyRsi":"~38","weeklyRsi":"~34","realizedPrice":"~$50K est","realizedDiff":"+19% vs spot","piCycle":"Clear"},
   {"date":"2026-06-30","price":59000,"mvrv":0.25,"puell":0.75,"fearGreed":15,"bottomConf":3,"signal":"EXTREME_ACCUM","big3":0,"week":36,"phase":"ENTERING_WINDOW","etf":"~$8B June total outflows; small mid-late June inflows — recovering","etfColor":"orange","dxy":"101.3, rising — hawkish FOMC, highest since May 2025","dxyColor":"red","m2":"Expanding +1.4% global (3-mo ending May); near-term hawkish headwind","m2Color":"yellow","fed":"3.50–3.75%, on hold w/ hawkish forward signals","fedColor":"orange","macd":"Bearish — weekly MACD negative","macdColor":"orange","ma200":"~$62,000 — spot 4.8% below 200WMA (first time below this cycle)","ma200Color":"green","monthlyRsi":"~37","weeklyRsi":"~34","realizedPrice":"~$62,000 est","realizedDiff":"-5% vs spot","piCycle":"Clear"},
   {"date":"2026-07-01","price":58500,"mvrv":0.23,"puell":0.75,"fearGreed":11,"bottomConf":2,"signal":"EXTREME_ACCUM","big3":0,"week":37,"phase":"ENTERING_WINDOW","etf":"Record $4.5B net outflows in June 2026 — worst month since ETF launch","etfColor":"red","dxy":"~101.3, rising — highest since May 2025","dxyColor":"red","m2":"Modest global expansion +1.4–1.9% (3-mo)","m2Color":"yellow","fed":"Held 3.50–3.75%, hawkish dot plot, hike risk flagged","fedColor":"orange","macd":"Bearish — weekly negative, approaching first bullish cross since May 2025","macdColor":"orange","ma200":"~$62,000 — spot ~5.6% below 200WMA","ma200Color":"green","monthlyRsi":"~30","weeklyRsi":"~34","realizedPrice":"~$53,400 est","realizedPriceNum":53400,"realizedDiff":"+9% vs spot","piCycle":"Clear","weeklyK":8.52,"weeklyD":23.62,"soprStreak":0},
-  {"date":"2026-07-02","price":61650,"mvrv":0.23,"puell":0.75,"fearGreed":36,"bottomConf":2,"signal":"STRONG_ACCUM","big3":0,"week":37,"phase":"ENTERING_WINDOW","etf":"Outflows persist — ~$296M net outflow Jul 1, ~$4.5B June total","etfColor":"red","dxy":"~101.3, 15-month high, rising","dxyColor":"red","m2":"Global M2 +1.38% (3-mo), modestly expanding","m2Color":"yellow","fed":"Held 3.50–3.75% (Jun 17), hawkish tone, hike risk flagged","fedColor":"red","macd":"Bearish — weekly negative, no bullish crossover yet","macdColor":"orange","ma200":"~$60,000 — price testing/reclaiming 200WMA","ma200Color":"green","monthlyRsi":"~30 (historic extreme oversold)","weeklyRsi":"~34","realizedPrice":"~$53,800 est","realizedPriceNum":53800,"realizedDiff":"+14.5% vs spot","piCycle":"Clear"}
+  {"date":"2026-07-02","price":61650,"mvrv":0.23,"puell":0.75,"fearGreed":36,"bottomConf":2,"signal":"STRONG_ACCUM","big3":0,"week":37,"phase":"ENTERING_WINDOW","etf":"Outflows persist — ~$296M net outflow Jul 1, ~$4.5B June total","etfColor":"red","dxy":"~101.3, 15-month high, rising","dxyColor":"red","m2":"Global M2 +1.38% (3-mo), modestly expanding","m2Color":"yellow","fed":"Held 3.50–3.75% (Jun 17), hawkish tone, hike risk flagged","fedColor":"red","macd":"Bearish — weekly negative, no bullish crossover yet","macdColor":"orange","ma200":"~$60,000 — price testing/reclaiming 200WMA","ma200Color":"green","monthlyRsi":"~30 (historic extreme oversold)","weeklyRsi":"~34","realizedPrice":"~$53,800 est","realizedPriceNum":53800,"realizedDiff":"+14.5% vs spot","piCycle":"Clear","weeklyK":8.52,"weeklyD":23.62,"soprStreak":0}
 ];
 
 // =====================================================================
@@ -3802,8 +3806,8 @@ setTimeout(checkAndShowAlerts, 2000);
 // WEEKLY CYCLE REVERSAL — AUTO CALCULATION
 // RSI(155) → Stoch(141) → K SMA(24) → D SMA(21) on weekly BTCUSDT candles
 // =====================================================================
-let _kdLive      = null; // { k, d, gap, gapHistory[] }
-let _fundingRate = null; // raw decimal from Bybit, e.g. 0.0001 = 0.01%
+var _kdLive      = null; // { k, d, gap, gapHistory[] } — var so it's hoisted (accessed before declaration by renderToday)
+var _fundingRate = null; // raw decimal from Bybit, e.g. 0.0001 = 0.01%
 
 async function fetchFundingRate() {
   try {
@@ -3922,7 +3926,7 @@ function render300DMA() {
     <div style="font-size:10px;color:#475569;line-height:1.5;border-top:1px solid #0f172a;padding-top:7px">${noteText} <span style="color:#334155">· Auto-calculated from Binance daily candles.</span></div>`;
 }
 
-setTimeout(fetchAndCompute300DMA, 2500);
+setTimeout(fetchAndCompute300DMA, 500);
 
 function _calcRSI(closes, period) {
   const out = new Array(closes.length).fill(null);
@@ -3986,7 +3990,7 @@ function _computeKDFromCloses(closes) {
   };
 }
 
-function _fetchWithTimeout(url, ms = 9000) {
+function _fetchWithTimeout(url, ms = 5000) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), ms);
   return fetch(url, { signal: ctrl.signal }).finally(() => clearTimeout(timer));
@@ -4175,7 +4179,10 @@ function updateDeploymentPosture() {
   const action = document.getElementById('posture-action');
   const detail = document.getElementById('posture-detail');
   const meta   = document.getElementById('posture-week-kd');
-  if (!card) return;
+  if (!card || !badge || !action || !detail) {
+    console.error('[posture] missing elements', { card: !!card, badge: !!badge, action: !!action, detail: !!detail });
+    return;
+  }
 
   const latest    = HISTORY_DATA[HISTORY_DATA.length - 1] || {};
   const bearWeek  = Math.max(1, Math.floor((Date.now() - new Date(ATH_DATE).getTime()) / (7*86400000)) + 1);
@@ -4248,20 +4255,25 @@ function updateDeploymentPosture() {
 
 // Called after signals load and after K/D calc completes
 // =====================================================================
-// Kick off calculation after page loads
-setTimeout(fetchAndComputeKD, 1500);
-// Safety net: render K/D + posture from manual data if APIs haven't resolved in 3s
-setTimeout(() => {
-  if (!_kdLive) {
-    const _fb = HISTORY_DATA[HISTORY_DATA.length - 1] || {};
+
+// ── IMMEDIATE render from manual data — no API wait ──────────────────
+// Runs synchronously so Today tab always shows something on load.
+// fetchAndComputeKD() will override with live data when it resolves.
+(function _initFromManualData() {
+  try {
+    // Search backwards for most recent entry that has weeklyK/weeklyD
+    const _fb = [...HISTORY_DATA].reverse().find(e => e.weeklyK != null && e.weeklyD != null) || {};
     if (_fb.weeklyK != null && _fb.weeklyD != null) {
       const k = parseFloat(_fb.weeklyK), d = parseFloat(_fb.weeklyD);
       _kdLive = { k, d, gap: +(d - k).toFixed(2), gapHistory: [+(d - k).toFixed(2)], fallback: true };
       renderKDCard();
     }
     updateDeploymentPosture();
-  }
-}, 3000);
+  } catch(e) { console.error('[initFromManualData]', e); }
+})();
+
+// Kick off live calculation in background — overrides manual data when done
+setTimeout(fetchAndComputeKD, 1500);
 
 // =====================================================================
 // AI DAILY SUMMARY
@@ -4288,14 +4300,16 @@ async function generateAISummary(force) {
     } catch(e) {}
   }
 
-  // Show loader, hide text
-  const loaderEl = document.getElementById('ai-sum-loader');
-  if (loaderEl) loaderEl.style.display = 'flex';
-  textEl.style.display = 'none';
-  textEl.textContent = '';
-  tsEl.textContent   = '';
-
   const coworkAvailable = typeof window.cowork?.askClaude === 'function';
+
+  // Only show loader if cowork AI is actually available — otherwise skip straight to template
+  if (coworkAvailable) {
+    const loaderEl = document.getElementById('ai-sum-loader');
+    if (loaderEl) loaderEl.style.display = 'flex';
+    textEl.style.display = 'none';
+    textEl.textContent = '';
+    tsEl.textContent   = '';
+  }
 
   // On GitHub Pages (no Cowork runtime), fall back to the template-based summary
   if (!coworkAvailable) {
@@ -4438,8 +4452,23 @@ function _buildTemplateSummary() {
   return [p1, p2, p3].join('\n\n');
 }
 
-// Wait 3.5s so livePrice and apathy signals have time to settle before generating
+// Show template summary immediately — AI will upgrade it if available
+let _aiTemplateShown = false;
+try { _renderAISum(_buildTemplateSummary(), false); _aiTemplateShown = true; } catch(e) { console.error('[aiTemplate]', e); }
+// Then attempt AI summary in background (only if cowork runtime available)
 setTimeout(() => generateAISummary(false), 3500);
+
+// ── Safety net: re-render posture + AI template after 1.5s ───────────────────
+// Catches any race where async ops cleared elements before sync render completed.
+setTimeout(() => {
+  try { updateDeploymentPosture(); } catch(e) { console.error('[posture-safety]', e); }
+  try {
+    const aiText = document.getElementById('ai-sum-text');
+    if (aiText && !aiText.textContent.trim()) {
+      _renderAISum(_buildTemplateSummary(), false);
+    }
+  } catch(e) { console.error('[aiText-safety]', e); }
+}, 1500);
 </script>
 
 <!-- ALERT MODAL -->
