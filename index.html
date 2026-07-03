@@ -249,9 +249,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   body { padding: 10px; }
 
   /* Grids collapse to single column */
-  .grid-3  { grid-template-columns: 1fr; }
-  .grid-4  { grid-template-columns: repeat(2,1fr); }
-  .grid-auto { grid-template-columns: repeat(auto-fit,minmax(140px,1fr)); }
+  .grid-3, .grid-4, .grid-auto { grid-template-columns: 1fr; }
 
   /* Header: stack signal + nav on top, meta below */
   .header { padding: 10px 12px; gap: 6px 10px; }
@@ -265,9 +263,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   /* Section titles */
   .section-title { margin-top: 10px; }
 
-  /* Meter + qual cards smaller text */
-  .mc-value { font-size: 18px; }
-  .score-num { font-size: 20px; }
+  /* Meter + qual cards — bump up for readability */
+  .mc-value { font-size: 24px; }
+  .mc-label { font-size: 11px; }
+  .mc-zone  { font-size: 11px; }
+  .qual-val { font-size: 13px; }
+  .card-label { font-size: 11px; }
+  .card-value { font-size: 16px; }
+  .score-num { font-size: 22px; }
+  .conf-count { font-size: 26px; }
+  .section-title { font-size: 12px; }
 
   /* Bottom confirmation pips — shrink on tiny screens */
   .conf-pip { width: 14px; height: 5px; }
@@ -389,7 +394,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <div id="alert-sidebar-body" style="flex:1;overflow-y:auto;padding:12px"></div>
   </div>
 
-  <!-- ===== DEPLOYMENT POSTURE ===== -->
+  <!-- ===== POSTURE + AI GROUP ===== -->
+  <div style="margin-bottom:8px">
+    <!-- Group toggle header -->
+    <div onclick="window._postureAiToggle()" style="display:flex;align-items:center;gap:8px;padding:6px 2px;cursor:pointer;user-select:none;margin-bottom:6px">
+      <span style="font-size:10px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.08em;flex:1">Posture &amp; Summary</span>
+      <span id="posture-ai-chev" style="color:#555;font-size:14px;transition:transform .2s;line-height:1">▾</span>
+    </div>
+    <div id="posture-ai-body">
+
+  <!-- DEPLOYMENT POSTURE -->
   <div id="posture-wrap" style="margin-bottom:8px">
     <div id="posture-card" style="border-radius:12px;border:1px solid #2563eb;overflow:hidden;background:#0d0d0d">
       <div style="padding:11px 14px 10px">
@@ -404,7 +418,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     </div>
   </div>
 
-  <!-- ===== AI DAILY SUMMARY ===== -->
+  <!-- AI DAILY SUMMARY -->
   <div id="ai-summary-wrap" style="margin-bottom:8px">
     <div style="background:#0d0d0d;border:1px solid #222;border-radius:12px;overflow:hidden">
       <div onclick="window._aiToggle()" style="display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;user-select:none">
@@ -431,6 +445,9 @@ Portfolio: $24,250 deployed of $150,000 total — 0.394 BTC at avg $61,549. Next
       </div>
     </div>
   </div>
+
+    </div><!-- /posture-ai-body -->
+  </div><!-- /posture-ai group -->
 
   <div id="big3-section" style="display:block;margin-bottom:20px">
     <div class="section-title">🎯 Big 3 Primary Triggers</div>
@@ -4347,6 +4364,13 @@ window._aiToggle = function() {
   _aiSumOpen = !_aiSumOpen;
   document.getElementById('ai-sum-body').style.display = _aiSumOpen ? '' : 'none';
   document.getElementById('ai-sum-chev').style.transform = _aiSumOpen ? '' : 'rotate(-90deg)';
+};
+
+let _postureAiOpen = true;
+window._postureAiToggle = function() {
+  _postureAiOpen = !_postureAiOpen;
+  document.getElementById('posture-ai-body').style.display = _postureAiOpen ? '' : 'none';
+  document.getElementById('posture-ai-chev').style.transform = _postureAiOpen ? '' : 'rotate(-90deg)';
 };
 
 async function generateAISummary(force) {
