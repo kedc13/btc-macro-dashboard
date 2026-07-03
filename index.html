@@ -3758,11 +3758,20 @@ function renderApathyMonitor() {
   else if (bearWeek >= 35 || classicScore >= 3)  _dcaRate = '$750/buy';
   else                                            _dcaRate = '$500/buy';
 
+  const big3Ct       = computeBig3(latest);
+  const tbGateCount2 = (() => { try { return computeTrueBottomGates(latest).count || 0; } catch(e) { return 0; } })();
+  const pileInGated  = (classicScore >= 6 && (big3Ct >= 3 || tbGateCount2 >= 2)) ||
+                       (apathyScore >= 6 && autoScore >= 4 && big3Ct >= 2);
+
   let action, ac, ab, ae;
-  if (classicScore >= 6 || (apathyScore >= 6 && autoScore >= 4)) {
+  if (pileInGated) {
     action='PILE IN — Cancel orders below current price. Redeploy into spot or compress ladder to $52–56K.'; ac='#4ade80'; ab='#16a34a'; ae='🟢';
   } else if (classicScore >= 5 || (apathyScore >= 5 && autoScore >= 3)) {
-    action='WATCH — Review orders below $47K. Consider canceling T6c/T7. Bottom may form without full capitulation.'; ac='#fb923c'; ab='#ea580c'; ae='🟠';
+    const nearPile = classicScore >= 6;
+    action = nearPile
+      ? `NEAR PILE IN — Classic ${classicScore}/8 confirmed. Big 3: ${big3Ct}/3 · Cycle Gate: ${tbGateCount2}/5. Maintain ladder. PILE IN activates when Big 3 = 3/3 or ≥2 cycle gates confirm.`
+      : 'WATCH — Review orders below $47K. Consider canceling T6c/T7. Bottom may form without full capitulation.';
+    ac='#fb923c'; ab='#ea580c'; ae='🟠';
   } else if (combined >= 7) {
     action=`BUILDING — Both tracks advancing. Hold full ladder. DCA ${_dcaRate}.`; ac='#fbbf24'; ab='#d97706'; ae='🟡';
   } else {
@@ -3949,8 +3958,8 @@ function computeAlertState() {
   const mvrvArr  = HISTORY_DATA.map(d => parseFloat(d.mvrv)).filter(n => !isNaN(n));
   const cycleLow = Math.min(...prices);
   const currentPrice = livePrice || latest?.price || 0;
-  const classicScore = parseInt(latest?.bottomConf) || 0;
-  const big3Count    = parseInt(latest?.big3) || 0;
+  const classicScore = latest ? computeBottomConf(latest) : 0;
+  const big3Count    = latest ? computeBig3(latest) : 0;
   const bearWeek     = Math.max(1, Math.floor((Date.now() - new Date(ATH_DATE).getTime()) / (7*86400000)) + 1);
 
   // Recompute apathy signals (mirrors renderApathyMonitor)
@@ -3974,8 +3983,14 @@ function computeAlertState() {
   const apathyScore = autoCount + [fundingActive, flowsActive, volumeActive].filter(Boolean).length;
 
   // Action level
+  // PILE_IN gated: Classic 6+/8 is necessary but not sufficient.
+  // Also requires Big 3 complete (3/3) OR ≥2 True Bottom Gates confirmed.
+  // This prevents premature PILE IN during mid-cycle apathy bottoms (weeks 35-43)
+  // where accumulation zone is confirmed but the cycle low is not.
+  const tbGateCount = latest ? (computeTrueBottomGates(latest).count || 0) : 0;
   let actionLevel = 'HOLD';
-  if      (classicScore >= 6 || (apathyScore >= 6 && autoCount >= 4)) actionLevel = 'PILE_IN';
+  if      ((classicScore >= 6 && (big3Count >= 3 || tbGateCount >= 2)) ||
+           (apathyScore >= 6 && autoCount >= 4 && big3Count >= 2))    actionLevel = 'PILE_IN';
   else if (classicScore >= 5 || (apathyScore >= 5 && autoCount >= 3)) actionLevel = 'WATCH';
   else if (classicScore + apathyScore >= 7)                            actionLevel = 'BUILDING';
 
