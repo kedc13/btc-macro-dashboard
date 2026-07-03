@@ -227,7 +227,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .mc-ends  { display:flex; justify-content:space-between; font-size:9px; font-weight:600; }
 /* INSTANT TOOLTIP */
 .tip { position:relative; display:inline-block; }
-.tip .tiptext { visibility:hidden; opacity:0; width:260px; background:#1e293b; color:#e2e8f0; font-size:11px; line-height:1.5; border-radius:7px; padding:9px 11px; position:absolute; z-index:999; bottom:130%; left:50%; transform:translateX(-50%); border:1px solid #334155; pointer-events:none; transition:opacity .05s; white-space:normal; }
+.tip .tiptext { visibility:hidden; opacity:0; width:260px; background:#222; color:#e2e8f0; font-size:11px; line-height:1.5; border-radius:7px; padding:9px 11px; position:absolute; z-index:999; bottom:130%; left:50%; transform:translateX(-50%); border:1px solid #555; pointer-events:none; transition:opacity .05s; white-space:normal; }
 .tip:hover .tiptext { visibility:visible; opacity:1; }
 /* QUAL CARDS */
 .qual-card { background:#141414; border-radius:10px; padding:12px 14px; border:1px solid #222; border-left:3px solid #333; }
@@ -352,12 +352,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
   <div class="header">
     <div class="signal-banner">
-      <div class="signal-dot" id="sig-dot" style="background:#94a3b8"></div>
+      <div class="signal-dot" id="sig-dot" style="background:#999"></div>
       <span id="sig-text">—</span>
     </div>
     <div class="header-meta">
       <strong id="hdr-price">—</strong> &nbsp;·&nbsp; Wk <span id="hdr-week">—</span> &nbsp;·&nbsp; <span class="phase-badge phase-early" id="hdr-phase">—</span>
-      <div style="font-size:10px;color:#64748b;margin-top:3px;letter-spacing:.02em">Updated <span id="last-updated">—</span></div>
+      <div style="font-size:10px;color:#777;margin-top:3px;letter-spacing:.02em">Updated <span id="last-updated">—</span></div>
     </div>
     <div class="header-nav">
       <button class="hnav-btn" id="tab-btn-today"   onclick="switchTab('today')">Today</button>
@@ -379,10 +379,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <div style="padding:18px 18px 14px;border-bottom:1px solid #1a1a1a;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
       <div>
         <div style="font-size:15px;font-weight:700;color:#e5e5e5">⚡ Alert History</div>
-        <div style="font-size:10px;color:#475569;margin-top:2px">Alerts are saved as they fire. Click any to expand.</div>
+        <div style="font-size:10px;color:#666;margin-top:2px">Alerts are saved as they fire. Click any to expand.</div>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
-        <button onclick="clearAlertHistory()" style="font-size:10px;color:#475569;background:none;border:1px solid #222;border-radius:5px;padding:4px 8px;cursor:pointer">Clear all</button>
+        <button onclick="clearAlertHistory()" style="font-size:10px;color:#666;background:none;border:1px solid #222;border-radius:5px;padding:4px 8px;cursor:pointer">Clear all</button>
         <button onclick="toggleAlertSidebar()" style="background:none;border:none;color:#555;font-size:22px;cursor:pointer;line-height:1;padding:0">&times;</button>
       </div>
     </div>
@@ -394,36 +394,36 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <div id="posture-card" style="border-radius:12px;border:1px solid #2563eb;overflow:hidden;background:#0d0d0d">
       <div style="padding:11px 14px 10px">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-          <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em">Deployment Posture</span>
-          <span id="posture-badge" style="font-size:11px;font-weight:800;border-radius:5px;padding:3px 10px;letter-spacing:.03em;background:#0c1529;color:#60a5fa;border:1px solid #2563eb">ACTIVE</span>
-          <span id="posture-week-kd" style="margin-left:auto;font-size:10px;color:#334155">Wk 37 · K/D gap 15.1 · Big3 0/3</span>
+          <span style="font-size:11px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.06em">Deployment Posture</span>
+          <span id="posture-badge" style="font-size:11px;font-weight:800;border-radius:5px;padding:3px 10px;letter-spacing:.03em;background:#111;color:#60a5fa;border:1px solid #2563eb">ACTIVE</span>
+          <span id="posture-week-kd" style="margin-left:auto;font-size:10px;color:#555">Wk 37 · K/D gap 15.1 · Big3 0/3</span>
         </div>
         <div id="posture-action" style="font-size:12px;font-weight:600;line-height:1.5;margin-bottom:6px;color:#60a5fa">Full DCA cadence on STRONG_ACCUM or better. Let limit orders sit. Do not chase price.</div>
-        <div id="posture-detail" style="font-size:11px;color:#475569;line-height:1.6;border-top:1px solid #0f172a;padding-top:6px">Week 37 — entering window. K/D gap 15.1 pts still wide. Signal STRONG_ACCUM, Big 3 0/3. Deploy DCA at current levels. Tranches should only fill via limit orders at pre-set prices — no manual deployment yet.</div>
+        <div id="posture-detail" style="font-size:11px;color:#666;line-height:1.6;border-top:1px solid #111;padding-top:6px">Week 37 — entering window. K/D gap 15.1 pts still wide. Signal STRONG_ACCUM, Big 3 0/3. Deploy DCA at current levels. Tranches should only fill via limit orders at pre-set prices — no manual deployment yet.</div>
       </div>
     </div>
   </div>
 
   <!-- ===== AI DAILY SUMMARY ===== -->
   <div id="ai-summary-wrap" style="margin-bottom:8px">
-    <div style="background:#0d0d0d;border:1px solid #1e293b;border-radius:12px;overflow:hidden">
+    <div style="background:#0d0d0d;border:1px solid #222;border-radius:12px;overflow:hidden">
       <div onclick="window._aiToggle()" style="display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;user-select:none">
         <span style="font-size:13px;opacity:.7">✦</span>
-        <span style="font-size:12px;font-weight:700;color:#cbd5e1;flex:1;letter-spacing:.01em">AI Daily Summary</span>
-        <span id="ai-sum-ts" style="font-size:10px;color:#334155"></span>
+        <span style="font-size:12px;font-weight:700;color:#bbb;flex:1;letter-spacing:.01em">AI Daily Summary</span>
+        <span id="ai-sum-ts" style="font-size:10px;color:#555"></span>
         <button id="ai-sum-refresh" onclick="event.stopPropagation();generateAISummary(true)"
-          style="background:none;border:1px solid #1e293b;border-radius:6px;color:#475569;font-size:10px;font-weight:600;padding:3px 9px;cursor:pointer"
-          onmouseover="this.style.color='#94a3b8'" onmouseout="this.style.color='#475569'">↺ Refresh</button>
-        <span id="ai-sum-chev" style="color:#334155;font-size:11px;transition:transform .2s">▾</span>
+          style="background:none;border:1px solid #222;border-radius:6px;color:#666;font-size:10px;font-weight:600;padding:3px 9px;cursor:pointer"
+          onmouseover="this.style.color='#999'" onmouseout="this.style.color='#666'">↺ Refresh</button>
+        <span id="ai-sum-chev" style="color:#666;font-size:14px;transition:transform .2s;line-height:1;padding:0 2px">▾</span>
       </div>
       <div id="ai-sum-body" style="border-top:1px solid #111;padding:12px 15px 14px">
         <div id="ai-sum-loader" style="display:none;align-items:center;gap:10px;padding:4px 0">
           <div style="display:flex;gap:5px" id="ai-sum-dots">
             <span class="ai-dot"></span><span class="ai-dot"></span><span class="ai-dot"></span>
           </div>
-          <span style="font-size:11px;color:#334155;letter-spacing:.04em">Analyzing indicators…</span>
+          <span style="font-size:11px;color:#555;letter-spacing:.04em">Analyzing indicators…</span>
         </div>
-        <div id="ai-sum-text" style="font-size:12px;line-height:1.75;color:#94a3b8;white-space:pre-wrap;display:block">Signal is Strong Accumulation at $61,650 in Week 37 of the bear — Entering Window phase. MVRV Z-Score at 0.23 puts us in extreme accumulation territory, with the Puell Multiple at 0.75 and Fear &amp; Greed at 36. Monthly RSI ~30 (historic extreme oversold) and weekly RSI ~34 are both deeply oversold. Spot is ~$60K — price testing/reclaiming 200WMA.
+        <div id="ai-sum-text" style="font-size:12px;line-height:1.75;color:#999;white-space:pre-wrap;display:block">Signal is Strong Accumulation at $61,650 in Week 37 of the bear — Entering Window phase. MVRV Z-Score at 0.23 puts us in extreme accumulation territory, with the Puell Multiple at 0.75 and Fear &amp; Greed at 36. Monthly RSI ~30 (historic extreme oversold) and weekly RSI ~34 are both deeply oversold. Spot is ~$60K — price testing/reclaiming 200WMA.
 
 Big 3 stands at 0/3. No Big 3 triggers have fired yet. Bottom confirmation is at 2/8 — early stages with most indicators still pending. ETF outflows persist (~$296M Jul 1, $4.5B June total). DXY ~101.3 (15-month high) and the Fed holding at 3.50–3.75% with hawkish tone remain the primary macro headwinds.
 
@@ -436,11 +436,11 @@ Portfolio: $24,250 deployed of $150,000 total — 0.394 BTC at avg $61,549. Next
     <div class="section-title">🎯 Big 3 Primary Triggers</div>
     <div class="grid-3" id="big3-grid"></div>
     <!-- Weekly K/D Cycle Reversal Card (auto-calculated from Binance weekly candles) -->
-    <div id="kd-card" style="margin-top:10px;background:#0d0d0d;border:1px solid #1e293b;border-radius:10px;padding:12px 14px">
+    <div id="kd-card" style="margin-top:10px;background:#0d0d0d;border:1px solid #222;border-radius:10px;padding:12px 14px">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-        <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em">Cycle Reversal Indicator</span>
-        <span style="font-size:9px;color:#334155">RSI(155) → Stoch(141) → K(24) → D(21) · Weekly</span>
-        <span id="kd-status-badge" style="margin-left:auto;font-size:10px;border-radius:4px;padding:2px 8px;font-weight:700;background:#0d0d0d;color:#64748b;border:1px solid #1e293b">BEAR PHASE *</span>
+        <span style="font-size:11px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.05em">Cycle Reversal Indicator</span>
+        <span style="font-size:9px;color:#555">RSI(155) → Stoch(141) → K(24) → D(21) · Weekly</span>
+        <span id="kd-status-badge" style="margin-left:auto;font-size:10px;border-radius:4px;padding:2px 8px;font-weight:700;background:#0d0d0d;color:#777;border:1px solid #222">BEAR PHASE *</span>
       </div>
 
       <!-- Convergence zone alert — shown only when gap is tight -->
@@ -451,7 +451,7 @@ Portfolio: $24,250 deployed of $150,000 total — 0.394 BTC at avg $61,549. Next
           <!-- K bar -->
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
             <span style="font-size:10px;color:#3b82f6;font-weight:700;width:12px">K</span>
-            <div style="flex:1;height:5px;background:#0f172a;border-radius:3px;overflow:hidden">
+            <div style="flex:1;height:5px;background:#111;border-radius:3px;overflow:hidden">
               <div id="kd-k-bar" style="height:100%;border-radius:3px;background:#3b82f6;transition:width .6s;width:8.52%"></div>
             </div>
             <span id="kd-k-val" style="font-size:12px;color:#3b82f6;font-weight:800;width:38px;text-align:right">8.52</span>
@@ -459,7 +459,7 @@ Portfolio: $24,250 deployed of $150,000 total — 0.394 BTC at avg $61,549. Next
           <!-- D bar -->
           <div style="display:flex;align-items:center;gap:8px">
             <span style="font-size:10px;color:#eab308;font-weight:700;width:12px">D</span>
-            <div style="flex:1;height:5px;background:#0f172a;border-radius:3px;overflow:hidden">
+            <div style="flex:1;height:5px;background:#111;border-radius:3px;overflow:hidden">
               <div id="kd-d-bar" style="height:100%;border-radius:3px;background:#eab308;transition:width .6s;width:23.62%"></div>
             </div>
             <span id="kd-d-val" style="font-size:12px;color:#eab308;font-weight:800;width:38px;text-align:right">23.62</span>
@@ -468,25 +468,25 @@ Portfolio: $24,250 deployed of $150,000 total — 0.394 BTC at avg $61,549. Next
 
         <!-- Gap display -->
         <div style="text-align:center;min-width:72px;padding:6px 0">
-          <div id="kd-gap-val" style="font-size:22px;font-weight:900;color:#475569;line-height:1">15.1</div>
-          <div id="kd-gap-label" style="font-size:9px;color:#334155;text-transform:uppercase;letter-spacing:.05em;margin-top:2px">gap pts</div>
-          <div id="kd-trend" style="font-size:10px;margin-top:3px;color:#475569">▲ widening</div>
+          <div id="kd-gap-val" style="font-size:22px;font-weight:900;color:#666;line-height:1">15.1</div>
+          <div id="kd-gap-label" style="font-size:9px;color:#555;text-transform:uppercase;letter-spacing:.05em;margin-top:2px">gap pts</div>
+          <div id="kd-trend" style="font-size:10px;margin-top:3px;color:#666">▲ widening</div>
         </div>
 
         <!-- Mini gap sparkline -->
         <div style="min-width:64px">
           <svg id="kd-spark" width="64" height="36" viewBox="0 0 64 36" style="display:block">
-            <text x="32" y="20" text-anchor="middle" font-size="9" fill="#334155">—</text>
+            <text x="32" y="20" text-anchor="middle" font-size="9" fill="#555">—</text>
           </svg>
-          <div style="font-size:8px;color:#334155;text-align:center;margin-top:1px">gap history</div>
+          <div style="font-size:8px;color:#555;text-align:center;margin-top:1px">gap history</div>
         </div>
       </div>
 
-      <div id="kd-note" style="margin-top:8px;font-size:10px;color:#475569;line-height:1.5;border-top:1px solid #0f172a;padding-top:7px"></div>
+      <div id="kd-note" style="margin-top:8px;font-size:10px;color:#666;line-height:1.5;border-top:1px solid #111;padding-top:7px"></div>
     </div>
     <!-- 300 DMA Card — rendered by render300DMA() -->
-    <div id="dma300-card" style="margin-top:10px;background:#0d0d0d;border:1px solid #1e293b;border-radius:10px;padding:12px 14px;min-height:60px">
-      <div style="font-size:11px;color:#475569">300 DMA: calculating via API… <span style="color:#334155">· Check TradingView if unavailable</span></div>
+    <div id="dma300-card" style="margin-top:10px;background:#0d0d0d;border:1px solid #222;border-radius:10px;padding:12px 14px;min-height:60px">
+      <div style="font-size:11px;color:#666">300 DMA: calculating via API… <span style="color:#555">· Check TradingView if unavailable</span></div>
     </div>
 
     <!-- Rally Caution Banner — shown/hidden by updateRallyCaution() -->
@@ -513,7 +513,7 @@ Portfolio: $24,250 deployed of $150,000 total — 0.394 BTC at avg $61,549. Next
       <div class="conf-header">
         <div>
           <div class="conf-count" id="conf-count">0/8</div>
-          <div style="font-size:11px;color:#64748b;margin-top:2px">indicators confirmed</div>
+          <div style="font-size:11px;color:#777;margin-top:2px">indicators confirmed</div>
         </div>
         <div class="conf-track" id="conf-pips"></div>
       </div>
@@ -530,10 +530,10 @@ Portfolio: $24,250 deployed of $150,000 total — 0.394 BTC at avg $61,549. Next
     <div class="section-title" style="margin-top:14px">🛣️ Accumulation Path</div>
     <div id="acc-path-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px"></div>
     <div class="section-title" style="margin-top:14px">👁️ Shallow Bottom Watch</div>
-    <div style="font-size:11px;color:#475569;margin-bottom:8px">3 signals that confirm a bottom is forming at current price — without needing lower</div>
+    <div style="font-size:11px;color:#666;margin-bottom:8px">3 signals that confirm a bottom is forming at current price — without needing lower</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px" id="shallow-grid"></div>
     <div class="tranche-guide">
-      <span style="font-weight:600;color:#475569">Tranche guide:</span>
+      <span style="font-weight:600;color:#666">Tranche guide:</span>
       <span class="tg-item"><span class="dot" style="background:#eab308"></span> BUY = first tranche</span>
       <span class="tg-item">🔔 ACCUMULATE = add</span>
       <span class="tg-item"><span class="dot" style="background:#22c55e"></span> BUY = heavy</span>
@@ -599,8 +599,8 @@ Portfolio: $24,250 deployed of $150,000 total — 0.394 BTC at avg $61,549. Next
     </div>
 
     <div class="chart-card">
-      <div class="chart-title" style="font-size:13px;font-weight:700;margin-bottom:12px">Signal Log <span style="font-size:11px;font-weight:400;color:#94a3b8">— most recent 14 tracked days</span></div>
-      <div id="history-table-wrap"><p style="color:#94a3b8;font-size:13px;padding:12px 0">No history yet — builds as the daily tracker runs.</p></div>
+      <div class="chart-title" style="font-size:13px;font-weight:700;margin-bottom:12px">Signal Log <span style="font-size:11px;font-weight:400;color:#999">— most recent 14 tracked days</span></div>
+      <div id="history-table-wrap"><p style="color:#999;font-size:13px;padding:12px 0">No history yet — builds as the daily tracker runs.</p></div>
     </div>
 
   </div>
@@ -683,7 +683,7 @@ const PLAN = {
   dcaDouble:        3000,   // aggressive: 3 × $1,000/wk on big drops
   dcaStartDate: '2026-06-09',
   dcaZones: [
-    { minPrice: 53697, label: 'Standard',   color: '#64748b', amount: 500,  perBuy: '$500/buy',   action: 'Standard cadence — 3× per week',                                         big3Req: 0 },
+    { minPrice: 53697, label: 'Standard',   color: '#777', amount: 500,  perBuy: '$500/buy',   action: 'Standard cadence — 3× per week',                                         big3Req: 0 },
     { minPrice: 47000, label: 'Aggressive', color: '#f97316', amount: 1000, perBuy: '$1K/buy',    action: 'T4–T5 zone — double up, keep limit orders set',                          big3Req: 0 },
     { minPrice: 41000, label: 'Heavy',      color: '#ef4444', amount: 1500, perBuy: '$1,500/buy', action: 'T6 zone — increase cadence, flag remaining DCA budget for lump sum',     big3Req: 1 },
     { minPrice: 0,     label: 'Lump Sum',   color: '#22c55e', amount: null, perBuy: 'Lump sum',   action: 'HALT weekly DCA — redeploy remaining DCA budget as T7 tranche if Big 3 confirmed', big3Req: 2 },
@@ -748,12 +748,12 @@ const SIG_CLR = {
   EXTREME_ACCUM: '#16a34a',
   STRONG_ACCUM:  '#22c55e',
   ACCUM_BOTTOM:  '#3b82f6',
-  WATCH:         '#94a3b8',
-  NEUTRAL:       '#cbd5e1',
+  WATCH:         '#999',
+  NEUTRAL:       '#bbb',
   ELEVATED:      '#f97316',
   EUPHORIC:      '#ef4444',
 };
-const CLR = { green:'#22c55e', yellow:'#eab308', orange:'#f97316', red:'#ef4444', gray:'#94a3b8' };
+const CLR = { green:'#22c55e', yellow:'#eab308', orange:'#f97316', red:'#ef4444', gray:'#999' };
 
 function sigColor(s) {
   if (!s) return SIG_CLR.NEUTRAL;
@@ -807,8 +807,8 @@ function valuationColor(h) {
     if (m < 0.42 && fg < 22)  return '#16a34a'; // cheap + extreme fear combined
     if (m < 0.55 && fg < 18)  return '#22c55e'; // cheap + maximum fear
     if (m < 0.55)              return '#3b82f6'; // cheap but timing risk — caution
-    if (m < 1.0)               return '#94a3b8'; // watch — likely more downside
-    if (m < 1.5)               return '#cbd5e1'; // neutral
+    if (m < 1.0)               return '#999'; // watch — likely more downside
+    if (m < 1.5)               return '#bbb'; // neutral
     return '#f97316';
   }
 
@@ -817,8 +817,8 @@ function valuationColor(h) {
     if (m < 0.3 || (m < 0.5 && fg < 25)) return '#16a34a';
     if (m < 0.65 || (m < 0.75 && fg < 30)) return '#22c55e';
     if (m < 0.9 && fg < 50)               return '#3b82f6';
-    if (m < 1.2)                            return '#94a3b8';
-    if (m < 3.5)                            return '#cbd5e1';
+    if (m < 1.2)                            return '#999';
+    if (m < 3.5)                            return '#bbb';
     return '#f97316';
   }
 
@@ -827,8 +827,8 @@ function valuationColor(h) {
   if (m < 0.5 && fg < 30)  return '#16a34a';
   if (m < 0.65)             return '#22c55e';
   if (m < 0.9 && fg < 50)  return '#3b82f6';
-  if (m < 1.2)              return '#94a3b8';
-  if (m < 3.5)              return '#cbd5e1';
+  if (m < 1.2)              return '#999';
+  if (m < 3.5)              return '#bbb';
   if (m < 7)                return '#f97316';
   return '#ef4444';
 }
@@ -867,8 +867,8 @@ function scoreTier(score) {
   if (score >= 65) return { label:'STRONG BUY',     color:'#22c55e', desc:'Multiple signals confirming — add aggressively' };
   if (score >= 50) return { label:'ACCUMULATE',     color:'#3b82f6', desc:'Valuation favorable — deploy first tranches' };
   if (score >= 35) return { label:'WATCH',          color:'#f59e0b', desc:'Approaching buy zone — wait for confirmation' };
-  if (score >= 20) return { label:'HOLD CASH',      color:'#94a3b8', desc:'Preserve capital — likely more downside' };
-  return               { label:'WAIT',              color:'#cbd5e1', desc:'Too early or overvalued' };
+  if (score >= 20) return { label:'HOLD CASH',      color:'#999', desc:'Preserve capital — likely more downside' };
+  return               { label:'WAIT',              color:'#bbb', desc:'Too early or overvalued' };
 }
 
 function whatWouldUpgrade(h) {
@@ -901,35 +901,35 @@ const ZONES = {
     { max:0.3,  label:'Extreme Accum', color:'#16a34a' },
     { max:0.5,  label:'Strong Accum',  color:'#22c55e' },
     { max:1.2,  label:'Accumulate',    color:'#3b82f6' },
-    { max:3.5,  label:'Neutral / Watch', color:'#94a3b8' },
+    { max:3.5,  label:'Neutral / Watch', color:'#999' },
     { max:7,    label:'Elevated',      color:'#f97316' },
     { max:999,  label:'Euphoric',      color:'#ef4444' },
   ],
   puell: [
     { max:0.5,  label:'Extreme Accum', color:'#16a34a' },
     { max:0.8,  label:'Accumulate',    color:'#22c55e' },
-    { max:2.0,  label:'Neutral',       color:'#94a3b8' },
+    { max:2.0,  label:'Neutral',       color:'#999' },
     { max:3.0,  label:'Caution',       color:'#f97316' },
     { max:999,  label:'Danger',        color:'#ef4444' },
   ],
   fg: [
     { max:20,   label:'Extreme Fear — Best Buy',   color:'#16a34a' },
     { max:35,   label:'Fear — Accumulate',          color:'#22c55e' },
-    { max:65,   label:'Neutral',                    color:'#94a3b8' },
+    { max:65,   label:'Neutral',                    color:'#999' },
     { max:80,   label:'Greed — Caution',            color:'#f97316' },
     { max:100,  label:'Extreme Greed — Avoid',      color:'#ef4444' },
   ],
   rsi: [
     { max:30,   label:'Oversold — Max Opportunity', color:'#16a34a' },
     { max:50,   label:'Low — Favorable',            color:'#22c55e' },
-    { max:70,   label:'Neutral',                    color:'#94a3b8' },
+    { max:70,   label:'Neutral',                    color:'#999' },
     { max:80,   label:'High — Caution',             color:'#f97316' },
     { max:100,  label:'Overbought — Avoid',         color:'#ef4444' },
   ],
   rr: [
     { max:0.002, label:'Extreme Accum', color:'#16a34a' },
     { max:0.006, label:'Accumulate',    color:'#22c55e' },
-    { max:0.012, label:'Neutral',       color:'#94a3b8' },
+    { max:0.012, label:'Neutral',       color:'#999' },
     { max:0.02,  label:'Caution',       color:'#f97316' },
     { max:999,   label:'Avoid',         color:'#ef4444' },
   ],
@@ -943,7 +943,7 @@ function meterPct(val, min, max) {
 }
 function meterCard(label, displayVal, numVal, min, max, zoneKey, live=false, id='') {
   const valid = numVal !== null && !isNaN(numVal);
-  const zone  = valid ? getZone(numVal, ZONES[zoneKey]) : { label:'N/C', color:'#94a3b8' };
+  const zone  = valid ? getZone(numVal, ZONES[zoneKey]) : { label:'N/C', color:'#999' };
   const pct   = valid ? meterPct(numVal, min, max) : 50;
   return `<div class="meter-card"${id ? ` id="${id}"` : ''}>
     <div class="mc-label">${label}${live ? ' <span class="live-badge">LIVE</span>' : ''}</div>
@@ -1288,8 +1288,8 @@ function renderBig3Cards(big3arr, liveData) {
           <div style="width:3px;height:12px;background:#fbbf24;border-radius:2px"></div>
           <span style="font-size:9px;color:#fbbf24;font-weight:700;letter-spacing:.04em">TRIGGER ${tp}%</span>
         </div>
-        <span style="font-size:9px;color:#475569">|</span>
-        <span style="font-size:9px;color:${pastTrigger?'#fbbf24':'#64748b'}">${meta.triggerLabel}</span>
+        <span style="font-size:9px;color:#666">|</span>
+        <span style="font-size:9px;color:${pastTrigger?'#fbbf24':'#777'}">${meta.triggerLabel}</span>
       </div>
     </div>`;
   }).join('');
@@ -1313,13 +1313,13 @@ async function fetchBig3Live(big3arr) {
     const rsiVals = calcRSI(monthlyCloses, 14);
     const stochK  = calcStochK(rsiVals, 14, 3);
     const lastK   = stochK[stochK.length - 1] ?? 50;
-    const stochSpark = makeSpark(stochK.slice(-14), lastK < 20 ? '#22c55e' : lastK < 40 ? '#f97316' : '#94a3b8', 20);
+    const stochSpark = makeSpark(stochK.slice(-14), lastK < 20 ? '#22c55e' : lastK < 40 ? '#f97316' : '#999', 20);
     const stochPct = lastK < 20
       ? 85 + (1 - lastK/20) * 10        // below 20 — very close
       : lastK < 40
         ? 50 + (40 - lastK) / 20 * 35   // 20-40 range
         : Math.max(10, 50 - (lastK-40)/60*40);
-    const stochColor = lastK < 20 ? '#22c55e' : lastK < 40 ? '#f97316' : '#64748b';
+    const stochColor = lastK < 20 ? '#22c55e' : lastK < 40 ? '#f97316' : '#777';
     // Count consecutive months K has been below 20
     let monthsBelowOversold = 0;
     for (let j = stochK.length - 1; j >= 0; j--) {
@@ -1352,7 +1352,7 @@ async function fetchBig3Live(big3arr) {
     const hrConfirmed  = hrBullishNow && hrFirstFired > 0 && (Date.now() - hrFirstFired >= 14 * 24 * 3600 * 1000);
     const hrDaysIn     = hrBullishNow && hrFirstFired > 0 ? Math.floor((Date.now() - hrFirstFired) / 86400000) : 0;
     const hrPct = Math.min(95, Math.max(5, (ratio - 0.85) / 0.2 * 100));
-    const hrColor = hrConfirmed ? '#22c55e' : hrBullishNow ? '#f97316' : '#64748b';
+    const hrColor = hrConfirmed ? '#22c55e' : hrBullishNow ? '#f97316' : '#777';
     const hrSpark = makeSpark(ratioHistory.slice(-12), hrColor, 50);
     const hrExtra = hrBullishNow && !hrConfirmed
       ? `Confirming — day ${hrDaysIn}/14 · needs 2-week persistence (2022 false signal lesson)`
@@ -1379,10 +1379,10 @@ async function fetchBig3Live(big3arr) {
       soprColor = '#f97316'; soprActive = false;
     } else if (liveFG <= 35) {
       soprPct = Math.round(35 + (35 - liveFG)); // approaching extreme fear
-      soprColor = '#64748b'; soprActive = false;
+      soprColor = '#777'; soprActive = false;
     } else {
       soprPct = Math.max(10, Math.round(35 - (liveFG - 35) * 0.4));
-      soprColor = '#64748b'; soprActive = false;
+      soprColor = '#777'; soprActive = false;
     }
     const soprSpark = makeSpark(fgLive, soprColor, 20);
 
@@ -1405,17 +1405,17 @@ async function fetchBig3Live(big3arr) {
 
     // Hash Ribbons proxy: MVRV < 1 = near capitulation
     const hrPct = Math.min(90, Math.max(5, Math.round((1 - Math.min(mvrv, 2) / 2) * 80)));
-    const hrColor = hrPct > 60 ? '#22c55e' : hrPct > 35 ? '#f97316' : '#64748b';
+    const hrColor = hrPct > 60 ? '#22c55e' : hrPct > 35 ? '#f97316' : '#777';
     const hrVals = HISTORY_DATA.slice(-14).map(d => d.mvrv != null ? Math.max(0, 1 - Math.min(+d.mvrv, 2)/2) * 100 : 50);
 
     // SOPR proxy: F&G
     const soprPct = fg < 15 ? 70 : fg < 25 ? 50 : fg < 40 ? 35 : 20;
-    const soprColor = soprPct > 60 ? '#22c55e' : soprPct > 35 ? '#f97316' : '#64748b';
+    const soprColor = soprPct > 60 ? '#22c55e' : soprPct > 35 ? '#f97316' : '#777';
     const soprVals = HISTORY_DATA.slice(-14).map(d => d.fearGreed != null ? Math.max(0, 50 - +d.fearGreed) : 25);
 
     // Stoch RSI proxy: composite score trend
     const stochPct = Math.round(Math.min(90, Math.max(10, (HISTORY_DATA.slice(-14).map(d => computeScore(d)).reduce((a,b)=>a+b,0) / 14))));
-    const stochColor = stochPct > 65 ? '#22c55e' : stochPct > 40 ? '#f97316' : '#64748b';
+    const stochColor = stochPct > 65 ? '#22c55e' : stochPct > 40 ? '#f97316' : '#777';
     const stochVals = HISTORY_DATA.slice(-14).map(d => computeScore(d));
 
     renderBig3Cards(big3arr, [
@@ -1545,7 +1545,7 @@ function renderToday(d) {
   document.getElementById('conf-pips').innerHTML=Array.from({length:8},(_,i)=>`<div class="conf-pip${i<ct?' active':''}"></div>`).join('');
   const gtags=(d.bottomGreen||[]).map(s=>`<span class="conf-tag conf-tag-green">${s}</span>`).join('');
   const ytags=(d.bottomYellow||[]).map(s=>`<span class="conf-tag conf-tag-yellow">${s}</span>`).join('');
-  document.getElementById('conf-tags').innerHTML=gtags+ytags||'<span style="color:#94a3b8;font-size:12px">No indicators firing</span>';
+  document.getElementById('conf-tags').innerHTML=gtags+ytags||'<span style="color:#999;font-size:12px">No indicators firing</span>';
   renderApathyMonitor();
   // Parse numerics for meters
   const mvrvN = parseFloat(d.mvrv);
@@ -1594,11 +1594,11 @@ function renderToday(d) {
 function shallowCard(title, value, color, sub, context, badge) {
   return `<div style="background:#111;border:1px solid #1e1e1e;border-left:3px solid ${color};border-radius:10px;padding:14px 15px">
     <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px">
-      <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.07em">${title}</div>
+      <div style="font-size:10px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.07em">${title}</div>
       ${badge ? `<span style="font-size:8px;font-weight:700;padding:1px 5px;border-radius:4px;background:${color}22;color:${color};border:1px solid ${color}44">${badge}</span>` : ''}
     </div>
     <div style="font-size:18px;font-weight:700;color:${color};margin-bottom:4px">${value}</div>
-    ${sub  ? `<div style="font-size:11px;color:#94a3b8;margin-bottom:5px">${sub}</div>` : ''}
+    ${sub  ? `<div style="font-size:11px;color:#999;margin-bottom:5px">${sub}</div>` : ''}
     ${context ? `<div style="font-size:10px;color:#7c8fa6;border-top:1px solid #222;padding-top:6px;margin-top:4px;line-height:1.5">${context}</div>` : ''}
   </div>`;
 }
@@ -1619,9 +1619,9 @@ function renderAccumulationPath() {
   const lowestUnfilled = unfilledLower.length ? Math.min(...unfilledLower.map(t => t.price)) : null;
   const pathASignals  = classicScore;
   const pathAStatus   = pathASignals >= 6 ? 'PILE IN Ready' : pathASignals >= 4 ? 'Building' : pathASignals >= 2 ? 'Watching' : 'Early';
-  const pathAColor    = pathASignals >= 6 ? '#22c55e' : pathASignals >= 4 ? '#f97316' : pathASignals >= 2 ? '#f59e0b' : '#475569';
+  const pathAColor    = pathASignals >= 6 ? '#22c55e' : pathASignals >= 4 ? '#f97316' : pathASignals >= 2 ? '#f59e0b' : '#666';
   const pathABadge    = pathAActive ? 'Active' : 'Tranches Exhausted';
-  const pathABadgeBg  = pathAActive ? '#22c55e' : '#64748b';
+  const pathABadgeBg  = pathAActive ? '#22c55e' : '#777';
 
   // Path B: Shallow/Apathy bottom — range holding at current price, no new lows needed
   const recentPrices  = HISTORY_DATA.slice(-21).map(x => x.price).filter(Boolean);
@@ -1629,7 +1629,7 @@ function renderAccumulationPath() {
   const rangeHolding  = recentLow && price ? (price - recentLow) / recentLow < 0.08 : false;
   const pathBForming  = apathyScore >= 3 && price > 48000;
   const pathBConfirmed = apathyScore >= 5 && rangeHolding && price > 48000;
-  const pathBColor    = pathBConfirmed ? '#22c55e' : pathBForming ? '#f97316' : '#475569';
+  const pathBColor    = pathBConfirmed ? '#22c55e' : pathBForming ? '#f97316' : '#666';
   const pathBStatus   = pathBConfirmed ? 'Confirmed ✓' : pathBForming ? 'Forming' : 'Watching';
   const pathBBadge    = pathBConfirmed ? 'Deploy Here' : pathBForming ? 'Signals Building' : 'Not Active';
   const pathBBadgeBg  = pathBConfirmed ? '#22c55e' : pathBForming ? '#f97316' : '#374151';
@@ -1637,22 +1637,22 @@ function renderAccumulationPath() {
   el.innerHTML = `
     <div style="background:#111;border:1px solid #1e1e1e;border-left:3px solid ${pathAColor};border-radius:10px;padding:13px 14px">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
-        <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em">Path A · Classic</div>
+        <div style="font-size:10px;font-weight:700;color:#777;text-transform:uppercase;letter-spacing:.07em">Path A · Classic</div>
         <span style="font-size:8px;font-weight:700;padding:1px 5px;border-radius:4px;background:${pathABadgeBg}22;color:${pathABadgeBg};border:1px solid ${pathABadgeBg}44">${pathABadge}</span>
       </div>
       <div style="font-size:16px;font-weight:700;color:${pathAColor};margin-bottom:4px">${pathAStatus} · ${classicScore}/8</div>
-      <div style="font-size:10px;color:#475569;line-height:1.5">
+      <div style="font-size:10px;color:#666;line-height:1.5">
         ${pathAActive ? `${unfilledLower.length} unfilled tranches · lowest $${lowestUnfilled?.toLocaleString()}` : 'No tranches below current price'}
         <br>Needs: MVRV Z negative · Hash Ribbons confirmed · SOPR recovery
       </div>
     </div>
     <div style="background:#111;border:1px solid #1e1e1e;border-left:3px solid ${pathBColor};border-radius:10px;padding:13px 14px">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
-        <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em">Path B · Shallow</div>
+        <div style="font-size:10px;font-weight:700;color:#777;text-transform:uppercase;letter-spacing:.07em">Path B · Shallow</div>
         <span style="font-size:8px;font-weight:700;padding:1px 5px;border-radius:4px;background:${pathBBadgeBg}22;color:${pathBBadgeBg};border:1px solid ${pathBBadgeBg}44">${pathBBadge}</span>
       </div>
       <div style="font-size:16px;font-weight:700;color:${pathBColor};margin-bottom:4px">${pathBStatus} · ${apathyScore}/8</div>
-      <div style="font-size:10px;color:#475569;line-height:1.5">
+      <div style="font-size:10px;color:#666;line-height:1.5">
         Range holding: ${rangeHolding ? '✓ Yes' : '✗ No'} · Price > $48K: ${price > 48000 ? '✓ Yes' : '✗ No'}
         <br>${pathBConfirmed ? 'Move unfilled tranches UP · Do not wait for $38–50K' : pathBForming ? `Need apathy ${apathyScore >= 5 ? '✓' : `${apathyScore}/5`} + range hold` : 'No apathy consolidation yet'}
       </div>
@@ -1678,11 +1678,11 @@ function renderShallowBottom(d) {
   const rpRaw   = (d.realizedPrice || '').replace(/[^0-9]/g, '');
   const rpVal   = rpRaw ? parseInt(rpRaw) : null;
   const curPrice = livePrice || 0;
-  let rpColor = '#64748b', rpValue = d.realizedPrice || 'N/C', rpSub = '', rpCtx = '', rpBadge = '';
+  let rpColor = '#777', rpValue = d.realizedPrice || 'N/C', rpSub = '', rpCtx = '', rpBadge = '';
   if (rpVal && curPrice) {
     const diffPct = ((curPrice - rpVal) / rpVal * 100).toFixed(1);
     const below   = curPrice < rpVal;
-    rpColor  = below ? '#22c55e' : parseFloat(diffPct) < 10 ? '#f59e0b' : '#64748b';
+    rpColor  = below ? '#22c55e' : parseFloat(diffPct) < 10 ? '#f59e0b' : '#777';
     rpValue  = `~$${rpVal.toLocaleString()}`;
     rpSub    = below
       ? `Spot $${Math.round(curPrice).toLocaleString()} — ${Math.abs(diffPct)}% BELOW realized (accumulation zone)`
@@ -1693,10 +1693,10 @@ function renderShallowBottom(d) {
   const rpCard = shallowCard('Realized Price', rpValue, rpColor, rpSub, rpCtx, rpBadge);
 
   // 3. BTC Dominance — placeholder, filled by fetchBTCDominance()
-  const domCard = `<div id="btc-dom-card" style="background:#111;border:1px solid #1e1e1e;border-left:3px solid #64748b;border-radius:10px;padding:14px 15px">
-    <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">BTC Dominance</div>
-    <div style="font-size:18px;font-weight:700;color:#64748b">Loading…</div>
-    <div style="font-size:10px;color:#475569;border-top:1px solid #1a1a1a;padding-top:6px;margin-top:8px;line-height:1.4">Rising dominance = capital staying in BTC (good). Falling = alt rotation risk / mid-cycle rally signal.</div>
+  const domCard = `<div id="btc-dom-card" style="background:#111;border:1px solid #1e1e1e;border-left:3px solid #777;border-radius:10px;padding:14px 15px">
+    <div style="font-size:10px;font-weight:700;color:#777;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">BTC Dominance</div>
+    <div style="font-size:18px;font-weight:700;color:#777">Loading…</div>
+    <div style="font-size:10px;color:#666;border-top:1px solid #1a1a1a;padding-top:6px;margin-top:8px;line-height:1.4">Rising dominance = capital staying in BTC (good). Falling = alt rotation risk / mid-cycle rally signal.</div>
   </div>`;
 
   grid.innerHTML = etfCard + rpCard + domCard;
@@ -1725,7 +1725,7 @@ async function fetchBTCDominance() {
     const ethLine = ethBtcChg != null
       ? `ETH/BTC 24h: ${ethBtcChg > 0 ? '+' : ''}${ethBtcChg.toFixed(2)}% ${ethBtcChg > 2 ? '(alts outperforming — caution)' : '(BTC holding ground ✓)'}`
       : '';
-    const staleNote = isStale ? `<div style="font-size:9px;color:#64748b;margin-top:5px">⏱ Cached ${staleAgeHours}h ago — CoinGecko rate limited · will auto-retry</div>` : '';
+    const staleNote = isStale ? `<div style="font-size:9px;color:#777;margin-top:5px">⏱ Cached ${staleAgeHours}h ago — CoinGecko rate limited · will auto-retry</div>` : '';
     const contextText = altRotating || domFalling
       ? 'Alts outperforming / BTC.D falling — mid-cycle rally risk. Hold reserve until BTC.D stabilizes or turns up.'
       : domRising
@@ -1772,8 +1772,8 @@ async function fetchBTCDominance() {
     } else {
       const errCard = document.getElementById('btc-dom-card');
       if (errCard) errCard.innerHTML = `
-        <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">BTC Dominance</div>
-        <div style="font-size:15px;font-weight:700;color:#64748b">CoinGecko rate limited</div>
+        <div style="font-size:10px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">BTC Dominance</div>
+        <div style="font-size:15px;font-weight:700;color:#777">CoinGecko rate limited</div>
         <div style="font-size:10px;color:#7c8fa6;margin-top:6px;line-height:1.5">Will retry in 60s · Manual: tradingview.com → BTC.D<br>Rising BTC.D = good · Falling = alt rotation risk</div>
       `;
       setTimeout(fetchBTCDominance, 60000);
@@ -1848,21 +1848,21 @@ function mvrvZone(v)  {
   if (v < 0.3) return { label:'EXTREME ACCUM', color:'#16a34a' };
   if (v < 0.5) return { label:'STRONG ACCUM',  color:'#22c55e' };
   if (v < 1.2) return { label:'WATCH',          color:'#f59e0b' };
-  if (v < 3.5) return { label:'NEUTRAL',        color:'#94a3b8' };
+  if (v < 3.5) return { label:'NEUTRAL',        color:'#999' };
   if (v < 7)   return { label:'ELEVATED',       color:'#f97316' };
   return               { label:'EUPHORIC',      color:'#ef4444' };
 }
 function puellZone(v) {
   if (v < 0.5) return { label:'EXTREME ACCUM', color:'#16a34a' };
   if (v < 0.8) return { label:'ACCUMULATION',  color:'#22c55e' };
-  if (v < 2)   return { label:'NEUTRAL',        color:'#94a3b8' };
+  if (v < 2)   return { label:'NEUTRAL',        color:'#999' };
   if (v < 4)   return { label:'CAUTION',        color:'#f97316' };
   return               { label:'DANGER',        color:'#ef4444' };
 }
 function fgZone(v) {
   if (v < 20)  return { label:'EXTREME FEAR',  color:'#16a34a' };
   if (v < 35)  return { label:'FEAR',           color:'#22c55e' };
-  if (v < 65)  return { label:'NEUTRAL',        color:'#94a3b8' };
+  if (v < 65)  return { label:'NEUTRAL',        color:'#999' };
   if (v < 85)  return { label:'GREED',          color:'#f97316' };
   return               { label:'EXTREME GREED', color:'#ef4444' };
 }
@@ -1878,7 +1878,7 @@ function big3Zone(v) {
   return               { label:'NONE FIRING',   color:'#ef4444' };
 }
 function phaseInfo(p) {
-  return { EARLY_BEAR:{label:'EARLY BEAR',color:'#7c3aed'}, ENTERING_WINDOW:{label:'ENTERING WINDOW',color:'#f97316'}, BOTTOM_WINDOW:{label:'BOTTOM WINDOW',color:'#22c55e'}, EXTENDED:{label:'EXTENDED BEAR',color:'#ef4444'} }[p] || { label:p, color:'#94a3b8' };
+  return { EARLY_BEAR:{label:'EARLY BEAR',color:'#7c3aed'}, ENTERING_WINDOW:{label:'ENTERING WINDOW',color:'#f97316'}, BOTTOM_WINDOW:{label:'BOTTOM WINDOW',color:'#22c55e'}, EXTENDED:{label:'EXTENDED BEAR',color:'#ef4444'} }[p] || { label:p, color:'#999' };
 }
 
 let lastPanelDate = null;
@@ -1917,7 +1917,7 @@ function updateIndicatorPanel(h, isHover) {
   // --- Composite score card ---
   const scoreHtml = `
     <div class="chart-card" style="flex:1;min-width:0;padding:10px 14px">
-      <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Composite Buy Score</div>
+      <div style="font-size:10px;font-weight:700;color:#777;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Composite Buy Score</div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
         <span style="font-size:28px;font-weight:900;color:${tier.color};line-height:1">${score}</span>
         <div>
@@ -1943,7 +1943,7 @@ function updateIndicatorPanel(h, isHover) {
   const cyclePhaseColor = week < 35 ? '#a78bfa' : week < 44 ? '#fb923c' : week < 58 ? '#4ade80' : '#f87171';
   const cycleHtml = `
     <div class="chart-card" style="flex:1;min-width:0;padding:10px 14px">
-      <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Bear Cycle</div>
+      <div style="font-size:10px;font-weight:700;color:#777;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Bear Cycle</div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
         <span style="font-size:28px;font-weight:900;color:${cyclePhaseColor};line-height:1">W${week}</span>
         <div style="flex:1">
@@ -1969,9 +1969,9 @@ function updateIndicatorPanel(h, isHover) {
   // --- Indicator cards ---
   const cards = [
     { lbl:'BTC Price',      val:'$'+Math.round(h.price).toLocaleString(),                                    zone:{ label:ph.label, color:ph.color } },
-    { lbl:'MVRV Z-Score',  val:h.mvrv  != null ? (+h.mvrv).toFixed(2)  : 'N/C', zone:h.mvrv  != null ? mvrvZone(+h.mvrv)  : {label:'N/C',color:'#94a3b8'} },
-    { lbl:'Puell Multiple',val:h.puell != null ? (+h.puell).toFixed(2) : 'N/C', zone:h.puell != null ? puellZone(+h.puell) : {label:'N/C',color:'#94a3b8'} },
-    { lbl:'Fear & Greed',  val:h.fearGreed != null ? h.fearGreed : 'N/C',        zone:h.fearGreed != null ? fgZone(+h.fearGreed) : {label:'N/C',color:'#94a3b8'} },
+    { lbl:'MVRV Z-Score',  val:h.mvrv  != null ? (+h.mvrv).toFixed(2)  : 'N/C', zone:h.mvrv  != null ? mvrvZone(+h.mvrv)  : {label:'N/C',color:'#999'} },
+    { lbl:'Puell Multiple',val:h.puell != null ? (+h.puell).toFixed(2) : 'N/C', zone:h.puell != null ? puellZone(+h.puell) : {label:'N/C',color:'#999'} },
+    { lbl:'Fear & Greed',  val:h.fearGreed != null ? h.fearGreed : 'N/C',        zone:h.fearGreed != null ? fgZone(+h.fearGreed) : {label:'N/C',color:'#999'} },
     { lbl:'Bottom Conf',   val:h.bottomConf+'/8', zone:confZone(h.bottomConf) },
   ];
   const cardsHtml = `<div class="ind-grid">
@@ -2003,8 +2003,8 @@ function updateIndicatorPanel(h, isHover) {
           <div class="ind-card-bar" style="background:${active?'#22c55e':'#222'}"></div>
           <div class="ind-card-body">
             <div class="ind-card-lbl">${b3.name}</div>
-            <div class="ind-card-val" style="color:${active?'#22c55e':'#94a3b8'};font-size:14px">${active?'✓ ACTIVE':'— Waiting'}</div>
-            <div class="ind-card-zone" style="color:${active?'#16a34a':'#94a3b8'};font-size:9px;white-space:normal;line-height:1.3">${b3.desc}</div>
+            <div class="ind-card-val" style="color:${active?'#22c55e':'#999'};font-size:14px">${active?'✓ ACTIVE':'— Waiting'}</div>
+            <div class="ind-card-zone" style="color:${active?'#16a34a':'#999'};font-size:9px;white-space:normal;line-height:1.3">${b3.desc}</div>
           </div>
         </div>`;
       }).join('')}
@@ -2017,8 +2017,8 @@ function updateIndicatorPanel(h, isHover) {
     <div class="levels-box">
       <div class="levels-lbl">Key Price Levels</div>
       <div class="levels-row">
-        <span class="levels-item">200WMA ~$61K &nbsp;<strong style="color:${below200wma?'#16a34a':'#94a3b8'}">${below200wma?'BELOW ✓':'Above'}</strong></span>
-        <span class="levels-item">LTH Cost ~$48K &nbsp;<strong style="color:${belowLTH?'#16a34a':'#94a3b8'}">${belowLTH?'BELOW ✓':'Above'}</strong></span>
+        <span class="levels-item">200WMA ~$61K &nbsp;<strong style="color:${below200wma?'#16a34a':'#999'}">${below200wma?'BELOW ✓':'Above'}</strong></span>
+        <span class="levels-item">LTH Cost ~$48K &nbsp;<strong style="color:${belowLTH?'#16a34a':'#999'}">${belowLTH?'BELOW ✓':'Above'}</strong></span>
       </div>
     </div>`;
 
@@ -2091,12 +2091,12 @@ function makeVMarkerPlugin(datesRef) {
         ctx.save();
         ctx.beginPath();
         ctx.setLineDash([2,2]);
-        ctx.strokeStyle = '#64748b';
+        ctx.strokeStyle = '#777';
         ctx.lineWidth = 1;
         ctx.moveTo(xp, top); ctx.lineTo(xp, bottom);
         ctx.stroke();
         ctx.setLineDash([]);
-        ctx.fillStyle = '#64748b';
+        ctx.fillStyle = '#777';
         ctx.font = 'bold 9px system-ui';
         ctx.fillText('Today', xp+3, top+22);
         ctx.restore();
@@ -2140,7 +2140,7 @@ function makePriceLevelPlugin() {
       const trancheColors = ['#f97316','#f97316','#ef4444','#ef4444','#dc2626'];
       const trancheLevels = PLAN.tranches.map((t, i) => ({
         price: t.price,
-        color: t.filled ? '#94a3b8' : trancheColors[i],
+        color: t.filled ? '#999' : trancheColors[i],
         label: t.label + ' $' + (t.price/1000).toFixed(0) + 'K' + (t.note ? ' · '+t.note : ''),
         dash: [4,3], width: 1, alpha: t.filled ? 0.3 : 0.55,
       }));
@@ -2424,8 +2424,8 @@ async function renderHistory() {
         tooltip: {
           backgroundColor: 'rgba(15,23,42,0.95)',
           titleColor: '#f8fafc',
-          bodyColor: '#94a3b8',
-          borderColor: '#334155',
+          bodyColor: '#999',
+          borderColor: '#555',
           borderWidth: 1,
           padding: 12,
           callbacks: {
@@ -2466,7 +2466,7 @@ async function renderHistory() {
             callback: (_,i) => tickLabels[i]||null,
             autoSkip: false,
             font: { size: 11 },
-            color: '#94a3b8',
+            color: '#999',
             maxTicksLimit: 50
           },
           grid: { color: '#1a1a1a', lineWidth: 1 }
@@ -2477,7 +2477,7 @@ async function renderHistory() {
           ticks: {
             callback: v => v>=1000?'$'+(v/1000).toFixed(0)+'K':'$'+v,
             font: { size: 10 },
-            color: '#94a3b8',
+            color: '#999',
             maxTicksLimit: 8
           },
           grid: { color: '#1a1a1a' }
@@ -2762,10 +2762,10 @@ function buildHistoryTable() {
         const sc  = computeScore(h);
         const ti  = scoreTier(sc);
         const vc  = valuationColor(h);
-        const vlbl= vc==='#16a34a'?'Extreme Cheap':vc==='#22c55e'?'Very Cheap':vc==='#3b82f6'?'Cheap':vc==='#94a3b8'?'Fair Value':vc==='#f97316'?'Expensive':'Neutral';
+        const vlbl= vc==='#16a34a'?'Extreme Cheap':vc==='#22c55e'?'Very Cheap':vc==='#3b82f6'?'Cheap':vc==='#999'?'Fair Value':vc==='#f97316'?'Expensive':'Neutral';
         return `
         <tr>
-          <td style="color:#64748b">${fmtDate(h.date)}</td>
+          <td style="color:#777">${fmtDate(h.date)}</td>
           <td style="text-align:right;font-weight:700">$${h.price.toLocaleString()}</td>
           <td style="text-align:right">${h.mvrv}</td>
           <td style="text-align:right">${h.fearGreed}</td>
@@ -2773,7 +2773,7 @@ function buildHistoryTable() {
           <td style="text-align:right">${h.big3}/3</td>
           <td style="text-align:right;font-weight:700;color:${ti.color}">${sc}</td>
           <td><span class="sig-pill"><span style="width:8px;height:8px;border-radius:50%;background:${vc};display:inline-block;margin-right:4px"></span>${vlbl}</span></td>
-          <td style="text-align:right;color:#94a3b8">${h.week}</td>
+          <td style="text-align:right;color:#999">${h.week}</td>
         </tr>`;}).join('')}
       </tbody>
     </table>`;
@@ -2860,9 +2860,9 @@ function renderPlan() {
     const hit    = price && price <= t.price;
     const near   = price && !hit && dist && parseFloat(dist) < 8;
     const status = t.filled ? '✓ Filled' : hit ? '⚡ Triggered!' : t.note ? t.note : 'Pending';
-    const color  = t.filled ? '#94a3b8' : hit ? '#16a34a' : near ? '#f97316' : '#64748b';
+    const color  = t.filled ? '#999' : hit ? '#16a34a' : near ? '#f97316' : '#777';
     const bg     = t.filled ? '#111' : hit ? '#0d1f0d' : near ? '#1f0d00' : '#141414';
-    const border = t.filled ? '#334155' : hit ? '#14532d' : near ? '#7c2d12' : '#334155';
+    const border = t.filled ? '#555' : hit ? '#14532d' : near ? '#7c2d12' : '#555';
     return { ...t, dist, hit, near, status, color, bg, border };
   });
 
@@ -2925,7 +2925,7 @@ function renderPlan() {
 
   <!-- CAPITAL DEPLOYMENT -->
   <div class="chart-card" style="margin-bottom:10px">
-    <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">💰 Capital Deployment</div>
+    <div style="font-size:11px;font-weight:700;color:#777;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">💰 Capital Deployment</div>
     ${(()=>{
       const gap = parseFloat(combinedPct) - depTarget;
       const onTrack = Math.abs(gap) <= 5;
@@ -2949,13 +2949,13 @@ function renderPlan() {
             ].map(m => `<div style="position:absolute;top:-2px;left:${m.pct}%;transform:translateX(-0.5px);z-index:10" onmouseenter="this.querySelector('.pm-tip').style.display='block'" onmouseleave="this.querySelector('.pm-tip').style.display='none'"><div style="width:1px;height:14px;background:${m.color};opacity:0.6"></div><div class="pm-tip" style="display:none;position:absolute;bottom:18px;left:50%;transform:translateX(-50%);white-space:nowrap;background:#111;border:1px solid ${m.color};border-radius:4px;padding:3px 8px;font-size:10px;font-weight:600;color:${m.color};pointer-events:none;z-index:99">${m.label} · ${m.pct}% · $${Math.round(m.pct/100*PLAN.totalBudget).toLocaleString()}</div></div>`).join('')}
             <div class="tip" style="position:absolute;top:-3px;left:${depTarget}%;transform:translateX(-2px);width:4px;height:16px;z-index:20"><div style="width:4px;height:16px;background:#e5e5e5;border-radius:1px"></div><span class="tiptext">📍 <strong>Deployment Target: ${depTarget}%</strong> ($${Math.round(depTarget/100*PLAN.totalBudget).toLocaleString()})<br><br>Where your capital deployment should be right now:<br>• Phase: ${depPhaseLabel} (base ${depPhase.base}%)<br>• Score adj: ${scoreAdj >= 0 ? '+' : ''}${scoreAdj}%<br><br>Blue = filled/deployed. Teal = active limit orders waiting to fill.<br>Bar left of line = behind target. Right = ahead.</span></div>
           </div>
-          <span style="font-size:14px;font-weight:800;color:${tier.color};white-space:nowrap">${combinedPct}% <span style="font-size:10px;font-weight:500;color:#64748b">(${pct}% filled)</span></span>
+          <span style="font-size:14px;font-weight:800;color:${tier.color};white-space:nowrap">${combinedPct}% <span style="font-size:10px;font-weight:500;color:#777">(${pct}% filled)</span></span>
         </div>
         <div style="display:flex;gap:12px;margin-top:5px;align-items:center;flex-wrap:wrap">
           <span style="color:${statusColor};font-weight:600;font-size:10px">${statusText}</span>
           <span style="display:flex;gap:8px;align-items:center;font-size:10px">
-            <span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:2px;background:${tier.color};display:inline-block"></span><span style="color:#64748b">Deployed $${deployed.toLocaleString()}</span></span>
-            <span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:2px;background:#0e7490;display:inline-block;opacity:0.7"></span><span style="color:#64748b">Committed $${committed.toLocaleString()}</span></span>
+            <span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:2px;background:${tier.color};display:inline-block"></span><span style="color:#777">Deployed $${deployed.toLocaleString()}</span></span>
+            <span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:2px;background:#0e7490;display:inline-block;opacity:0.7"></span><span style="color:#777">Committed $${committed.toLocaleString()}</span></span>
           </span>
           <span style="color:#333;font-size:10px;margin-left:auto">Target: <strong style="color:#666">${depTarget}%</strong> · ${depPhaseLabel}${scoreAdj !== 0 ? ' · Score adj: '+(scoreAdj>0?'+':'')+scoreAdj+'%' : ''}</span>
         </div>
@@ -2988,14 +2988,14 @@ function renderPlan() {
   <!-- THIS WEEK'S DCA -->
   <div class="chart-card" style="margin-bottom:10px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em">This Week's DCA</div>
+      <div style="font-size:11px;font-weight:700;color:#777;text-transform:uppercase;letter-spacing:.07em">This Week's DCA</div>
       <div style="font-size:12px;font-weight:700;color:${shouldDouble?'#ef4444':'#22c55e'}">${dcaLabel}</div>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:10px">
       ${buyLabels.map(b => `
         <div style="flex:1;text-align:center;padding:10px 6px;border-radius:8px;border:1px solid ${b.isToday?'#e5e5e5':'#222'};background:${b.isToday?'#1a1a1a':'#0d0d0d'}">
           <div style="font-size:12px;font-weight:700;color:${b.isToday?'#fff':'#aaa'}">${b.name}</div>
-          <div style="font-size:10px;color:#94a3b8;margin-top:2px">${b.date}</div>
+          <div style="font-size:10px;color:#999;margin-top:2px">${b.date}</div>
           <div style="font-size:13px;font-weight:800;color:${b.isToday?'#2563eb':'#22c55e'};margin-top:4px">$${dcaAmount.toLocaleString()}</div>
           ${b.isToday?'<div style="font-size:9px;color:#2563eb;margin-top:2px;font-weight:700">BUY TODAY</div>':''}
         </div>`).join('')}
@@ -3012,7 +3012,7 @@ function renderPlan() {
 
   <!-- TRANCHE STATUS -->
   <div class="chart-card" style="margin-bottom:10px">
-    <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Tranche Targets ${price?'· Live $'+Math.round(price).toLocaleString():''}</div>
+    <div style="font-size:11px;font-weight:700;color:#777;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Tranche Targets ${price?'· Live $'+Math.round(price).toLocaleString():''}</div>
     <div style="display:flex;flex-direction:column;gap:6px">
       ${(() => {
         // Group sub-levels (T5a/b/c, T6a/b/c) into zone blocks
@@ -3044,7 +3044,7 @@ function renderPlan() {
               <div style="font-size:13px;font-weight:800;color:${t.color};min-width:52px">${t.label}</div>
               <div style="font-size:14px;font-weight:700;color:#e5e5e5;min-width:72px">$${t.price.toLocaleString()}</div>
               <div style="min-width:130px">
-                ${t.size ? `<div style="font-size:11px;color:#64748b">$${t.size.toLocaleString()} total</div>` : ''}
+                ${t.size ? `<div style="font-size:11px;color:#777">$${t.size.toLocaleString()} total</div>` : ''}
                 ${perEx ? `<div style="font-size:11px;color:#f97316;font-weight:600">$${perEx} × 2 exch</div>` : ''}
               </div>
               <div style="flex:1"></div>
@@ -3062,7 +3062,7 @@ function renderPlan() {
             <div style="border:1.5px solid ${gc}33;border-radius:10px;overflow:hidden;background:#0d0d0d">
               <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:${gc}12;border-bottom:1px solid ${gc}22">
                 <div style="font-size:12px;font-weight:800;color:${gc};min-width:52px">${grp.key} ZONE</div>
-                <div style="font-size:11px;color:#94a3b8">$${priceLow} – $${priceHigh} · ${grp.rows.length} levels · ${perLevel}</div>
+                <div style="font-size:11px;color:#999">$${priceLow} – $${priceHigh} · ${grp.rows.length} levels · ${perLevel}</div>
                 <div style="flex:1"></div>
                 <div style="font-size:12px;font-weight:800;color:${gc}">$${grp.total.toLocaleString()} zone total</div>
               </div>
@@ -3075,7 +3075,7 @@ function renderPlan() {
                     <div style="font-size:12px;font-weight:700;color:${t.color};min-width:52px">${t.label}</div>
                     <div style="font-size:13px;font-weight:700;color:#e5e5e5;min-width:72px">$${t.price.toLocaleString()}</div>
                     <div style="min-width:130px">
-                      ${t.size ? `<div style="font-size:11px;color:#64748b">$${t.size.toLocaleString()} total</div>` : ''}
+                      ${t.size ? `<div style="font-size:11px;color:#777">$${t.size.toLocaleString()} total</div>` : ''}
                       ${perEx ? `<div style="font-size:11px;color:#f97316;font-weight:600">$${perEx} × 2 exch</div>` : ''}
                     </div>
                     <div style="flex:1"></div>
@@ -3089,7 +3089,7 @@ function renderPlan() {
         }).join('');
       })()}
     </div>
-    <div style="margin-top:10px;font-size:11px;color:#94a3b8">Tranche lines are drawn on the History chart. Mark filled=true in PLAN.tranches when a level executes.</div>
+    <div style="margin-top:10px;font-size:11px;color:#999">Tranche lines are drawn on the History chart. Mark filled=true in PLAN.tranches when a level executes.</div>
   </div>
 
   <!-- RESERVE MODE / TRANCHE STATUS -->
@@ -3118,24 +3118,24 @@ function renderPlan() {
       : [];
     return `<div class="chart-card" style="margin-bottom:10px;border-left:3px solid ${accent}">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em">Tranche Status &amp; Reserve</div>
+        <div style="font-size:11px;font-weight:700;color:#777;text-transform:uppercase;letter-spacing:.07em">Tranche Status &amp; Reserve</div>
         <span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:4px;background:${accent}22;color:${accent};border:1px solid ${accent}44">${filled.length}/${total} Filled</span>
       </div>
       ${avgCost ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
         <div>
-          <div style="font-size:10px;color:#64748b;margin-bottom:2px">Tranche Avg Cost</div>
+          <div style="font-size:10px;color:#777;margin-bottom:2px">Tranche Avg Cost</div>
           <div style="font-size:22px;font-weight:700;color:#e5e5e5">$${Math.round(avgCost).toLocaleString()}</div>
-          <div style="font-size:10px;color:#475569">${totalQty.toFixed(4)} BTC from ${trancheBuys.length} fills</div>
+          <div style="font-size:10px;color:#666">${totalQty.toFixed(4)} BTC from ${trancheBuys.length} fills</div>
         </div>
         <div>
-          <div style="font-size:10px;color:#64748b;margin-bottom:5px">Projected (tranche BTC only)</div>
-          ${targets.map(t => `<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px"><span style="color:#64748b">BTC @ $${(t.price/1000).toFixed(0)}K</span><span style="color:#22c55e;font-weight:600">$${t.val.toLocaleString()}</span></div>`).join('')}
+          <div style="font-size:10px;color:#777;margin-bottom:5px">Projected (tranche BTC only)</div>
+          ${targets.map(t => `<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px"><span style="color:#777">BTC @ $${(t.price/1000).toFixed(0)}K</span><span style="color:#22c55e;font-weight:600">$${t.val.toLocaleString()}</span></div>`).join('')}
         </div>
       </div>` : ''}
       <div style="background:${resColor}11;border:1px solid ${resColor}33;border-radius:7px;padding:9px 12px">
         <div style="font-size:11px;font-weight:700;color:${resColor};margin-bottom:3px">${resLabel}</div>
-        <div style="font-size:10px;color:#64748b">${resNote}</div>
-        <div style="font-size:11px;color:#94a3b8;margin-top:5px">Undeployed capital: <strong style="color:#e5e5e5">$${reserveHeld.toLocaleString()}</strong></div>
+        <div style="font-size:10px;color:#777">${resNote}</div>
+        <div style="font-size:11px;color:#999;margin-top:5px">Undeployed capital: <strong style="color:#e5e5e5">$${reserveHeld.toLocaleString()}</strong></div>
       </div>
     </div>`;
   })()}
@@ -3166,25 +3166,25 @@ function renderPlan() {
       note = w35Open ? 'Entering window (W35+) — slight DCA increase' : 'Classic 3+ signals — step up DCA';
       nextTrigger = `Next: $1,000/buy when W44 opens (${W44_DATE})`;
     } else {
-      tier = 'Standard'; rate = '$500/buy'; tColor = '#64748b';
+      tier = 'Standard'; rate = '$500/buy'; tColor = '#777';
       note = 'Early bear, pre-W35 — conservative cadence, let tranches work';
       nextTrigger = `Next: $750/buy when W35 opens (${W35_DATE}) or Classic ≥3`;
     }
     return `<div class="chart-card" style="margin-bottom:10px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em">Score-Based DCA Rate</div>
+        <div style="font-size:11px;font-weight:700;color:#777;text-transform:uppercase;letter-spacing:.07em">Score-Based DCA Rate</div>
         <span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:4px;background:${tColor}22;color:${tColor};border:1px solid ${tColor}44">${tier}</span>
       </div>
       <div style="font-size:28px;font-weight:700;color:${tColor};margin-bottom:4px">${rate}</div>
-      <div style="font-size:11px;color:#94a3b8;margin-bottom:8px">${note}</div>
-      ${nextTrigger ? `<div style="font-size:10px;color:#475569;border-top:1px solid #1a1a1a;padding-top:7px">${nextTrigger}</div>` : ''}
-      <div style="margin-top:8px;font-size:10px;color:#334155">Based on: Classic ${cs}/8 · Apathy ${as2}/8 · Week ${bw} · ${w44Open ? 'W44+ window open' : w35Open ? 'W35+ entering window' : 'Pre-W35 early bear'}</div>
+      <div style="font-size:11px;color:#999;margin-bottom:8px">${note}</div>
+      ${nextTrigger ? `<div style="font-size:10px;color:#666;border-top:1px solid #1a1a1a;padding-top:7px">${nextTrigger}</div>` : ''}
+      <div style="margin-top:8px;font-size:10px;color:#555">Based on: Classic ${cs}/8 · Apathy ${as2}/8 · Week ${bw} · ${w44Open ? 'W44+ window open' : w35Open ? 'W35+ entering window' : 'Pre-W35 early bear'}</div>
     </div>`;
   })()}
 
   <!-- DCA ESCALATION MODE -->
   <div class="chart-card" style="margin-bottom:10px">
-    <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">DCA Price-Zone Escalation</div>
+    <div style="font-size:11px;font-weight:700;color:#777;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">DCA Price-Zone Escalation</div>
     <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px">
       ${(PLAN.dcaZones||[]).map((z,i) => {
         const isActive = i === dcaZoneIndex;
@@ -3192,7 +3192,7 @@ function renderPlan() {
         const locked   = isActive && z.big3Req > 0 && !big3Met;
         const bg       = isActive ? (locked ? '#1a1000' : '#0d1a0d') : '#111';
         const border   = isActive ? (locked ? '#92400e' : z.color) : '#222';
-        const labelCol = isActive ? (locked ? '#fbbf24' : z.color) : '#334155';
+        const labelCol = isActive ? (locked ? '#fbbf24' : z.color) : '#555';
         const priceLabel = i === 0
           ? `Above $${(z.minPrice - 1).toLocaleString()}`
           : i === (PLAN.dcaZones.length-1)
@@ -3201,8 +3201,8 @@ function renderPlan() {
         return `<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;border:1.5px solid ${border};background:${bg}">
           <div style="width:8px;height:8px;border-radius:50%;background:${isActive?z.color:'#333'};flex-shrink:0"></div>
           <div style="font-size:12px;font-weight:700;color:${labelCol};min-width:80px">${z.label}</div>
-          <div style="font-size:11px;color:#64748b;min-width:120px">${priceLabel}</div>
-          <div style="font-size:11px;font-weight:${isActive?'700':'400'};color:${isActive?(locked?'#fbbf24':z.color):'#475569'};flex:1">${z.perBuy}</div>
+          <div style="font-size:11px;color:#777;min-width:120px">${priceLabel}</div>
+          <div style="font-size:11px;font-weight:${isActive?'700':'400'};color:${isActive?(locked?'#fbbf24':z.color):'#666'};flex:1">${z.perBuy}</div>
           ${isActive && locked ? `<div style="font-size:10px;color:#fbbf24;font-weight:600">⚠ Awaiting Big 3 (${latestBig3}/${z.big3Req})</div>` : ''}
           ${isActive && !locked ? `<div style="font-size:10px;color:${z.color};font-weight:700">● ACTIVE</div>` : ''}
         </div>`;
@@ -3210,16 +3210,16 @@ function renderPlan() {
     </div>
     ${activeDcaZone ? `
     <div style="background:#0f1a0f;border:1px solid #1a3a1a;border-radius:8px;padding:10px 12px">
-      <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Current Instruction</div>
+      <div style="font-size:10px;font-weight:700;color:#777;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Current Instruction</div>
       <div style="font-size:12px;color:${activeDcaZone.color};font-weight:600">${activeDcaZone.action}</div>
       ${activeDcaZone.big3Req > 0 && latestBig3 < activeDcaZone.big3Req ? `<div style="font-size:11px;color:#fbbf24;margin-top:4px">⚠ Big 3 confirmation required (${latestBig3}/${activeDcaZone.big3Req}) before switching to this mode</div>` : ''}
     </div>` : ''}
-    <div style="margin-top:8px;font-size:11px;color:#475569">Remaining DCA budget: <strong style="color:#e5e5e5">$${((PLAN.dcaBudget||0)-(PLAN.dcaDeployed||0)).toLocaleString()}</strong> · Escalation triggers automatically on price zone entry</div>
+    <div style="margin-top:8px;font-size:11px;color:#666">Remaining DCA budget: <strong style="color:#e5e5e5">$${((PLAN.dcaBudget||0)-(PLAN.dcaDeployed||0)).toLocaleString()}</strong> · Escalation triggers automatically on price zone entry</div>
   </div>
 
   <!-- BUY HISTORY -->
   <div class="chart-card" style="margin-bottom:10px">
-    <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Buy History</div>
+    <div style="font-size:11px;font-weight:700;color:#777;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Buy History</div>
     ${(()=>{
       const buys = [...(PLAN.buys || [])].reverse();
       const rows = buys.map(b => {
@@ -3230,10 +3230,10 @@ function renderPlan() {
         const d = new Date(b.date + 'T12:00:00');
         const dateStr = d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
         return `<tr style="border-bottom:1px solid #161616">
-          <td style="padding:7px 8px;color:#94a3b8;white-space:nowrap">${dateStr}</td>
+          <td style="padding:7px 8px;color:#999;white-space:nowrap">${dateStr}</td>
           <td style="padding:7px 8px"><span style="font-size:10px;font-weight:700;color:${typeColor};background:${typeColor}20;padding:2px 7px;border-radius:4px;white-space:nowrap">${typeLabel}</span></td>
-          <td style="padding:7px 8px;text-align:right;color:#64748b;font-variant-numeric:tabular-nums">$${b.price.toLocaleString()}</td>
-          <td style="padding:7px 8px;text-align:right;color:#cbd5e1;font-weight:600;font-variant-numeric:tabular-nums">${b.qty.toFixed(5)}</td>
+          <td style="padding:7px 8px;text-align:right;color:#777;font-variant-numeric:tabular-nums">$${b.price.toLocaleString()}</td>
+          <td style="padding:7px 8px;text-align:right;color:#bbb;font-weight:600;font-variant-numeric:tabular-nums">${b.qty.toFixed(5)}</td>
           <td style="padding:7px 8px;text-align:right;font-weight:700;color:${typeColor};font-variant-numeric:tabular-nums">$${usd.toLocaleString()}</td>
         </tr>`;
       }).join('');
@@ -3241,7 +3241,7 @@ function renderPlan() {
       return `
       <table style="width:100%;border-collapse:collapse;font-size:12px">
         <thead>
-          <tr style="color:#475569;font-size:10px;text-transform:uppercase;letter-spacing:.06em">
+          <tr style="color:#666;font-size:10px;text-transform:uppercase;letter-spacing:.06em">
             <th style="text-align:left;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Date</th>
             <th style="text-align:left;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Type</th>
             <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Price</th>
@@ -3252,29 +3252,29 @@ function renderPlan() {
         <tbody>${rows}</tbody>
       </table>
       <div style="margin-top:10px;display:flex;gap:20px;flex-wrap:wrap;font-size:11px;padding:8px 4px;border-top:1px solid #1e1e1e">
-        <span style="color:#64748b">Tranches: <strong style="color:#f97316">$${(PLAN.trancheDeployed||0).toLocaleString()}</strong></span>
-        <span style="color:#64748b">DCA: <strong style="color:#3b82f6">$${(PLAN.dcaDeployed||0).toLocaleString()}</strong></span>
-        <span style="color:#64748b">BTC held: <strong style="color:#e5e5e5">${totalBtc} BTC</strong></span>
-        <span style="color:#64748b">Avg cost: <strong style="color:#e5e5e5">$${(PLAN.avgPrice||0).toLocaleString()}</strong></span>
+        <span style="color:#777">Tranches: <strong style="color:#f97316">$${(PLAN.trancheDeployed||0).toLocaleString()}</strong></span>
+        <span style="color:#777">DCA: <strong style="color:#3b82f6">$${(PLAN.dcaDeployed||0).toLocaleString()}</strong></span>
+        <span style="color:#777">BTC held: <strong style="color:#e5e5e5">${totalBtc} BTC</strong></span>
+        <span style="color:#777">Avg cost: <strong style="color:#e5e5e5">$${(PLAN.avgPrice||0).toLocaleString()}</strong></span>
       </div>`;
     })()}
   </div>
 
   <!-- MILESTONE COUNTDOWN -->
   <div class="chart-card" style="margin-bottom:10px">
-    <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Next Milestone</div>
+    <div style="font-size:11px;font-weight:700;color:#777;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Next Milestone</div>
     <div style="display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:6px;background:#111;border-left:3px solid ${milestone.color}">
       <div style="font-size:32px;font-weight:900;color:${milestone.color};min-width:44px;text-align:center;line-height:1">${milestone.days}</div>
       <div>
         <div style="font-size:13px;font-weight:700;color:#e5e5e5">${milestone.label} <span style="color:#555;font-weight:400">· ${milestone.date}</span></div>
-        <div style="font-size:11px;color:#64748b;margin-top:3px">${milestone.note}</div>
+        <div style="font-size:11px;color:#777;margin-top:3px">${milestone.note}</div>
       </div>
     </div>
-    ${daysToW35 > 0 ? `<div style="margin-top:8px;font-size:11px;color:#94a3b8">After W35: score multiplier lifts to 0.85×. After W44 (${daysToW44}d): full thresholds unlock — historical bottom zone.</div>` : `<div style="margin-top:8px;font-size:11px;color:#16a34a;font-weight:600">✓ In entering window. Watch for Stoch RSI compression + SOPR recovery as bottom confirmation.</div>`}
+    ${daysToW35 > 0 ? `<div style="margin-top:8px;font-size:11px;color:#999">After W35: score multiplier lifts to 0.85×. After W44 (${daysToW44}d): full thresholds unlock — historical bottom zone.</div>` : `<div style="margin-top:8px;font-size:11px;color:#16a34a;font-weight:600">✓ In entering window. Watch for Stoch RSI compression + SOPR recovery as bottom confirmation.</div>`}
   </div>
 
   <!-- STRATEGY REMINDER -->
-  <div style="background:#0f172a;border-radius:10px;padding:14px 16px;color:#94a3b8;font-size:11px;line-height:1.7">
+  <div style="background:#111;border-radius:10px;padding:14px 16px;color:#999;font-size:11px;line-height:1.7">
     <div style="color:#e5e5e5;font-weight:700;margin-bottom:6px">Your Strategy in Plain Terms</div>
     $${(dcaAmount).toLocaleString()} × Sun/Tue/Thu (${scoreBaseLabel}). If price drops 9%+ from the last DCA buy price, doubles to $${(dcaAmount*2).toLocaleString()}/buy. Resets automatically when a new buy is recorded at the lower level.
     Tranches at $58K, $53K, $49K, $43K, $38K are set — they fill automatically when price hits them.
@@ -3564,24 +3564,24 @@ function renderApathyMonitor() {
   } else if (combined >= 7) {
     action=`BUILDING — Both tracks advancing. Hold full ladder. DCA ${_dcaRate}.`; ac='#fbbf24'; ab='#d97706'; ae='🟡';
   } else {
-    action=`HOLD LADDER — Signals early. Keep all orders set. DCA ${_dcaRate}. Patience is the edge.`; ac='#64748b'; ab='#334155'; ae='⚪';
+    action=`HOLD LADDER — Signals early. Keep all orders set. DCA ${_dcaRate}. Patience is the edge.`; ac='#777'; ab='#555'; ae='⚪';
   }
 
   el.innerHTML = `
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
     <div style="background:#141414;border:1px solid #2a2a2a;border-radius:10px;padding:13px">
-      <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Classic Track</div>
-      <div style="font-size:26px;font-weight:800;color:${classicScore>=6?'#22c55e':classicScore>=4?'#f97316':'#94a3b8'}">${classicScore}<span style="font-size:12px;color:#64748b">/8</span></div>
+      <div style="font-size:10px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Classic Track</div>
+      <div style="font-size:26px;font-weight:800;color:${classicScore>=6?'#22c55e':classicScore>=4?'#f97316':'#999'}">${classicScore}<span style="font-size:12px;color:#777">/8</span></div>
       <div style="display:flex;gap:2px;margin:7px 0 5px">${Array.from({length:8},(_,i)=>`<div style="flex:1;height:4px;border-radius:2px;background:${i<classicScore?'#22c55e':'#2a2a2a'}"></div>`).join('')}</div>
-      <div style="font-size:10px;color:#64748b">MVRV · Puell · F&G · Big 3 · Timing</div>
-      <div style="font-size:10px;color:#475569;margin-top:3px">Requires deep capitulation signals</div>
+      <div style="font-size:10px;color:#777">MVRV · Puell · F&G · Big 3 · Timing</div>
+      <div style="font-size:10px;color:#666;margin-top:3px">Requires deep capitulation signals</div>
     </div>
     <div style="background:#141414;border:1px solid #2a2a2a;border-radius:10px;padding:13px">
-      <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Apathy Track</div>
-      <div style="font-size:26px;font-weight:800;color:${apathyScore>=5?'#22c55e':apathyScore>=3?'#06b6d4':'#94a3b8'}">${apathyScore}<span style="font-size:12px;color:#64748b">/8</span></div>
+      <div style="font-size:10px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Apathy Track</div>
+      <div style="font-size:26px;font-weight:800;color:${apathyScore>=5?'#22c55e':apathyScore>=3?'#06b6d4':'#999'}">${apathyScore}<span style="font-size:12px;color:#777">/8</span></div>
       <div style="display:flex;gap:2px;margin:7px 0 5px">${Array.from({length:8},(_,i)=>`<div style="flex:1;height:4px;border-radius:2px;background:${i<apathyScore?'#06b6d4':'#2a2a2a'}"></div>`).join('')}</div>
-      <div style="font-size:10px;color:#64748b">Range · Vol · MVRV · Floor · Time</div>
-      <div style="font-size:10px;color:#475569;margin-top:3px">Bottom without blow-off top pattern</div>
+      <div style="font-size:10px;color:#777">Range · Vol · MVRV · Floor · Time</div>
+      <div style="font-size:10px;color:#666;margin-top:3px">Bottom without blow-off top pattern</div>
     </div>
   </div>
   <div style="display:flex;flex-direction:column;gap:3px;margin-bottom:8px">
@@ -3589,15 +3589,15 @@ function renderApathyMonitor() {
     <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#111;border-radius:6px;border:1px solid ${s.active?(s.auto?'#164e63':'#14532d'):'#1a1a1a'}">
       <div style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${s.active?(s.auto?'#06b6d4':'#22c55e'):'#2a2a2a'}"></div>
       <div style="flex:1;min-width:0">
-        <span style="font-size:12px;font-weight:600;color:${s.active?'#f1f5f9':'#64748b'}">${s.label}</span>
-        <span style="font-size:9px;color:${s.live?'#0891b2':s.auto?'#475569':'#475569'};margin-left:6px">${s.live?'LIVE API':s.auto?'AUTO':'MANUAL'}</span>
-        <div style="font-size:11px;color:${s.active?'#94a3b8':'#475569'};margin-top:2px">${s.desc}</div>
+        <span style="font-size:12px;font-weight:600;color:${s.active?'#f1f5f9':'#777'}">${s.label}</span>
+        <span style="font-size:9px;color:${s.live?'#0891b2':s.auto?'#666':'#666'};margin-left:6px">${s.live?'LIVE API':s.auto?'AUTO':'MANUAL'}</span>
+        <div style="font-size:11px;color:${s.active?'#999':'#666'};margin-top:2px">${s.desc}</div>
       </div>
       ${!s.auto?`<div onclick="apathyToggle('${s.key}')" style="width:36px;height:20px;border-radius:10px;background:${s.active?'#0e7490':'#222'};position:relative;cursor:pointer;flex-shrink:0;transition:background .15s;border:1px solid ${s.active?'#0891b2':'#333'}"><div style="position:absolute;top:2px;left:${s.active?'15px':'2px'};width:14px;height:14px;border-radius:50%;background:#fff;transition:left .15s"></div></div>`:''}
     </div>`).join('')}
   </div>
   <div style="background:#111;border-left:3px solid ${ab};border-radius:0 8px 8px 0;padding:12px 14px">
-    <div style="font-size:10px;font-weight:700;color:#64748b;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">Order Strategy</div>
+    <div style="font-size:10px;font-weight:700;color:#777;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">Order Strategy</div>
     <div style="font-size:13px;font-weight:700;color:${ac}">${ae} ${action}</div>
   </div>`;
 }
@@ -3676,14 +3676,14 @@ function renderAlertSidebar() {
     const dateStr = dt.toLocaleDateString('en-US', { month:'short', day:'numeric' });
     const timeStr = dt.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
     return `
-    <div style="border:1px solid ${unread?borderColors[a.level]+'66':'#1a1a1a'};border-left:3px solid ${borderColors[a.level]||'#334155'};border-radius:8px;padding:12px 13px;margin-bottom:8px;background:${unread?'#111':'#0d0d0d'}">
+    <div style="border:1px solid ${unread?borderColors[a.level]+'66':'#1a1a1a'};border-left:3px solid ${borderColors[a.level]||'#555'};border-radius:8px;padding:12px 13px;margin-bottom:8px;background:${unread?'#111':'#0d0d0d'}">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
-        <span style="font-size:12px;font-weight:700;color:${textColors[a.level]||'#94a3b8'}">${a.icon} ${a.title}</span>
+        <span style="font-size:12px;font-weight:700;color:${textColors[a.level]||'#999'}">${a.icon} ${a.title}</span>
         ${unread?'<span style="font-size:8px;font-weight:700;color:#ef4444;letter-spacing:.04em">NEW</span>':''}
       </div>
-      <div style="font-size:10px;color:#475569;margin-bottom:7px">${dateStr} · ${timeStr} &nbsp;·&nbsp; BTC $${(a.price||0).toLocaleString()} &nbsp;·&nbsp; Wk ${a.week} &nbsp;·&nbsp; C${a.classicScore}/A${a.apathyScore}</div>
-      <div style="font-size:11px;color:#64748b;line-height:1.5;margin-bottom:6px">${a.body}</div>
-      <div style="font-size:10px;font-weight:600;color:#475569;border-top:1px solid #1a1a1a;padding-top:6px">→ ${a.action}</div>
+      <div style="font-size:10px;color:#666;margin-bottom:7px">${dateStr} · ${timeStr} &nbsp;·&nbsp; BTC $${(a.price||0).toLocaleString()} &nbsp;·&nbsp; Wk ${a.week} &nbsp;·&nbsp; C${a.classicScore}/A${a.apathyScore}</div>
+      <div style="font-size:11px;color:#777;line-height:1.5;margin-bottom:6px">${a.body}</div>
+      <div style="font-size:10px;font-weight:600;color:#666;border-top:1px solid #1a1a1a;padding-top:6px">→ ${a.action}</div>
     </div>`;
   }).join('');
 }
@@ -3808,11 +3808,11 @@ function showAlertModal(alerts, curr) {
   const html = alerts.map(a => `
     <div style="border-left:3px solid ${colors[a.level]};padding:12px 14px;background:#141414;border-radius:0 8px 8px 0;margin-bottom:8px">
       <div style="font-size:13px;font-weight:700;color:${textColors[a.level]};margin-bottom:5px">${a.icon} ${a.title}</div>
-      <div style="font-size:12px;color:#94a3b8;line-height:1.55;margin-bottom:7px">${a.body}</div>
-      <div style="font-size:11px;font-weight:600;color:#64748b;border-top:1px solid #1e293b;padding-top:6px">→ ${a.action}</div>
+      <div style="font-size:12px;color:#999;line-height:1.55;margin-bottom:7px">${a.body}</div>
+      <div style="font-size:11px;font-weight:600;color:#777;border-top:1px solid #222;padding-top:6px">→ ${a.action}</div>
     </div>`).join('');
   document.getElementById('alert-modal-body').innerHTML =
-    `<div style="font-size:10px;color:#475569;margin-bottom:12px;border-bottom:1px solid #1a1a1a;padding-bottom:10px">Week ${curr.bearWeek} · BTC $${curr.currentPrice.toLocaleString()} · ${new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>${html}`;
+    `<div style="font-size:10px;color:#666;margin-bottom:12px;border-bottom:1px solid #1a1a1a;padding-bottom:10px">Week ${curr.bearWeek} · BTC $${curr.currentPrice.toLocaleString()} · ${new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>${html}`;
   document.getElementById('alert-modal').style.display = 'flex';
 }
 
@@ -3928,7 +3928,7 @@ async function fetchAndCompute300DMA() {
   } catch(err) {
     // Show fallback state — don't leave "Loading 300 DMA..." forever
     const el = document.getElementById('dma300-card');
-    if (el) el.innerHTML = '<div style="font-size:11px;color:#334155;padding:10px 14px">300 DMA unavailable — API unreachable. Check manually: price vs 300-day SMA on TradingView.</div>';
+    if (el) el.innerHTML = '<div style="font-size:11px;color:#555;padding:10px 14px">300 DMA unavailable — API unreachable. Check manually: price vs 300-day SMA on TradingView.</div>';
   }
 }
 
@@ -3957,7 +3957,7 @@ function render300DMA() {
     badgeText   = `${pct.toFixed(1)}% above 300 DMA`;
     noteText    = `Price $${curPrice.toLocaleString()} is ${pct.toFixed(1)}% above the 300 DMA ($${value.toLocaleString()}). Approaching the long-term average — if price declines toward this level, historically a significant buy zone.`;
   } else {
-    borderColor = '#1e293b'; badgeColor = '#64748b'; badgeBg = '#0d0d0d';
+    borderColor = '#222'; badgeColor = '#777'; badgeBg = '#0d0d0d';
     badgeText   = `${pct !== null ? pct.toFixed(1)+'% above' : '—'} 300 DMA`;
     noteText    = `300 DMA: $${value.toLocaleString()}. Price is well above the long-term average — not yet in historical bottom territory.`;
   }
@@ -3966,26 +3966,26 @@ function render300DMA() {
   el.innerHTML = `
     ${alertHtml}
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-      <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em">300-Day Moving Average</span>
+      <span style="font-size:11px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.05em">300-Day Moving Average</span>
       <span style="margin-left:auto;font-size:10px;border-radius:4px;padding:2px 8px;font-weight:700;background:${badgeBg};color:${badgeColor};border:1px solid ${borderColor}">${badgeText}</span>
     </div>
     <div style="display:flex;align-items:center;gap:16px;margin-bottom:8px">
       <div style="flex:1">
         <div style="font-size:22px;font-weight:900;color:${badgeColor}">$${value.toLocaleString()}</div>
-        <div style="font-size:9px;color:#334155;text-transform:uppercase;letter-spacing:.05em;margin-top:2px">300 DMA value</div>
+        <div style="font-size:9px;color:#555;text-transform:uppercase;letter-spacing:.05em;margin-top:2px">300 DMA value</div>
       </div>
       <div style="text-align:center">
         <div style="font-size:18px;font-weight:800;color:${badgeColor}">${pct !== null ? (pct > 0 ? '+' : '') + pct.toFixed(1) + '%' : '—'}</div>
-        <div style="font-size:9px;color:#334155;text-transform:uppercase;letter-spacing:.05em;margin-top:2px">price vs DMA</div>
+        <div style="font-size:9px;color:#555;text-transform:uppercase;letter-spacing:.05em;margin-top:2px">price vs DMA</div>
       </div>
       <div style="flex:1">
-        <div style="height:5px;background:#0f172a;border-radius:3px;overflow:hidden;margin-bottom:3px">
+        <div style="height:5px;background:#111;border-radius:3px;overflow:hidden;margin-bottom:3px">
           <div style="height:100%;border-radius:3px;background:${badgeColor};width:${Math.min(100, Math.max(0, 100 - (pct || 0)))  }%;transition:width .5s"></div>
         </div>
-        <div style="font-size:9px;color:#334155">proximity to 300 DMA</div>
+        <div style="font-size:9px;color:#555">proximity to 300 DMA</div>
       </div>
     </div>
-    <div style="font-size:10px;color:#475569;line-height:1.5;border-top:1px solid #0f172a;padding-top:7px">${noteText} <span style="color:#334155">· Auto-calculated from Binance daily candles.</span></div>`;
+    <div style="font-size:10px;color:#666;line-height:1.5;border-top:1px solid #111;padding-top:7px">${noteText} <span style="color:#555">· Auto-calculated from Binance daily candles.</span></div>`;
 }
 
 setTimeout(fetchAndCompute300DMA, 500);
@@ -4139,7 +4139,7 @@ function renderKDCard() {
   if (crossed)       { state = 'K > D — CROSSED';     stateColor = '#86efac'; stateBg = '#052e16'; stateBorder = '#166534'; }
   else if (absGap < 3)  { state = '⚡ CONVERGENCE ZONE';  stateColor = '#fde68a'; stateBg = '#1c1200'; stateBorder = '#d97706'; }
   else if (absGap < 7)  { state = '▲ APPROACHING';        stateColor = '#fdba74'; stateBg = '#1a0e00'; stateBorder = '#92400e'; }
-  else                   { state = 'BEAR PHASE';           stateColor = '#64748b'; stateBg = '#0d0d0d'; stateBorder = '#1e293b'; }
+  else                   { state = 'BEAR PHASE';           stateColor = '#777'; stateBg = '#0d0d0d'; stateBorder = '#222'; }
 
   const badge = document.getElementById('kd-status-badge');
   if (badge) {
@@ -4160,7 +4160,7 @@ function renderKDCard() {
     gapLbl.textContent = 'crossed';
   } else {
     gapEl.textContent  = absGap.toFixed(1);
-    gapEl.style.color  = absGap < 3 ? '#fbbf24' : absGap < 7 ? '#f97316' : '#475569';
+    gapEl.style.color  = absGap < 3 ? '#fbbf24' : absGap < 7 ? '#f97316' : '#666';
     gapLbl.textContent = 'gap pts';
   }
 
@@ -4220,7 +4220,7 @@ function renderKDCard() {
         xvalHtml = `<span style="color:#fbbf24;font-weight:700">⚠ Divergence</span> — Kraken K ${xval.krakenK} / D ${xval.krakenD} (K diff ${xval.kDiff}, D diff ${xval.dDiff}). Check TradingView manually.`;
       }
     } else if (!fallback) {
-      xvalHtml = '<span style="color:#475569">Kraken cross-validation unavailable</span>';
+      xvalHtml = '<span style="color:#666">Kraken cross-validation unavailable</span>';
     }
 
     if (crossed) {
@@ -4285,15 +4285,15 @@ function updateDeploymentPosture() {
     // ACTIVE — strong indicators but timing not there yet
     posture     = 'ACTIVE';
     borderColor = '#2563eb';
-    badgeStyle  = 'background:#0c1529;color:#60a5fa;border:1px solid #2563eb';
+    badgeStyle  = 'background:#111;color:#60a5fa;border:1px solid #2563eb';
     actionText  = 'Full DCA cadence on STRONG_ACCUM or better. Let limit orders sit. Do not chase price.';
     detailText  = `Week ${bearWeek} — entering window. K/D gap ${kdGap.toFixed(1)} pts still wide. Signal ${signal}, Big 3 ${big3}/3. Deploy DCA at current levels. Tranches should only fill via limit orders at pre-set prices — no manual deployment yet.`;
 
   } else if (sigScore >= 2) {
     // PATIENT — in bear but conditions not strong enough yet
     posture     = 'PATIENT';
-    borderColor = '#475569';
-    badgeStyle  = 'background:#0f172a;color:#94a3b8;border:1px solid #475569';
+    borderColor = '#666';
+    badgeStyle  = 'background:#111;color:#999;border:1px solid #666';
     actionText  = 'Minimum DCA only on STRONG_ACCUM. Tranches on limit orders only. Preserve dry powder.';
     detailText  = `Week ${bearWeek}. Signal ${signal} — not yet at threshold for active deployment. K/D gap ${kdGap.toFixed(1)} pts. Big 3 ${big3}/3. The best prices and confirmation signals are likely still ahead. Patience protects your averaging power.`;
 
@@ -4310,7 +4310,7 @@ function updateDeploymentPosture() {
   badge.textContent = posture;
   badge.style.cssText = badgeStyle + ';font-size:11px;font-weight:800;border-radius:5px;padding:3px 10px;letter-spacing:.03em';
   action.textContent = actionText;
-  action.style.color = badgeStyle.match(/color:([^;]+)/)?.[1] || '#94a3b8';
+  action.style.color = badgeStyle.match(/color:([^;]+)/)?.[1] || '#999';
   detail.textContent = detailText;
   if (meta) meta.textContent = `Wk ${bearWeek} · K/D gap ${kdGap.toFixed(1)} · Big3 ${big3}/3`;
 }
@@ -4383,7 +4383,7 @@ async function generateAISummary(force) {
       const loader = document.getElementById('ai-sum-loader');
       if (loader) loader.style.display = 'none';
       textEl.style.display = 'block';
-      textEl.style.color = '#475569';
+      textEl.style.color = '#666';
       textEl.textContent = 'Summary unavailable — open in Claude desktop for AI summaries.';
     }
     return;
@@ -4457,7 +4457,7 @@ Paragraph 3 — Portfolio and next watch item: $${ctx.totalDeployed?.toLocaleStr
       const loader = document.getElementById('ai-sum-loader');
       if (loader) loader.style.display = 'none';
       textEl.style.display = 'block';
-      textEl.style.color = '#475569';
+      textEl.style.color = '#666';
       textEl.textContent = 'Could not generate summary — try refreshing.';
     }
   }
@@ -4468,7 +4468,7 @@ function _renderAISum(text, fromCache) {
   if (loader) loader.style.display = 'none';
   const el = document.getElementById('ai-sum-text');
   el.style.display = 'block';
-  el.style.color   = '#94a3b8';
+  el.style.color   = '#999';
   el.textContent   = text;
   document.getElementById('ai-sum-ts').textContent = fromCache
     ? `Cached · ${new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'})}`
@@ -4541,7 +4541,7 @@ setTimeout(() => {
       <button onclick="dismissAlerts()" style="background:none;border:none;color:#555;font-size:22px;cursor:pointer;line-height:1;padding:0 2px">&times;</button>
     </div>
     <div id="alert-modal-body"></div>
-    <button onclick="dismissAlerts()" style="width:100%;margin-top:14px;padding:11px;background:#141414;border:1px solid #2a2a2a;border-radius:8px;color:#94a3b8;font-size:12px;font-weight:600;cursor:pointer;letter-spacing:.02em">Got it — dismiss until something changes</button>
+    <button onclick="dismissAlerts()" style="width:100%;margin-top:14px;padding:11px;background:#141414;border:1px solid #2a2a2a;border-radius:8px;color:#999;font-size:12px;font-weight:600;cursor:pointer;letter-spacing:.02em">Got it — dismiss until something changes</button>
   </div>
 </div>
 </body>
