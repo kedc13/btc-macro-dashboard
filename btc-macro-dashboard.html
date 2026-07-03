@@ -689,7 +689,8 @@ const HISTORY_DATA = [
   {"date":"2026-06-29","price":59860,"mvrv":0.25,"puell":0.75,"fearGreed":36,"bottomConf":3,"signal":"STRONG_ACCUM","big3":1,"week":36,"phase":"ENTERING_WINDOW","etf":"~$8B June total outflows; $86M inflow Jun 26 — tentative streak end","etfColor":"red","dxy":"~100.7, rising — highest since May 2025","dxyColor":"red","m2":"Contracting — Iran energy shock, CPI 4.2%, hawkish environment","m2Color":"red","fed":"3.50–3.75%, hawkish dot plot, possible hike Oct 2026","fedColor":"red","macd":"Bearish — weekly negative, no bullish crossover","macdColor":"orange","ma200":"~$62,457 — spot 4.2% below 200WMA","ma200Color":"green","monthlyRsi":"~38","weeklyRsi":"~34","realizedPrice":"~$50K est","realizedDiff":"+19% vs spot","piCycle":"Clear"},
   {"date":"2026-06-30","price":59000,"mvrv":0.25,"puell":0.75,"fearGreed":15,"bottomConf":3,"signal":"EXTREME_ACCUM","big3":0,"week":36,"phase":"ENTERING_WINDOW","etf":"~$8B June total outflows; small mid-late June inflows — recovering","etfColor":"orange","dxy":"101.3, rising — hawkish FOMC, highest since May 2025","dxyColor":"red","m2":"Expanding +1.4% global (3-mo ending May); near-term hawkish headwind","m2Color":"yellow","fed":"3.50–3.75%, on hold w/ hawkish forward signals","fedColor":"orange","macd":"Bearish — weekly MACD negative","macdColor":"orange","ma200":"~$62,000 — spot 4.8% below 200WMA (first time below this cycle)","ma200Color":"green","monthlyRsi":"~37","weeklyRsi":"~34","realizedPrice":"~$62,000 est","realizedDiff":"-5% vs spot","piCycle":"Clear"},
   {"date":"2026-07-01","price":58500,"mvrv":0.23,"puell":0.75,"fearGreed":11,"bottomConf":2,"signal":"EXTREME_ACCUM","big3":0,"week":37,"phase":"ENTERING_WINDOW","etf":"Record $4.5B net outflows in June 2026 — worst month since ETF launch","etfColor":"red","dxy":"~101.3, rising — highest since May 2025","dxyColor":"red","m2":"Modest global expansion +1.4–1.9% (3-mo)","m2Color":"yellow","fed":"Held 3.50–3.75%, hawkish dot plot, hike risk flagged","fedColor":"orange","macd":"Bearish — weekly negative, approaching first bullish cross since May 2025","macdColor":"orange","ma200":"~$62,000 — spot ~5.6% below 200WMA","ma200Color":"green","monthlyRsi":"~30","weeklyRsi":"~34","realizedPrice":"~$53,400 est","realizedPriceNum":53400,"realizedDiff":"+9% vs spot","piCycle":"Clear","weeklyK":8.52,"weeklyD":23.62,"soprStreak":0},
-  {"date":"2026-07-02","price":61650,"mvrv":0.23,"puell":0.75,"fearGreed":36,"bottomConf":2,"signal":"STRONG_ACCUM","big3":0,"week":37,"phase":"ENTERING_WINDOW","etf":"Outflows persist — ~$296M net outflow Jul 1, ~$4.5B June total","etfColor":"red","dxy":"~101.3, 15-month high, rising","dxyColor":"red","m2":"Global M2 +1.38% (3-mo), modestly expanding","m2Color":"yellow","fed":"Held 3.50–3.75% (Jun 17), hawkish tone, hike risk flagged","fedColor":"red","macd":"Bearish — weekly negative, no bullish crossover yet","macdColor":"orange","ma200":"~$60,000 — price testing/reclaiming 200WMA","ma200Color":"green","monthlyRsi":"~30 (historic extreme oversold)","weeklyRsi":"~34","realizedPrice":"~$53,800 est","realizedPriceNum":53800,"realizedDiff":"+14.5% vs spot","piCycle":"Clear","weeklyK":8.52,"weeklyD":23.62,"soprStreak":0}
+  {"date":"2026-07-02","price":61650,"mvrv":0.23,"puell":0.75,"fearGreed":36,"bottomConf":2,"signal":"STRONG_ACCUM","big3":0,"week":37,"phase":"ENTERING_WINDOW","etf":"Outflows persist — ~$296M net outflow Jul 1, ~$4.5B June total","etfColor":"red","dxy":"~101.3, 15-month high, rising","dxyColor":"red","m2":"Global M2 +1.38% (3-mo), modestly expanding","m2Color":"yellow","fed":"Held 3.50–3.75% (Jun 17), hawkish tone, hike risk flagged","fedColor":"red","macd":"Bearish — weekly negative, no bullish crossover yet","macdColor":"orange","ma200":"~$60,000 — price testing/reclaiming 200WMA","ma200Color":"green","monthlyRsi":"~30 (historic extreme oversold)","weeklyRsi":"~34","realizedPrice":"~$53,800 est","realizedPriceNum":53800,"realizedDiff":"+14.5% vs spot","piCycle":"Clear","weeklyK":8.52,"weeklyD":23.62,"soprStreak":0},
+  {"date":"2026-07-03","price":61300,"mvrv":0.20,"puell":0.75,"fearGreed":27,"bottomConf":2,"signal":"STRONG_ACCUM","big3":0,"week":39,"phase":"ENTERING_WINDOW","etf":"Turned positive (+$221.7M), ending 10-day outflow streak; YTD outflows still ~-$5.4B","etfColor":"yellow","dxy":"~100.8, declining","dxyColor":"green","m2":"Global M2 +1.38% (3-mo), expanding","m2Color":"green","fed":"Held 3.50–3.75% (Jun 17), hawkish bias into Jul 28–29 meeting","fedColor":"yellow","macd":"Bearish — weekly negative, no bullish crossover yet","macdColor":"orange","ma200":"~$62,443 — closed below 200WMA for first time since 2022 (Jun 30 weekly close)","ma200Color":"yellow","monthlyRsi":"~<30 (historic oversold)","weeklyRsi":"~34","realizedPrice":"~$53,800 est","realizedPriceNum":53800,"realizedDiff":"+14% vs spot","piCycle":"Clear","weeklyK":8.52,"weeklyD":23.62,"soprStreak":0}
 ];
 
 // =====================================================================
@@ -829,7 +830,7 @@ function dot(c) { return `<span class="dot" style="background:${CLR[c]||CLR.gray
 function valuationColor(h) {
   const m     = parseFloat(h.mvrv)      || 999;
   const fg    = parseFloat(h.fearGreed) || 50;
-  const phase = h.phase || 'EARLY_BEAR';
+  const phase = computePhase(h);  // auto-computed
   const week  = h.week  || 0;
 
   if (phase === 'EARLY_BEAR' || week < 35) {
@@ -866,17 +867,84 @@ function valuationColor(h) {
 }
 
 // =====================================================================
+// AUTO-COMPUTED SUB-SCORES — derived from raw numeric data only
+// No editorial inputs. These replace the stored bottomConf/big3/phase.
+// =====================================================================
+
+// bottomConf 0–8: each point earned by a rule, not manually entered
+function computeBottomConf(h) {
+  const k     = parseFloat(h.weeklyK)         || 50;
+  const mvrv  = parseFloat(h.mvrv)            || 1;
+  const fg    = parseFloat(h.fearGreed)        || 50;
+  const p     = parseFloat(h.puell)           || 1;
+  const week  = parseInt(h.week)              || 0;
+  const price = parseFloat(h.price)           || 99999;
+  const rp    = parseFloat(h.realizedPriceNum)|| 0;
+  let conf = 0;
+  if (k    < 20)                   conf++;  // weekly Stoch K below 20
+  if (k    < 10)                   conf++;  // extreme compression bonus
+  if (mvrv < 0.8)                  conf++;  // MVRV in accumulation zone
+  if (mvrv < 0.5)                  conf++;  // MVRV extreme value bonus
+  if (fg   < 25)                   conf++;  // extreme fear
+  if (p    < 0.8)                  conf++;  // miner stress
+  if (rp   > 0 && price < rp*1.05) conf++;  // at/below realized price
+  if (week >= 35)                  conf++;  // inside timing window
+  return Math.min(conf, 8);
+}
+
+// big3 0–3: three objectively-defined confirmation signals
+function computeBig3(h) {
+  const k    = parseFloat(h.weeklyK)  || 50;
+  const d    = parseFloat(h.weeklyD)  || 50;
+  const sopr = parseInt(h.soprStreak) || 0;
+  const mrsiRaw = String(h.monthlyRsi || '50');
+  const mrsiM   = mrsiRaw.match(/[\d.]+/);
+  const mrsi    = mrsiM ? parseFloat(mrsiM[0]) : 50;
+  let b = 0;
+  if (k < 15 && d < 25) b++;  // weekly Stoch RSI compression (2018/2022 bottom signal)
+  if (mrsi < 30)         b++;  // monthly RSI extreme oversold
+  if (sopr >= 3)         b++;  // SOPR recovery streak ≥ 3 days above 1.0
+  return Math.min(b, 3);
+}
+
+// phase: data-driven, not just week count
+function computePhase(h) {
+  const week  = parseInt(h.week)               || 0;
+  const mvrv  = parseFloat(h.mvrv)             || 1;
+  const price = parseFloat(h.price)            || 0;
+  const rp    = parseFloat(h.realizedPriceNum) || 0;
+  // Post-recovery: price well above realized price
+  if (rp > 0 && price > rp * 1.5)             return 'EXTENDED';
+  // True bottom window: deep in timing + MVRV extreme
+  if (week >= 44 && mvrv < 0.65)              return 'BOTTOM_WINDOW';
+  // Entering timing window
+  if (week >= 35)                              return 'ENTERING_WINDOW';
+  return 'EARLY_BEAR';
+}
+
+// derivedSignalKey: converts computed score → signal string for display
+function derivedSignalKey(h) {
+  const score = computeScore(h);
+  if (score >= 80) return 'EXTREME_ACCUM';
+  if (score >= 65) return 'STRONG_ACCUM';
+  if (score >= 50) return 'ACCUM_BOTTOM';
+  if (score >= 35) return 'WATCH';
+  return 'NEUTRAL';
+}
+
+// =====================================================================
 // COMPOSITE BUY SCORE 0–100
 // MVRV 35% | F&G 20% | Puell 15% | Bottom Conf 20% | Big3 10%
 // Phase multiplier: Early Bear = 0.62 (timing risk penalty)
+// All sub-scores auto-computed — no stored editorial values used.
 // =====================================================================
 function computeScore(h) {
   const m     = parseFloat(h.mvrv)      || 999;
   const fg    = parseFloat(h.fearGreed) || 50;
   const p     = parseFloat(h.puell)     || 1;
-  const c     = h.bottomConf            || 0;
-  const b     = h.big3                  || 0;
-  const phase = h.phase                 || 'EARLY_BEAR';
+  const c     = computeBottomConf(h);   // auto-computed from rules
+  const b     = computeBig3(h);         // auto-computed from rules
+  const phase = computePhase(h);        // auto-computed from data
 
   const ms = m  < 0.3 ? 100 : m  < 0.5 ? 82 : m  < 0.8 ? 60 : m  < 1.2 ? 38 : m  < 3.5 ? 18 : 5;
   const fs = fg < 10  ? 100 : fg < 20  ? 88 : fg < 35  ? 65 : fg < 55  ? 40 : fg < 75  ? 18 : 5;
@@ -908,9 +976,9 @@ function whatWouldUpgrade(h) {
   const m     = parseFloat(h.mvrv)      || 1;
   const fg    = parseFloat(h.fearGreed) || 50;
   const p     = parseFloat(h.puell)     || 1;
-  const c     = h.bottomConf            || 0;
-  const b     = h.big3                  || 0;
-  const phase = h.phase                 || 'EARLY_BEAR';
+  const c     = computeBottomConf(h);   // auto-computed
+  const b     = computeBig3(h);         // auto-computed
+  const phase = computePhase(h);        // auto-computed
 
   if (phase === 'EARLY_BEAR')
     tips.push('Reach W35 entering window (~' + W35_DATE + ') — biggest score unlock');
@@ -1469,7 +1537,7 @@ function updateRallyCaution() {
   if (!banner) return;
 
   const latest = HISTORY_DATA[HISTORY_DATA.length - 1] || {};
-  const big3   = latest.big3 || 0;
+  const big3   = computeBig3(latest);   // auto-computed
 
   // K/D card is now rendered by renderKDCard() called from fetchAndComputeKD()
   // Only evaluate caution banner when Big 3 has meaningful progress
@@ -1935,14 +2003,14 @@ function updateIndicatorPanel(h, isHover) {
       : 'Latest · ' + fmtDate(h.date) + ', ' + h.date.slice(0,4);
   }
 
-  const ph    = phaseInfo(h.phase);
+  const ph    = phaseInfo(computePhase(h));
   const score = computeScore(h);
   const tier  = scoreTier(score);
   const upg   = whatWouldUpgrade(h);
   const week  = h.week || 0;
 
   // --- Phase risk warning (early bear only) ---
-  const isEarlyBear = (h.phase === 'EARLY_BEAR');
+  const isEarlyBear = (computePhase(h) === 'EARLY_BEAR');
   const phaseWarning = isEarlyBear ? `
     <div style="background:#111;border-left:3px solid #78350f;border-radius:0 6px 6px 0;padding:10px 12px;margin-bottom:12px">
       <div style="font-size:11px;font-weight:700;color:#fbbf24;margin-bottom:3px">⚠️ Early Bear Phase — High False-Bottom Risk</div>
@@ -2007,7 +2075,7 @@ function updateIndicatorPanel(h, isHover) {
     { lbl:'MVRV Z-Score',  val:h.mvrv  != null ? (+h.mvrv).toFixed(2)  : 'N/C', zone:h.mvrv  != null ? mvrvZone(+h.mvrv)  : {label:'N/C',color:'#999'} },
     { lbl:'Puell Multiple',val:h.puell != null ? (+h.puell).toFixed(2) : 'N/C', zone:h.puell != null ? puellZone(+h.puell) : {label:'N/C',color:'#999'} },
     { lbl:'Fear & Greed',  val:h.fearGreed != null ? h.fearGreed : 'N/C',        zone:h.fearGreed != null ? fgZone(+h.fearGreed) : {label:'N/C',color:'#999'} },
-    { lbl:'Bottom Conf',   val:h.bottomConf+'/8', zone:confZone(h.bottomConf) },
+    { lbl:'Bottom Conf',   val:computeBottomConf(h)+'/8', zone:confZone(computeBottomConf(h)) },
   ];
   const cardsHtml = `<div class="ind-grid">
     ${cards.map(c=>`
@@ -2030,10 +2098,10 @@ function updateIndicatorPanel(h, isHover) {
     { name:'Monthly Stoch RSI', desc:'Lines compressing/tightening below 20 (pre-cross = strongest signal; cross itself is lagging)' },
   ];
   const big3Html = `
-    <div class="big3-section-hdr">🎯 Big 3 Triggers (${h.big3}/3 confirmed)</div>
+    <div class="big3-section-hdr">🎯 Big 3 Triggers (${computeBig3(h)}/3 confirmed)</div>
     <div class="ind-grid" style="margin-bottom:10px">
       ${BIG3.map((b3, i) => {
-        const active = i < (h.big3||0);
+        const active = i < computeBig3(h);
         return `<div class="ind-card">
           <div class="ind-card-bar" style="background:${active?'#22c55e':'#222'}"></div>
           <div class="ind-card-body">
@@ -2486,9 +2554,9 @@ async function renderHistory() {
               const dot = c => c === '#16a34a' ? '🟢' : c === '#22c55e' ? '🟢' : c === '#f59e0b' ? '🟡' : c === '#ef4444' ? '🔴' : '⚪';
               return [
                 '',
-                '  ' + dot(sigColor(h.signal)) + ' ' + sigLabel(h.signal) + '  ·  Wk ' + h.week,
+                '  ' + dot(sigColor(derivedSignalKey(h))) + ' ' + sigLabel(derivedSignalKey(h)) + '  ·  Wk ' + h.week,
                 '  MVRV ' + (h.mvrv||'—') + '  ·  Puell ' + (h.puell||'—'),
-                '  F&G ' + (h.fearGreed||'—') + '  ·  Conf ' + h.bottomConf + '/8  ·  Big3 ' + h.big3 + '/3',
+                '  F&G ' + (h.fearGreed||'—') + '  ·  Conf ' + computeBottomConf(h) + '/8  ·  Big3 ' + computeBig3(h) + '/3',
               ];
             }
           }
@@ -2804,8 +2872,8 @@ function buildHistoryTable() {
           <td style="text-align:right;font-weight:700">$${h.price.toLocaleString()}</td>
           <td style="text-align:right">${h.mvrv}</td>
           <td style="text-align:right">${h.fearGreed}</td>
-          <td style="text-align:right">${h.bottomConf}/8</td>
-          <td style="text-align:right">${h.big3}/3</td>
+          <td style="text-align:right">${computeBottomConf(h)}/8</td>
+          <td style="text-align:right">${computeBig3(h)}/3</td>
           <td style="text-align:right;font-weight:700;color:${ti.color}">${sc}</td>
           <td><span class="sig-pill"><span style="width:8px;height:8px;border-radius:50%;background:${vc};display:inline-block;margin-right:4px"></span>${vlbl}</span></td>
           <td style="text-align:right;color:#999">${h.week}</td>
@@ -2923,7 +2991,7 @@ function renderPlan() {
   const dcaLabel        = shouldDouble ? `$${dcaAmount.toLocaleString()}/buy · DROP TRIGGER` : scoreBaseLabel;
 
   // ── DCA Zone escalation ──────────────────────────────────────────
-  const latestBig3  = HISTORY_DATA.length ? (HISTORY_DATA[HISTORY_DATA.length-1].big3 || 0) : 0;
+  const latestBig3  = HISTORY_DATA.length ? computeBig3(HISTORY_DATA[HISTORY_DATA.length-1]) : 0;
   const dcaZones    = PLAN.dcaZones || [];
   const activeDcaZone = price
     ? dcaZones.find(z => price >= z.minPrice) || dcaZones[dcaZones.length-1]
@@ -3351,17 +3419,20 @@ function switchTab(tab) {
   var latest = HISTORY_DATA.length ? HISTORY_DATA[HISTORY_DATA.length - 1] : null;
   if (!latest) return;
   var el;
-  el = document.getElementById('sig-dot');   if (el) el.style.background = sigColor(latest.signal);
-  el = document.getElementById('sig-text');  if (el) el.textContent = sigLabel(latest.signal) + ' — Week ' + latest.week;
+  var _sig = derivedSignalKey(latest);
+  var _ph  = computePhase(latest);
+  var _bc  = computeBottomConf(latest);
+  el = document.getElementById('sig-dot');   if (el) el.style.background = sigColor(_sig);
+  el = document.getElementById('sig-text');  if (el) el.textContent = sigLabel(_sig) + ' — Week ' + latest.week;
   el = document.getElementById('hdr-price'); if (el && !livePrice) el.textContent = '$' + latest.price.toLocaleString();
   el = document.getElementById('hdr-week');  if (el) el.textContent = latest.week;
   el = document.getElementById('hdr-phase'); if (el) {
     var phMap = { EARLY_BEAR:'EARLY BEAR', ENTERING_WINDOW:'ENTERING WINDOW', BOTTOM_WINDOW:'BOTTOM WINDOW', EXTENDED:'EXTENDED' };
-    el.textContent = phMap[latest.phase] || latest.phase;
-    el.className = 'phase-badge ' + phaseClass(phMap[latest.phase] || '');
+    el.textContent = phMap[_ph] || _ph;
+    el.className = 'phase-badge ' + phaseClass(phMap[_ph] || '');
   }
   el = document.getElementById('action-text');
-  if (el) el.textContent = 'Last tracked ' + latest.date + ' — MVRV ' + latest.mvrv + ' · F&G ' + latest.fearGreed + ' · Conf ' + latest.bottomConf + '/8';
+  if (el) el.textContent = 'Last tracked ' + latest.date + ' — MVRV ' + latest.mvrv + ' · F&G ' + latest.fearGreed + ' · Conf ' + _bc + '/8';
 })();
 
 // Adapter: converts compact HISTORY_DATA entry → renderToday() format
@@ -3380,24 +3451,29 @@ function histToTodayData(h) {
     EARLY_BEAR:'Early Bear', ENTERING_WINDOW:'Entering Window',
     BOTTOM_WINDOW:'Bottom Window', EXTENDED:'Extended'
   };
-  // Big 3 display based on count
-  const big3Names = ['Hash Ribbons','SOPR Recovery','Monthly Stoch RSI'];
-  const big3Count = parseInt(h.big3) || 0;
+  // Big 3 display — auto-computed, not from stored h.big3
+  const big3Names = ['Weekly Stoch RSI (K<15 D<25)','Monthly RSI <30','SOPR streak ≥3'];
+  const big3Count = computeBig3(h);
   const big3Arr = big3Names.map((name, i) => ({
     name,
     color: i < big3Count ? 'green' : 'gray',
     status: i < big3Count ? 'Confirmed 🟢' : 'Not yet triggered'
   }));
 
+  // Signal + phase always derived from formula — never from stored editorial field
+  const _derivedSig = derivedSignalKey(h);
+  const _derivedPh  = computePhase(h);
+  const _derivedBC  = computeBottomConf(h);
+
   return {
-    signalDotColor: sigDotMap[h.signal] || 'gray',
-    signal: sigLabelMap[h.signal] || h.signal || '—',
+    signalDotColor: sigDotMap[_derivedSig] || 'gray',
+    signal: sigLabelMap[_derivedSig] || _derivedSig || '—',
     price: '$' + (h.price||0).toLocaleString(),
     week: h.week,
-    phase: phMap[h.phase] || h.phase || '—',
+    phase: phMap[_derivedPh] || _derivedPh || '—',
     action: 'Snapshot ' + h.date,
     big3: big3Arr,
-    bottomConf: (h.bottomConf||0) + '/8',
+    bottomConf: _derivedBC + '/8',
     bottomGreen: [],
     bottomYellow: [],
     mvrv:       h.mvrv  != null ? String(h.mvrv)      : null,
@@ -3510,7 +3586,7 @@ function renderApathyMonitor() {
   const mvrvArr = HISTORY_DATA.map(d => parseFloat(d.mvrv)).filter(n => !isNaN(n));
   const latest  = HISTORY_DATA[HISTORY_DATA.length - 1];
   const bearWeek = Math.max(1, Math.floor((Date.now() - new Date(ATH_DATE).getTime()) / (7*86400000)) + 1);
-  const classicScore = latest ? (parseInt(latest.bottomConf) || 0) : 0;
+  const classicScore = latest ? computeBottomConf(latest) : 0;
 
   const tog = k => localStorage.getItem('apath_' + k) === '1';
   const sd  = arr => { if(arr.length<2) return 0; const m=arr.reduce((a,b)=>a+b,0)/arr.length; return Math.sqrt(arr.map(x=>(x-m)**2).reduce((a,b)=>a+b,0)/arr.length); };
@@ -4283,8 +4359,8 @@ function updateDeploymentPosture() {
 
   const latest    = HISTORY_DATA[HISTORY_DATA.length - 1] || {};
   const bearWeek  = Math.max(1, Math.floor((Date.now() - new Date(ATH_DATE).getTime()) / (7*86400000)) + 1);
-  const signal    = latest.signal || 'WATCH';
-  const big3      = latest.big3 || 0;
+  const signal    = derivedSignalKey(latest);   // formula-derived, not stored field
+  const big3      = computeBig3(latest);        // formula-derived, not stored field
   const kdGap     = _kdLive ? Math.abs(_kdLive.gap || 0) : (latest.weeklyD - latest.weeklyK || 99);
   const kdCrossed = _kdLive ? (_kdLive.k > _kdLive.d) : false;
   const fearGreed = parseInt(latest.fearGreed) || 50;
@@ -4439,13 +4515,15 @@ async function generateAISummary(force) {
 
   // What changed vs yesterday
   const changes = [];
-  const big3Delta = (latest.big3 || 0) - (prev.big3 || 0);
-  const confDelta = (latest.bottomConf || 0) - (prev.bottomConf || 0);
+  const _lb3 = computeBig3(latest), _pb3 = computeBig3(prev);
+  const _lbc = computeBottomConf(latest), _pbc = computeBottomConf(prev);
+  const big3Delta = _lb3 - _pb3;
+  const confDelta = _lbc - _pbc;
   const pDelta    = latest.price && prev.price ? latest.price - prev.price : null;
-  if (big3Delta > 0) changes.push(`Big 3 advanced to ${latest.big3}/3`);
-  if (big3Delta < 0) changes.push(`Big 3 retreated to ${latest.big3}/3`);
-  if (confDelta > 0) changes.push(`Bottom conf improved to ${latest.bottomConf}/9`);
-  if (confDelta < 0) changes.push(`Bottom conf dropped to ${latest.bottomConf}/9`);
+  if (big3Delta > 0) changes.push(`Big 3 advanced to ${_lb3}/3`);
+  if (big3Delta < 0) changes.push(`Big 3 retreated to ${_lb3}/3`);
+  if (confDelta > 0) changes.push(`Bottom conf improved to ${_lbc}/8`);
+  if (confDelta < 0) changes.push(`Bottom conf dropped to ${_lbc}/8`);
   if (pDelta !== null) changes.push(`Price ${pDelta >= 0 ? '+' : ''}$${Math.round(pDelta).toLocaleString()} vs yesterday`);
 
   // MVRV trend
@@ -4456,11 +4534,11 @@ async function generateAISummary(force) {
     : 'unknown';
 
   const ctx = {
-    date: today, bearWeek, phase: latest.phase, signal: latest.signal,
+    date: today, bearWeek, phase: computePhase(latest), signal: derivedSignalKey(latest),
     currentPrice: curPrice,
     mvrv: latest.mvrv, mvrvTrend,
     puell: latest.puell, fearGreed: latest.fearGreed,
-    big3: latest.big3 || 0, bottomConf: latest.bottomConf || 0,
+    big3: computeBig3(latest), bottomConf: computeBottomConf(latest),
     weeklyRsi: latest.weeklyRsi, monthlyRsi: latest.monthlyRsi,
     realizedPrice: latest.realizedPrice, realizedDiff: latest.realizedDiff,
     ma200: latest.ma200, piCycle: latest.piCycle,
@@ -4523,8 +4601,8 @@ function _buildTemplateSummary() {
   const curPrice = livePrice || latest.price || 0;
   const bearWeek = Math.max(1, Math.floor((Date.now() - new Date(ATH_DATE).getTime()) / (7*86400000)) + 1);
   const nextT    = PLAN.tranches.find(t => !t.filled);
-  const big3     = latest.big3 || 0;
-  const conf     = latest.bottomConf || 0;
+  const big3     = computeBig3(latest);
+  const conf     = computeBottomConf(latest);
 
   const SIG = { EXTREME_ACCUM:'Extreme Accumulation', STRONG_ACCUM:'Strong Accumulation',
     ACCUM_BOTTOM:'Accumulate — Bottom Confirmation', WATCH:'Watch', NEUTRAL:'Neutral',
@@ -4547,7 +4625,9 @@ function _buildTemplateSummary() {
     ? `${((curPrice / PLAN.avgPrice - 1) * 100).toFixed(1)}%` : null;
   const pnl = spotVsAvg ? `, currently ${parseFloat(spotVsAvg) >= 0 ? '+' : ''}${spotVsAvg} vs avg cost` : '';
 
-  const p1 = `Signal is ${SIG[latest.signal] || latest.signal || '—'} at $${curPrice.toLocaleString()}${pChange}, in Week ${bearWeek} of the bear — ${PHS[latest.phase] || latest.phase || '—'} phase. MVRV Z-Score at ${latest.mvrv} puts us in ${mvrvZone}, with the Puell Multiple at ${latest.puell} and Fear & Greed at ${latest.fearGreed}. Monthly RSI is ${latest.monthlyRsi || 'N/A'} and weekly RSI ${latest.weeklyRsi || 'N/A'}, both deeply oversold. Spot is ${latest.ma200 || 'testing the 200-week moving average'}.`;
+  const _tmplSig = derivedSignalKey(latest);
+  const _tmplPh  = computePhase(latest);
+  const p1 = `Signal is ${SIG[_tmplSig] || _tmplSig || '—'} at $${curPrice.toLocaleString()}${pChange}, in Week ${bearWeek} of the bear — ${PHS[_tmplPh] || _tmplPh || '—'} phase. MVRV Z-Score at ${latest.mvrv} puts us in ${mvrvZone}, with the Puell Multiple at ${latest.puell} and Fear & Greed at ${latest.fearGreed}. Monthly RSI is ${latest.monthlyRsi || 'N/A'} and weekly RSI ${latest.weeklyRsi || 'N/A'}, both deeply oversold. Spot is ${latest.ma200 || 'testing the 200-week moving average'}.`;
 
   const p2 = `Big 3 stands at ${big3}/3. ${B3[Math.min(big3, 3)]} Bottom confirmation is at ${conf}/9 — ${confCtx}. On the macro side: ${latest.etf || 'ETF flows mixed'}. DXY ${latest.dxy || 'N/A'} and the Fed at ${latest.fed || 'N/A'} remain the primary headwinds alongside a ${latest.macd || 'bearish'} weekly MACD.`;
 
