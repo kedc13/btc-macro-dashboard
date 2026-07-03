@@ -922,6 +922,39 @@ function computePhase(h) {
   return 'EARLY_BEAR';
 }
 
+// computeBottomConfItems: returns which criteria fired (for display tags)
+function computeBottomConfItems(h) {
+  const k     = parseFloat(h.weeklyK)          || 50;
+  const mvrv  = parseFloat(h.mvrv)             || 1;
+  const fg    = parseFloat(h.fearGreed)         || 50;
+  const p     = parseFloat(h.puell)            || 1;
+  const week  = parseInt(h.week)               || 0;
+  const price = parseFloat(h.price)            || 99999;
+  const rp    = parseFloat(h.realizedPriceNum) || 0;
+  const green = [], yellow = [];
+  // K/D
+  if      (k < 10) { green.push('Stoch K <10 🔥'); green.push('Stoch K <20'); }
+  else if (k < 20)   green.push('Stoch K <20');
+  else if (k < 30)   yellow.push('Stoch K approaching (<30)');
+  // MVRV
+  if      (mvrv < 0.5) { green.push('MVRV <0.5 🔥'); green.push('MVRV <0.8'); }
+  else if (mvrv < 0.8)   green.push('MVRV <0.8');
+  else if (mvrv < 1.2)   yellow.push('MVRV watch zone');
+  // F&G
+  if      (fg < 25) green.push('F&G extreme fear');
+  else if (fg < 40) yellow.push(`F&G fear (${Math.round(fg)})`);
+  // Puell
+  if      (p < 0.8) green.push(`Puell stressed (${p})`);
+  else if (p < 1.0) yellow.push(`Puell low (${p.toFixed(2)})`);
+  // At realized price
+  if (rp > 0 && price < rp * 1.05)       green.push('At/below realized price');
+  else if (rp > 0 && price < rp * 1.25)  yellow.push('Near realized price');
+  // Timing
+  if (week >= 35) green.push(`W${week} — in timing window`);
+  else            yellow.push(`W${week} — need W35`);
+  return { green, yellow };
+}
+
 // derivedSignalKey: converts computed score → signal string for display
 function derivedSignalKey(h) {
   const score = computeScore(h);
@@ -3474,8 +3507,8 @@ function histToTodayData(h) {
     action: 'Snapshot ' + h.date,
     big3: big3Arr,
     bottomConf: _derivedBC + '/8',
-    bottomGreen: [],
-    bottomYellow: [],
+    bottomGreen: computeBottomConfItems(h).green,
+    bottomYellow: computeBottomConfItems(h).yellow,
     mvrv:       h.mvrv  != null ? String(h.mvrv)      : null,
     puell:      h.puell != null ? String(h.puell)     : null,
     fearGreed:  h.fearGreed != null ? String(h.fearGreed) : null,
