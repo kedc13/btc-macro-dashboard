@@ -4562,6 +4562,64 @@ setTimeout(() => {
     }
   } catch(e) { console.error('[aiText-safety]', e); }
 }, 1500);
+
+// ── Pull-to-refresh (iOS PWA / mobile) ───────────────────────────────────────
+(function() {
+  const THRESHOLD = 80; // px of pull needed to trigger
+  let startY = 0, pulling = false, triggered = false;
+
+  // Indicator element
+  const bar = document.createElement('div');
+  bar.id = '_ptr-bar';
+  bar.style.cssText = [
+    'position:fixed;top:0;left:0;right:0;z-index:99999',
+    'height:0;overflow:hidden;transition:height .15s',
+    'background:#111;display:flex;align-items:center;justify-content:center',
+    'font-size:12px;font-weight:600;color:#555;letter-spacing:.04em;gap:8px',
+    'pointer-events:none'
+  ].join(';');
+  document.body.appendChild(bar);
+
+  document.addEventListener('touchstart', function(e) {
+    if (window.scrollY === 0) {
+      startY = e.touches[0].clientY;
+      pulling = true;
+      triggered = false;
+    }
+  }, { passive: true });
+
+  document.addEventListener('touchmove', function(e) {
+    if (!pulling) return;
+    const dy = e.touches[0].clientY - startY;
+    if (dy <= 0) { pulling = false; bar.style.height = '0'; return; }
+    const pct = Math.min(dy / THRESHOLD, 1);
+    const h = Math.min(dy * 0.4, 44);
+    bar.style.height = h + 'px';
+    bar.style.opacity = pct;
+    if (dy >= THRESHOLD && !triggered) {
+      triggered = true;
+      bar.innerHTML = '<span style="font-size:15px">↑</span> Release to refresh';
+      bar.style.color = '#bbb';
+    } else if (dy < THRESHOLD) {
+      triggered = false;
+      bar.innerHTML = '<span style="font-size:15px">↓</span> Pull to refresh';
+      bar.style.color = '#555';
+    }
+  }, { passive: true });
+
+  document.addEventListener('touchend', function() {
+    if (!pulling) return;
+    pulling = false;
+    if (triggered) {
+      bar.style.height = '44px';
+      bar.innerHTML = '<span style="font-size:13px">↻</span> Refreshing…';
+      bar.style.color = '#bbb';
+      setTimeout(() => location.reload(), 300);
+    } else {
+      bar.style.height = '0';
+    }
+  });
+})();
 </script>
 
 <!-- ALERT MODAL -->
