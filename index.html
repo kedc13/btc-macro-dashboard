@@ -36,11 +36,17 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 /* Header nav tabs */
 .header-nav { display: flex; gap: 4px; flex-shrink: 0; }
 @media (max-width: 640px) {
-  .header-nav  { order: 1; flex: 0 0 100%; }
-  .signal-banner { order: 2; }
-  .header-meta { order: 3; flex: 0 0 100%; text-align: left; }
-  .header-nav .hnav-btn { flex: 1; text-align: center; padding: 10px 6px; font-size: 13px; border-radius: 10px; }
-  .header-nav > div { flex-shrink: 0; } /* bell stays compact */
+  /* Row 1: signal left, price right */
+  .signal-banner { order: 1; flex: 1; min-width: 0; }
+  #hdr-price-m   { display: block !important; }
+  /* Row 2: week · phase · updated — hide the desktop price from here */
+  .header-meta   { order: 2; flex: 0 0 100%; text-align: left; }
+  .header-meta #hdr-price { display: none; }
+  .header-meta .price-sep { display: none; }
+  /* Row 3: full-width nav buttons with padding */
+  .header-nav    { order: 3; flex: 0 0 100%; margin-top: 4px; padding-top: 10px; border-top: 1px solid #1a1a1a; }
+  .header-nav .hnav-btn { flex: 1; text-align: center; padding: 11px 6px; font-size: 13px; border-radius: 10px; }
+  .header-nav > div { flex-shrink: 0; }
 }
 .hnav-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid #2a2a2a; background: transparent; font-size: 12px; font-weight: 600; color: #555; cursor: pointer; transition: all .15s; white-space: nowrap; }
 .hnav-btn:hover { border-color: #444; color: #aaa; }
@@ -366,9 +372,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <div class="signal-banner">
       <div class="signal-dot" id="sig-dot" style="background:#999"></div>
       <span id="sig-text">—</span>
+      <!-- Mobile-only price, right-aligned in signal row -->
+      <strong id="hdr-price-m" style="display:none;margin-left:auto;font-size:15px;font-weight:700;color:#e5e5e5;letter-spacing:-.01em">—</strong>
     </div>
     <div class="header-meta">
-      <strong id="hdr-price">—</strong> &nbsp;·&nbsp; Wk <span id="hdr-week">—</span> &nbsp;·&nbsp; <span class="phase-badge phase-early" id="hdr-phase">—</span>
+      <strong id="hdr-price">—</strong><span class="price-sep"> &nbsp;·&nbsp; </span>Wk <span id="hdr-week">—</span> &nbsp;·&nbsp; <span class="phase-badge phase-early" id="hdr-phase">—</span>
       <div style="font-size:10px;color:#777;margin-top:3px;letter-spacing:.02em">Updated <span id="last-updated">—</span></div>
     </div>
     <div class="header-nav">
@@ -1082,7 +1090,10 @@ function updatePriceDisplay(price) {
   if (!price || isNaN(price)) return;
   livePrice = price;
   const el = document.getElementById('hdr-price');
-  if (el) el.innerHTML = '$' + Math.round(price).toLocaleString() + ' <span class="live-badge" style="font-size:8px;vertical-align:middle">LIVE</span>';
+  const priceStr = '$' + Math.round(price).toLocaleString();
+  if (el) el.innerHTML = priceStr + ' <span class="live-badge" style="font-size:8px;vertical-align:middle">LIVE</span>';
+  const elM = document.getElementById('hdr-price-m');
+  if (elM) elM.textContent = priceStr;
   // Check price level alerts on every price update (throttled internally to 1/min)
   if (typeof checkPriceAlerts === 'function') checkPriceAlerts(price);
   if (typeof updateRallyCaution === 'function') updateRallyCaution();
