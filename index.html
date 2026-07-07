@@ -972,7 +972,7 @@ function computeTrueBottomGates(h) {
   const rp   = parseFloat(h.realizedPriceNum)   || 0;
   const hr   = (h.hashRibbons || '').toUpperCase();
 
-  const g1 = gap < 5 && k < 20 && d < 30;          // K/D converged
+  const g1 = gap <= 6 && k < 20 && d < 30;          // K/D converged (actionable zone: gap ≤6 pts)
   const g2 = k > d  && k < 30;                      // K/D cross
   const g3 = sopr >= 5;                             // SOPR sustained
   const g4 = rp > 0 && price <= rp * 1.02;         // price at realized
@@ -982,17 +982,17 @@ function computeTrueBottomGates(h) {
     count: [g1,g2,g3,g4,g5].filter(Boolean).length,
     total: 5,
     gates: [
-      { label:'K/D Gap <5',          met:g1,
+      { label:'K/D Gap ≤6',          met:g1,
         value: gap.toFixed(1)+' pts',
         pct: Math.max(0, Math.min(100,(1-gap/25)*100)),
         alert: gap < 10,
         detail: g1 ? 'Converged — cross imminent'
-               : gap<10 ? `${gap.toFixed(1)} pts remaining to <5 threshold`
+               : gap<10 ? `${gap.toFixed(1)} pts remaining to ≤6 threshold`
                : `${gap.toFixed(1)} pts to close — D still falling toward K` },
       { label:'K/D Cross',           met:g2,
         value: g2 ? 'CROSSED ✓' : `K ${k.toFixed(1)} vs D ${d.toFixed(1)}`,
         pct: g2 ? 100 : Math.max(0,Math.min(90,(1-gap/25)*100)),
-        alert: gap < 5,
+        alert: gap <= 6,
         detail: g2 ? 'K crossed above D in oversold zone — cycle bottom forming'
                : 'Waiting for K to cross above D below 30' },
       { label:'SOPR Holds ≥5 Days',  met:g3,
@@ -4392,7 +4392,7 @@ function renderKDCard() {
   let state, stateColor, stateBg, stateBorder;
   if (crossed)       { state = 'K > D — CROSSED';     stateColor = '#86efac'; stateBg = '#052e16'; stateBorder = '#166534'; }
   else if (absGap < 3)  { state = '⚡ CONVERGENCE ZONE';  stateColor = '#fde68a'; stateBg = '#1c1200'; stateBorder = '#d97706'; }
-  else if (absGap < 7)  { state = '▲ APPROACHING';        stateColor = '#fdba74'; stateBg = '#1a0e00'; stateBorder = '#92400e'; }
+  else if (absGap <= 6)  { state = '▲ APPROACHING';        stateColor = '#fdba74'; stateBg = '#1a0e00'; stateBorder = '#92400e'; }
   else                   { state = 'BEAR PHASE';           stateColor = '#777'; stateBg = '#0d0d0d'; stateBorder = '#222'; }
 
   const badge = document.getElementById('kd-status-badge');
@@ -4451,12 +4451,12 @@ function renderKDCard() {
     if (!crossed && absGap < 3) {
       alert.style.display = 'block';
       alert.innerHTML = `⚡ <strong>CONVERGENCE ZONE</strong> — K and D are ${absGap.toFixed(1)} pts apart. Historically this tight spread has marked the actual cycle low. Price may be at or forming the bottom right now — highest conviction window for deployment.`;
-    } else if (!crossed && absGap < 7) {
+    } else if (!crossed && absGap <= 6) {
       alert.style.display = 'block';
       alert.style.background = '#1a0e00';
       alert.style.border = '1px solid #92400e';
       alert.style.color = '#fdba74';
-      alert.innerHTML = `▲ <strong>APPROACHING</strong> — Gap narrowing to ${absGap.toFixed(1)} pts. Watch this weekly. When it drops below 3 the bottom convergence window opens.`;
+      alert.innerHTML = `▲ <strong>APPROACHING</strong> — Gap narrowing to ${absGap.toFixed(1)} pts (actionable zone is ≤6 pts). Watch this weekly. When it drops below 3 the bottom convergence window opens.`;
     } else {
       alert.style.display = 'none';
     }
@@ -4516,7 +4516,7 @@ function updateDeploymentPosture() {
   let posture, borderColor, badgeStyle, actionText, detailText;
 
   const inBottomWindow = bearWeek >= 44;
-  const kdConverging   = kdGap < 5;
+  const kdConverging   = kdGap <= 6;
   const kdApproaching  = kdGap < 10;
 
   if (kdCrossed || (kdConverging && big3 >= 2 && sigScore >= 3)) {
