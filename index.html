@@ -4330,51 +4330,62 @@ async function _fetchKrakenCloses() {
 }
 
 async function fetchAndComputeKD() {
-  // Check sessionStorage cache — recalculate at most once per hour
-  const cacheKey = 'btc_kd_v2_' + new Date().toISOString().slice(0, 13);
+  // PRIMARY SOURCE: the manually-logged weeklyK/weeklyD in HISTORY_DATA. These are read
+  // directly off Keith's saved TradingView chart (tradingview.com/chart/c9SbvtLb/) via
+  // Table View each morning — the exact "Bitcoin Cycle Reversal Indicator" values, not an
+  // approximation. The Binance/Kraken live calc below uses a different price feed and is
+  // only a secondary reference shown in the note line — it will diverge from TradingView
+  // by design and should never override the logged value.
+  const latest = HISTORY_DATA[HISTORY_DATA.length - 1] || {};
+  const loggedSeries = HISTORY_DATA.filter(h => h.weeklyK != null && h.weeklyD != null);
+  const manual = (latest.weeklyK != null && latest.weeklyD != null) ? {
+    k: parseFloat(latest.weeklyK),
+    d: parseFloat(latest.weeklyD),
+    gap: +(parseFloat(latest.weeklyD) - parseFloat(latest.weeklyK)).toFixed(2),
+    gapHistory: loggedSeries.slice(-12).map(h => +(parseFloat(h.weeklyD) - parseFloat(h.weeklyK)).toFixed(2)),
+    asOfDate: latest.date
+  } : null;
+
+  // Check sessionStorage cache for the live reference calc — recalculate at most once per hour
+  const cacheKey = 'btc_kd_ref_v3_' + new Date().toISOString().slice(0, 13);
+  let liveRef = null;
   try {
     const cached = sessionStorage.getItem(cacheKey);
-    if (cached) { _kdLive = JSON.parse(cached); renderKDCard(); return; }
+    if (cached) liveRef = JSON.parse(cached);
   } catch(e) {}
 
-  // Fire both requests in parallel
-  const [binanceResult, krakenResult] = await Promise.allSettled([
-    _fetchBinanceCloses().then(closes => _computeKDFromCloses(closes)),
-    _fetchKrakenCloses().then(closes  => _computeKDFromCloses(closes))
-  ]);
-
-  const binance = binanceResult.status === 'fulfilled' ? binanceResult.value : null;
-  const kraken  = krakenResult.status  === 'fulfilled' ? krakenResult.value  : null;
-
-  if (!binance && !kraken) {
-    // Both failed — fall back to manually-logged value
-    const latest = HISTORY_DATA[HISTORY_DATA.length - 1] || {};
-    if (latest.weeklyK != null && latest.weeklyD != null) {
-      const k = parseFloat(latest.weeklyK), d = parseFloat(latest.weeklyD);
-      _kdLive = { k, d, gap: +(d - k).toFixed(2), gapHistory: [+(d - k).toFixed(2)], fallback: true };
-    }
-  } else {
-    // Use Binance as primary (or Kraken if Binance failed)
-    const primary = binance || kraken;
-    // Cross-validation: compare K and D between sources
-    let xval = null;
-    if (binance && kraken) {
-      const kDiff = Math.abs(binance.k - kraken.k);
-      const dDiff = Math.abs(binance.d - kraken.d);
-      const confirmed = kDiff < 2 && dDiff < 2;
-      xval = {
-        krakenK: kraken.k,
-        krakenD: kraken.d,
-        krakenGap: kraken.gap,
-        kDiff: +kDiff.toFixed(2),
-        dDiff: +dDiff.toFixed(2),
-        confirmed
-      };
-    }
-    _kdLive = { ...primary, xval, fallback: false };
+  if (!liveRef) {
+    const [binanceResult, krakenResult] = await Promise.allSettled([
+      _fetchBinanceCloses().then(closes => _computeKDFromCloses(closes)),
+      _fetchKrakenCloses().then(closes  => _computeKDFromCloses(closes))
+    ]);
+    const binance = binanceResult.status === 'fulfilled' ? binanceResult.value : null;
+    const kraken  = krakenResult.status  === 'fulfilled' ? krakenResult.value  : null;
+    liveRef = binance || kraken || null;
+    if (liveRef) { try { sessionStorage.setItem(cacheKey, JSON.stringify(liveRef)); } catch(e) {} }
   }
 
-  try { sessionStorage.setItem(cacheKey, JSON.stringify(_kdLive)); } catch(e) {}
+  if (manual) {
+    let xval = null;
+    if (liveRef && liveRef.k != null) {
+      const kDiff = Math.abs(manual.k - liveRef.k);
+      const dDiff = Math.abs(manual.d - liveRef.d);
+      xval = {
+        liveK: liveRef.k,
+        liveD: liveRef.d,
+        kDiff: +kDiff.toFixed(2),
+        dDiff: +dDiff.toFixed(2),
+        confirmed: kDiff < 2 && dDiff < 2
+      };
+    }
+    _kdLive = { ...manual, xval, fallback: false, source: 'tradingview' };
+  } else if (liveRef) {
+    // No TradingView value has ever been logged — fall back to the live Binance/Kraken calc
+    _kdLive = { ...liveRef, xval: null, fallback: true, source: 'live-calc' };
+  } else {
+    _kdLive = null;
+  }
+
   renderKDCard();
   updateRallyCaution();
   updateDeploymentPosture();
@@ -4462,25 +4473,26 @@ function renderKDCard() {
     }
   }
 
-  // Cross-validation row
+  // Reference row — compares the logged TradingView value against the independent
+  // Binance/Kraken live calc. This is a sanity check only; TradingView is authoritative.
   const note = document.getElementById('kd-note');
   if (note) {
     const xval = _kdLive?.xval;
     let xvalHtml = '';
     if (xval) {
       if (xval.confirmed) {
-        xvalHtml = `<span style="color:#4ade80;font-weight:700">✓ Kraken confirmed</span> — K ${xval.krakenK} / D ${xval.krakenD} (Δ ${xval.kDiff} pts). Both sources agree — high confidence.`;
+        xvalHtml = `<span style="color:#4ade80;font-weight:700">✓ Live calc agrees</span> — Binance/Kraken K ${xval.liveK} / D ${xval.liveD} (Δ ${xval.kDiff} pts). Reference source is in line with TradingView.`;
       } else {
-        xvalHtml = `<span style="color:#fbbf24;font-weight:700">⚠ Divergence</span> — Kraken K ${xval.krakenK} / D ${xval.krakenD} (K diff ${xval.kDiff}, D diff ${xval.dDiff}). Check TradingView manually.`;
+        xvalHtml = `<span style="color:#666">Reference only</span> — Binance/Kraken live calc reads K ${xval.liveK} / D ${xval.liveD} (K diff ${xval.kDiff}, D diff ${xval.dDiff}). Expected to differ — different feed/formula. TradingView value above is authoritative.`;
       }
-    } else if (!fallback) {
-      xvalHtml = '<span style="color:#666">Kraken cross-validation unavailable</span>';
+    } else if (fallback) {
+      xvalHtml = '<span style="color:#fbbf24;font-weight:700">⚠ No TradingView reading logged yet</span> — showing Binance/Kraken live calc as a placeholder until Step 0 logs a Table View value.';
     }
 
     if (crossed) {
       note.innerHTML = `K has crossed above D — cycle low confirmed and likely already printed. Best entries were at convergence. ${xvalHtml ? '<br>' + xvalHtml : ''}`;
     } else {
-      note.innerHTML = `Gap ${absGap.toFixed(1)} pts to cross. Cycle low historically prints at convergence (gap &lt; 3) — cross is lagging. ${fallback ? '<em>*Using last logged value</em>' : 'Binance weekly candles.'} ${xvalHtml ? '<br>' + xvalHtml : ''}`;
+      note.innerHTML = `Gap ${absGap.toFixed(1)} pts to cross. Cycle low historically prints at convergence (gap &lt; 3) — cross is lagging. ${fallback ? '' : `TradingView Table View${_kdLive?.asOfDate ? ', as of ' + _kdLive.asOfDate : ''}.`} ${xvalHtml ? '<br>' + xvalHtml : ''}`;
     }
   }
 }
