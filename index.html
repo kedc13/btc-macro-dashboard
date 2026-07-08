@@ -4431,9 +4431,13 @@ function renderKDCard() {
   }
 
   // Trend arrow — is gap narrowing?
+  // Compare against ~1 week back (not just the prior day) so a single-day
+  // intra-week wiggle in the still-forming weekly candle doesn't flip the
+  // arrow against the real multi-week trend.
   const trendEl = document.getElementById('kd-trend');
   if (trendEl && gapHistory.length >= 2) {
-    const prev = gapHistory[gapHistory.length - 2];
+    const lookback = Math.min(6, gapHistory.length - 1);
+    const prev = gapHistory[gapHistory.length - 1 - lookback];
     const curr = gapHistory[gapHistory.length - 1];
     const narrowing = curr < prev;
     trendEl.textContent = narrowing ? '▼ narrowing' : '▲ widening';
