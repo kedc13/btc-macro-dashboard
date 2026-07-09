@@ -699,13 +699,25 @@ const HISTORY_DATA = [
 ];
 
 // =====================================================================
-// CYCLE PHASE BOUNDARIES (based on ATH Oct 20, 2025 + historical weeks)
+// CYCLE PHASE BOUNDARIES (based on ATH Oct 6, 2025 + historical weeks)
 // =====================================================================
-const ATH_DATE   = '2025-10-20';
-const W35_DATE   = '2026-06-22';  // Week 35: entering bottom formation window
-const W44_DATE   = '2026-08-24';  // Week 44: bottom window start
-const W58_DATE   = '2026-12-01';  // Week 58: extended bear / end of historical window
+const ATH_DATE   = '2025-10-06';
+const W35_DATE   = '2026-06-01';  // Week 35: entering bottom formation window
+const W44_DATE   = '2026-08-03';  // Week 44: bottom window start
+const W58_DATE   = '2026-11-09';  // Week 58: extended bear / end of historical window
 const CHART_END  = '2027-04-01';  // Chart horizon
+
+// Normalize every HISTORY_DATA entry's `week` field from its date + ATH_DATE.
+// Prevents drift from manual/per-run week calculations (was producing 37/39/40
+// inconsistently across consecutive days). Single source of truth from here on.
+(function normalizeHistoryWeeks(){
+  const athMs = new Date(ATH_DATE + 'T00:00:00Z').getTime();
+  HISTORY_DATA.forEach(h => {
+    if (!h.date) return;
+    const days = Math.floor((new Date(h.date + 'T00:00:00Z').getTime() - athMs) / 86400000);
+    h.week = Math.max(1, Math.floor(days / 7) + 1);
+  });
+})();
 
 // =====================================================================
 // PERSONAL DCA PLAN — update PLAN.deployed as buys happen
@@ -1362,13 +1374,13 @@ function parseSlack(raw) {
 // =====================================================================
 const BIG3_META = [
   { name:'Hash Ribbons',
-    tip:'Fires when the 30-day hashrate MA crosses back above the 60-day MA after miner capitulation. Historically one of the highest-conviction BTC buy signals — price often doubles within 6 months after trigger.',
-    proxySrc:'mvrv',
-    triggerPct: 75, triggerLabel: '30d MA crosses above 60d MA' },
+    tip:'Fires when the 30-day network hashrate MA crosses back above the 60-day MA after miner capitulation. Historically one of the highest-conviction BTC buy signals — price often doubles within 6 months after trigger. Sourced from tracked on-chain hashRibbons field, not price.',
+    proxySrc:'hashRibbons',
+    triggerPct: 75, triggerLabel: 'Real hash rate: 30d MA crosses above 60d MA' },
   { name:'SOPR Recovery',
-    tip:'Spent Output Profit Ratio sustained above 1.0 signals that coins are being moved at a profit — a bear-to-recovery trend shift. Watch for it to hold above 1 for multiple weeks.',
-    proxySrc:'fg',
-    triggerPct: 85, triggerLabel: 'F&G recovering above 18 after sustained extreme fear' },
+    tip:'Spent Output Profit Ratio sustained above 1.0 signals that coins are being moved at a profit — a bear-to-recovery trend shift. Sourced from tracked on-chain soprStreak field (consecutive days SOPR MA has held above 1.0), not sentiment.',
+    proxySrc:'soprStreak',
+    triggerPct: 85, triggerLabel: 'Real SOPR MA holds above 1.0 (streak building toward 5d)' },
   { name:'Monthly Stoch RSI',
     tip:'Stochastic RSI on the monthly chart. Lines compressing below 20 = oversold. Pre-cross (K tightening) is the strongest signal. The actual cross lags but confirms direction.',
     proxySrc:'live',
@@ -1532,66 +1544,40 @@ async function fetchBig3Live(big3arr) {
       ? `Month ${monthsBelowOversold} of oversold  ·  prior cycles: 3–6 months`
       : null;
 
-    // Hash Ribbons proxy: 30d vs 60d MA of price (price-based ribbon)
-    const dailyPrices = dRows.map(r => parseFloat(r[4])); // daily closes from Binance
-    const ma30 = dailyPrices.slice(-30).reduce((a,b)=>a+b,0)/30;
-    const ma60 = dailyPrices.slice(-60).reduce((a,b)=>a+b,0)/60;
-    const ratio = ma30 / ma60; // >1 = bullish cross, <1 = still under
-    // Track ratio trend over last 60 days (every 5 days)
-    const ratioHistory = [];
-    for (let i = 60; i <= dailyPrices.length; i += 5) {
-      const s30 = dailyPrices.slice(i-30, i).reduce((a,b)=>a+b,0)/30;
-      const s60 = dailyPrices.slice(i-60, i).reduce((a,b)=>a+b,0)/60;
-      ratioHistory.push((s30/s60 - 0.85) / 0.3 * 100); // normalize to 0-100 range
-    }
-    // HR 2-week confirmation: 2022 showed a false HR signal (Aug→FTX). Require 14 days persistence.
-    const hrBullishNow = ratio > 1;
-    const HR_KEY = 'btc_hr_first_fired';
-    const hrStoredTs = parseInt(localStorage.getItem(HR_KEY) || '0');
-    if (hrBullishNow && !hrStoredTs) localStorage.setItem(HR_KEY, Date.now().toString());
-    if (!hrBullishNow && hrStoredTs) localStorage.removeItem(HR_KEY);
-    const hrFirstFired = hrBullishNow ? (hrStoredTs || Date.now()) : 0;
-    const hrConfirmed  = hrBullishNow && hrFirstFired > 0 && (Date.now() - hrFirstFired >= 14 * 24 * 3600 * 1000);
-    const hrDaysIn     = hrBullishNow && hrFirstFired > 0 ? Math.floor((Date.now() - hrFirstFired) / 86400000) : 0;
-    const hrPct = Math.min(95, Math.max(5, (ratio - 0.85) / 0.2 * 100));
-    const hrColor = hrConfirmed ? '#22c55e' : hrBullishNow ? '#f97316' : '#777';
-    const hrSpark = makeSpark(ratioHistory.slice(-12), hrColor, 50);
-    const hrExtra = hrBullishNow && !hrConfirmed
-      ? `Confirming — day ${hrDaysIn}/14 · needs 2-week persistence (2022 false signal lesson)`
-      : hrConfirmed ? `Confirmed ${hrDaysIn}d persistent · high-conviction signal` : null;
+    // Hash Ribbons: sourced from tracked on-chain `hashRibbons` field (real 30d/60d
+    // hash rate MA cross), NOT price. Price-MA proxy removed — it was flashing false
+    // "ACTIVE" on ordinary bear-market relief rallies with no actual miner recovery.
+    const latestEntry = HISTORY_DATA[HISTORY_DATA.length - 1] || {};
+    const hrState  = (latestEntry.hashRibbons || '').toUpperCase();
+    const hrActive = hrState === 'BUY';
+    const hrPctMap = { COMPRESSION: 15, CLEAR: 45, BUY: 95 };
+    const hrPct    = hrPctMap[hrState] ?? 20;
+    const hrColor  = hrActive ? '#22c55e' : hrState === 'CLEAR' ? '#f97316' : '#777';
+    const hrHistVals = HISTORY_DATA.slice(-14).map(d => hrPctMap[(d.hashRibbons||'').toUpperCase()] ?? 20);
+    const hrSpark  = makeSpark(hrHistVals, hrColor, 50);
+    const hrExtra  = hrActive
+      ? 'Hash Ribbons BUY signal — 30d hash rate MA crossed above 60d MA'
+      : hrState === 'CLEAR'
+        ? 'No active death cross, but no confirmed buy signal yet'
+        : 'Miner hash rate still in compression (death cross) — no recovery cross yet';
 
-    // SOPR proxy: live F&G history (stored by fetchLiveFG) + HISTORY_DATA fallback
-    // Recovery signal: was in extreme fear (<20), now recovering upward = SOPR likely crossing 1.0
-    const fgLive = window._fngHistory && window._fngHistory.length >= 7
-      ? window._fngHistory
-      : HISTORY_DATA.slice(-14).map(h => h.fearGreed != null ? +h.fearGreed : 50);
-    const liveFG    = fgLive[fgLive.length - 1] ?? 50;
-    const prior3avg = fgLive.slice(-4, -1).reduce((a,b)=>a+b,0) / Math.max(1, Math.min(3, fgLive.slice(-4,-1).length));
-    const wasInExtremeFear = fgLive.some(v => v <= 20);
-    // Recovery: must have LEFT extreme fear (≥20), not just ticked up within it.
-    // prior3avg < 20 ensures we were still in extreme fear recently, making the cross meaningful.
-    const recovering = wasInExtremeFear && liveFG >= 20 && prior3avg < 20 && liveFG > prior3avg;
-    // pct: 0-65 = not yet in extreme fear; 65-80 = in capitulation zone; 85+ = recovering (trigger zone)
-    let soprPct, soprColor, soprActive;
-    if (recovering) {
-      soprPct = Math.min(95, 85 + (liveFG - 18) * 1.5);
-      soprColor = '#22c55e'; soprActive = true;
-    } else if (liveFG <= 20) {
-      soprPct = Math.round(60 + (20 - liveFG) * 1.5); // 60-90 range in capitulation
-      soprColor = '#f97316'; soprActive = false;
-    } else if (liveFG <= 35) {
-      soprPct = Math.round(35 + (35 - liveFG)); // approaching extreme fear
-      soprColor = '#777'; soprActive = false;
-    } else {
-      soprPct = Math.max(10, Math.round(35 - (liveFG - 35) * 0.4));
-      soprColor = '#777'; soprActive = false;
-    }
-    const soprSpark = makeSpark(fgLive, soprColor, 20);
+    // SOPR Recovery: sourced from tracked on-chain `soprStreak` field (consecutive
+    // days real SOPR MA has held above 1.0), NOT Fear & Greed. F&G proxy removed —
+    // sentiment recovering off extreme fear isn't the same as sellers stopping.
+    const soprStreak = parseInt(latestEntry.soprStreak) || 0;
+    const soprActive = soprStreak >= 1;
+    const soprPct    = Math.min(95, Math.max(5, Math.round((soprStreak / 5) * 100)));
+    const soprColor  = soprActive ? '#22c55e' : '#777';
+    const soprHistVals = HISTORY_DATA.slice(-14).map(d => parseInt(d.soprStreak) || 0);
+    const soprSpark  = makeSpark(soprHistVals, soprColor, 1);
+    const soprExtra  = soprActive
+      ? `SOPR holding above 1.0 — ${soprStreak}/5 day streak toward Cycle Gate 3`
+      : 'Real on-chain SOPR still below 1.0 — sellers not yet exhausted';
 
     const liveData = [
-      { pct: Math.round(hrPct),   color: hrColor,   spark: hrSpark, activeOverride: hrConfirmed, extra: hrExtra },
-      { pct: soprPct,             color: soprColor, spark: soprSpark, activeOverride: soprActive },
-      { pct: Math.round(stochPct),color: stochColor,spark: stochSpark, activeOverride: lastK < 20, extra: stochExtra },
+      { pct: Math.round(hrPct),   color: hrColor,   spark: hrSpark,   activeOverride: hrActive,   extra: hrExtra },
+      { pct: soprPct,             color: soprColor, spark: soprSpark, activeOverride: soprActive, extra: soprExtra },
+      { pct: Math.round(stochPct),color: stochColor,spark: stochSpark,activeOverride: lastK < 20,  extra: stochExtra },
     ];
     // Store lastK globally so checkShallowBottomAlert can reference it
     window._lastStochK = lastK;
@@ -1600,29 +1586,33 @@ async function fetchBig3Live(big3arr) {
     if (typeof checkShallowBottomAlert === 'function') checkShallowBottomAlert();
   } catch(e) {
     console.warn('Big3 live fetch failed — using HISTORY_DATA fallback', e);
-    // Fallback: derive all 3 from HISTORY_DATA only, no external fetch
+    // Fallback (no network): Hash Ribbons + SOPR still read the real tracked fields
+    // (same source as the primary path — these never depended on the Binance fetch).
+    // Only Monthly Stoch RSI needs a substitute here since its real calc needs live candles.
     const h = HISTORY_DATA[HISTORY_DATA.length - 1] || {};
-    const mvrv = h.mvrv != null ? +h.mvrv : 1;
-    const fg   = h.fearGreed != null ? +h.fearGreed : 50;
 
-    // Hash Ribbons proxy: MVRV < 1 = near capitulation
-    const hrPct = Math.min(90, Math.max(5, Math.round((1 - Math.min(mvrv, 2) / 2) * 80)));
-    const hrColor = hrPct > 60 ? '#22c55e' : hrPct > 35 ? '#f97316' : '#777';
-    const hrVals = HISTORY_DATA.slice(-14).map(d => d.mvrv != null ? Math.max(0, 1 - Math.min(+d.mvrv, 2)/2) * 100 : 50);
+    const hrState  = (h.hashRibbons || '').toUpperCase();
+    const hrActive = hrState === 'BUY';
+    const hrPctMap = { COMPRESSION: 15, CLEAR: 45, BUY: 95 };
+    const hrPct    = hrPctMap[hrState] ?? 20;
+    const hrColor  = hrActive ? '#22c55e' : hrState === 'CLEAR' ? '#f97316' : '#777';
+    const hrVals   = HISTORY_DATA.slice(-14).map(d => hrPctMap[(d.hashRibbons||'').toUpperCase()] ?? 20);
 
-    // SOPR proxy: F&G
-    const soprPct = fg < 15 ? 70 : fg < 25 ? 50 : fg < 40 ? 35 : 20;
-    const soprColor = soprPct > 60 ? '#22c55e' : soprPct > 35 ? '#f97316' : '#777';
-    const soprVals = HISTORY_DATA.slice(-14).map(d => d.fearGreed != null ? Math.max(0, 50 - +d.fearGreed) : 25);
+    const soprStreak = parseInt(h.soprStreak) || 0;
+    const soprActive = soprStreak >= 1;
+    const soprPct    = Math.min(95, Math.max(5, Math.round((soprStreak / 5) * 100)));
+    const soprColor  = soprActive ? '#22c55e' : '#777';
+    const soprVals   = HISTORY_DATA.slice(-14).map(d => parseInt(d.soprStreak) || 0);
 
-    // Stoch RSI proxy: composite score trend
+    // Stoch RSI proxy: composite score trend (only card still using a substitute,
+    // since real monthly StochRSI needs a live price fetch that just failed)
     const stochPct = Math.round(Math.min(90, Math.max(10, (HISTORY_DATA.slice(-14).map(d => computeScore(d)).reduce((a,b)=>a+b,0) / 14))));
     const stochColor = stochPct > 65 ? '#22c55e' : stochPct > 40 ? '#f97316' : '#777';
     const stochVals = HISTORY_DATA.slice(-14).map(d => computeScore(d));
 
     renderBig3Cards(big3arr, [
-      { pct: hrPct,    color: hrColor,    spark: makeSpark(hrVals,    hrColor,    50) },
-      { pct: soprPct,  color: soprColor,  spark: makeSpark(soprVals,  soprColor,  25) },
+      { pct: hrPct,    color: hrColor,    spark: makeSpark(hrVals,   hrColor,   50), activeOverride: hrActive },
+      { pct: soprPct,  color: soprColor,  spark: makeSpark(soprVals, soprColor, 1),  activeOverride: soprActive },
       { pct: stochPct, color: stochColor, spark: makeSpark(stochVals, stochColor, 50) },
     ]);
   }
