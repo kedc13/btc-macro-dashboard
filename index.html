@@ -917,19 +917,34 @@ function computeBottomConf(h) {
   return Math.min(conf, 8);
 }
 
-// big3 0–3: three objectively-defined confirmation signals
+// big3 0–3: three primary cycle-bottom confirmation signals
+// Definition must match SKILL.md exactly — these gate the PILE_IN condition
+// ① Hash Ribbons BUY   (miner capitulation complete)
+// ② SOPR streak ≥ 3    (on-chain spending recovering above breakeven)
+// ③ Monthly Stoch RSI K crosses above D while oversold (cycle momentum turning)
 function computeBig3(h) {
-  const k    = parseFloat(h.weeklyK)  || 50;
-  const d    = parseFloat(h.weeklyD)  || 50;
   const sopr = parseInt(h.soprStreak) || 0;
-  const mrsiRaw = String(h.monthlyRsi || '50');
-  const mrsiM   = mrsiRaw.match(/[\d.]+/);
-  const mrsi    = mrsiM ? parseFloat(mrsiM[0]) : 50;
-  let b = 0;
-  if (k < 15 && d < 25) b++;  // weekly Stoch RSI compression (2018/2022 bottom signal)
-  if (mrsi < 30)         b++;  // monthly RSI extreme oversold
-  if (sopr >= 3)         b++;  // SOPR recovery streak ≥ 3 days above 1.0
-  return Math.min(b, 3);
+  const hr   = (h.hashRibbons || '').toUpperCase();
+
+  // Monthly Stoch RSI K/D cross: use stored monthlyStochK/D when available;
+  // fall back to monthly RSI < 25 proxy when those fields aren't yet populated
+  let mStochCross = false;
+  if (h.monthlyStochK != null && h.monthlyStochD != null) {
+    const msk = parseFloat(h.monthlyStochK);
+    const msd = parseFloat(h.monthlyStochD);
+    mStochCross = msk > msd && msk < 30;  // K crossed above D in oversold zone
+  } else {
+    const mrsiRaw = String(h.monthlyRsi || '50');
+    const mrsiM   = mrsiRaw.match(/[\d.]+/);
+    const mrsi    = mrsiM ? parseFloat(mrsiM[0]) : 50;
+    mStochCross = mrsi < 25;  // tighter proxy when Stoch K/D not stored
+  }
+
+  // Each signal evaluated independently — no sequential dependency
+  const b1 = hr === 'BUY';   // Hash Ribbons buy signal
+  const b2 = sopr >= 3;       // SOPR recovery streak
+  const b3 = mStochCross;     // Monthly Stoch RSI K/D cross
+  return [b1, b2, b3].filter(Boolean).length;
 }
 
 // phase: data-driven, not just week count
@@ -1099,7 +1114,7 @@ function whatWouldUpgrade(h) {
   if (phase === 'EARLY_BEAR')
     tips.push('Reach W35 entering window (~' + W35_DATE + ') — biggest score unlock');
   if (b === 0)
-    tips.push('Any Big 3 fires: Hash Ribbons, SOPR Recovery, or Monthly Stoch RSI compressing below 20');
+    tips.push('Big 3 all dark: need Hash Ribbons BUY, SOPR 3-day streak, or Monthly Stoch RSI K/D cross');
   else if (b < 3)
     tips.push((3-b) + ' more Big 3 trigger' + (3-b>1?'s':'') + ' → max allocation signal');
   if (m  > 0.5)  tips.push('MVRV drops below 0.5 (now ' + m.toFixed(2) + ')');
@@ -3545,14 +3560,22 @@ function histToTodayData(h) {
     EARLY_BEAR:'Early Bear', ENTERING_WINDOW:'Entering Window',
     BOTTOM_WINDOW:'Bottom Window', EXTENDED:'Extended'
   };
-  // Big 3 display — auto-computed, not from stored h.big3
-  const big3Names = ['Weekly Stoch RSI (K<15 D<25)','Monthly RSI <30','SOPR streak ≥3'];
+  // Big 3 display — each signal evaluated individually for accurate per-indicator status
+  const _b1_hr    = (h.hashRibbons || '').toUpperCase() === 'BUY';
+  const _b2_sopr  = (parseInt(h.soprStreak) || 0) >= 3;
+  let _b3_mstoch  = false;
+  if (h.monthlyStochK != null && h.monthlyStochD != null) {
+    _b3_mstoch = parseFloat(h.monthlyStochK) > parseFloat(h.monthlyStochD) && parseFloat(h.monthlyStochK) < 30;
+  } else {
+    const _mr = String(h.monthlyRsi || '50'); const _mm = _mr.match(/[\d.]+/);
+    _b3_mstoch = _mm ? parseFloat(_mm[0]) < 25 : false;
+  }
   const big3Count = computeBig3(h);
-  const big3Arr = big3Names.map((name, i) => ({
-    name,
-    color: i < big3Count ? 'green' : 'gray',
-    status: i < big3Count ? 'Confirmed 🟢' : 'Not yet triggered'
-  }));
+  const big3Arr = [
+    { name: 'Hash Ribbons Buy',             color: _b1_hr    ? 'green' : 'gray', status: _b1_hr    ? 'Confirmed 🟢' : 'Not yet triggered' },
+    { name: 'SOPR Recovery ≥3 days',        color: _b2_sopr  ? 'green' : 'gray', status: _b2_sopr  ? 'Confirmed 🟢' : 'Not yet triggered' },
+    { name: 'Monthly Stoch RSI K/D Cross',  color: _b3_mstoch ? 'green' : 'gray', status: _b3_mstoch ? 'Confirmed 🟢' : 'Not yet triggered' },
+  ];
 
   // Signal + phase always derived from formula — never from stored editorial field
   const _derivedSig = derivedSignalKey(h);
