@@ -3121,19 +3121,24 @@ function renderPlan() {
     return { ...t, dist, hit, near, status, color, bg, border };
   });
 
-  // ── Score-based DCA base rate (drives This Week's DCA) ──────────
-  const _dcaState = computeAlertState();
-  const _cs = _dcaState ? _dcaState.classicScore : 0;
-  const _bw = _dcaState ? _dcaState.bearWeek : bearWeek;
-  const _al = _dcaState ? _dcaState.actionLevel : 'HOLD';
-  let scoreBaseRate, scoreBaseLabel;
-  if (_al === 'PILE_IN')              { scoreBaseRate = null;  scoreBaseLabel = 'Lump Sum'; }
-  else if (_bw >= 44 && _cs >= 5)    { scoreBaseRate = 1500;  scoreBaseLabel = '$1,500/buy · Maximum'; }
-  else if (_bw >= 44 && _cs >= 4)    { scoreBaseRate = 1000;  scoreBaseLabel = '$1,000/buy · Aggressive'; }
-  else if (_bw >= 35 || _cs >= 3)    { scoreBaseRate = 750;   scoreBaseLabel = '$750/buy · Enhanced'; }
-  else                                { scoreBaseRate = 500;   scoreBaseLabel = '$500/buy · Standard'; }
+  // ── DCA Zone escalation (price-based — single source of truth) ────
+  const latestBig3  = HISTORY_DATA.length ? computeBig3(HISTORY_DATA[HISTORY_DATA.length-1]) : 0;
+  const dcaZones    = PLAN.dcaZones || [];
+  const activeDcaZone = price
+    ? dcaZones.find(z => price >= z.minPrice) || dcaZones[dcaZones.length-1]
+    : dcaZones[0];
+  const dcaZoneIndex = dcaZones.indexOf(activeDcaZone);
 
-  // ── Double DCA trigger (multiplies on top of score base) ────────
+  // ── Price-zone DCA base rate (drives This Week's DCA) ────────────
+  // Sizing is driven purely by PLAN.dcaZones / current BTC price.
+  // Deliberately NOT tied to bear-week or on-chain score — calendar-based
+  // escalation was overriding this and forcing $750/buy during rallies,
+  // which fights the "save cash for lower prices" strategy. Removed 2026-07-23.
+  let scoreBaseRate, scoreBaseLabel;
+  if (!activeDcaZone || activeDcaZone.amount == null) { scoreBaseRate = null; scoreBaseLabel = 'Lump Sum'; }
+  else { scoreBaseRate = activeDcaZone.amount; scoreBaseLabel = `${activeDcaZone.perBuy} · ${activeDcaZone.label}`; }
+
+  // ── Double DCA trigger (multiplies on top of price-zone base) ────
   const lastDCABuy      = [...PLAN.buys].reverse().find(b => b.type === 'dca');
   const lastDCAPrice    = lastDCABuy ? lastDCABuy.price : null;
   const dropFromLastDCA = price && lastDCAPrice ? (lastDCAPrice - price) / lastDCAPrice : 0;
@@ -3141,14 +3146,6 @@ function renderPlan() {
   const shouldDouble    = dropFromLastDCA >= PLAN.doubleDropPct;
   const dcaAmount       = shouldDouble ? (scoreBaseRate ? scoreBaseRate * 2 : PLAN.dcaDouble) : (scoreBaseRate || PLAN.dcaWeekly);
   const dcaLabel        = shouldDouble ? `$${dcaAmount.toLocaleString()}/buy · DROP TRIGGER` : scoreBaseLabel;
-
-  // ── DCA Zone escalation ──────────────────────────────────────────
-  const latestBig3  = HISTORY_DATA.length ? computeBig3(HISTORY_DATA[HISTORY_DATA.length-1]) : 0;
-  const dcaZones    = PLAN.dcaZones || [];
-  const activeDcaZone = price
-    ? dcaZones.find(z => price >= z.minPrice) || dcaZones[dcaZones.length-1]
-    : dcaZones[0];
-  const dcaZoneIndex = dcaZones.indexOf(activeDcaZone);
 
   // ── Next key milestone ───────────────────────────────────────────
   const w35Ms   = new Date(W35_DATE).getTime();
@@ -3395,45 +3392,25 @@ function renderPlan() {
     </div>`;
   })()}
 
-  <!-- SCORE-BASED DCA RECOMMENDATION -->
+  <!-- PRICE-ZONE DCA RECOMMENDATION -->
   ${(()=>{
-    const curr2 = typeof computeAlertState === 'function' ? computeAlertState() : null;
-    if (!curr2) return '';
-    const { classicScore: cs, apathyScore: as2, bearWeek: bw } = curr2;
-    const w35Open = bw >= 35;
-    const w44Open = bw >= 44;
-    // Progressive tier — scores drive rate independent of price zone
-    let tier, rate, note, tColor, nextTrigger;
-    if (curr2.actionLevel === 'PILE_IN') {
-      tier = 'PILE IN'; rate = 'Lump Sum'; tColor = '#22c55e';
-      note = 'Deploy remaining DCA budget as lump sum — full confirmation across both tracks';
-      nextTrigger = null;
-    } else if (w44Open && cs >= 5) {
-      tier = 'Maximum'; rate = '$1,500/buy'; tColor = '#ef4444';
-      note = 'W44+ bottom window + Classic 5+/8 — maximum weekly DCA cadence';
-      nextTrigger = `Next: PILE IN when Classic ≥6 or Apathy ≥6 + all Big 3`;
-    } else if (w44Open && cs >= 4) {
-      tier = 'Aggressive'; rate = '$1,000/buy'; tColor = '#f97316';
-      note = 'W44+ bottom window active — increase DCA, signals building';
-      nextTrigger = `Next: $1,500/buy when Classic ≥5`;
-    } else if (w35Open || cs >= 3) {
-      tier = 'Enhanced'; rate = '$750/buy'; tColor = '#f59e0b';
-      note = w35Open ? 'Entering window (W35+) — slight DCA increase' : 'Classic 3+ signals — step up DCA';
-      nextTrigger = `Next: $1,000/buy when W44 opens (${W44_DATE})`;
-    } else {
-      tier = 'Standard'; rate = '$500/buy'; tColor = '#777';
-      note = 'Early bear, pre-W35 — conservative cadence, let tranches work';
-      nextTrigger = `Next: $750/buy when W35 opens (${W35_DATE}) or Classic ≥3`;
-    }
+    if (!activeDcaZone) return '';
+    // Rate is driven entirely by PLAN.dcaZones / live price — no bear-week
+    // or on-chain-score bump. Removed 2026-07-23 (was forcing $750/buy at
+    // W35+ regardless of price, fighting the "save cash for a leg down" plan).
+    const nextZone = dcaZones[dcaZoneIndex + 1] || null;
+    const tColor   = activeDcaZone.color;
+    const big3Met  = latestBig3 >= activeDcaZone.big3Req;
     return `<div class="chart-card" style="margin-bottom:10px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <div style="font-size:11px;font-weight:700;color:#777;text-transform:uppercase;letter-spacing:.07em">Score-Based DCA Rate</div>
-        <span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:4px;background:${tColor}22;color:${tColor};border:1px solid ${tColor}44">${tier}</span>
+        <div style="font-size:11px;font-weight:700;color:#777;text-transform:uppercase;letter-spacing:.07em">Price-Zone DCA Rate</div>
+        <span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:4px;background:${tColor}22;color:${tColor};border:1px solid ${tColor}44">${activeDcaZone.label}</span>
       </div>
-      <div style="font-size:28px;font-weight:700;color:${tColor};margin-bottom:4px">${rate}</div>
-      <div style="font-size:11px;color:#999;margin-bottom:8px">${note}</div>
-      ${nextTrigger ? `<div style="font-size:10px;color:#666;border-top:1px solid #1a1a1a;padding-top:7px">${nextTrigger}</div>` : ''}
-      <div style="margin-top:8px;font-size:10px;color:#555">Based on: Classic ${cs}/8 · Apathy ${as2}/8 · Week ${bw} · ${w44Open ? 'W44+ window open' : w35Open ? 'W35+ entering window' : 'Pre-W35 early bear'}</div>
+      <div style="font-size:28px;font-weight:700;color:${tColor};margin-bottom:4px">${activeDcaZone.perBuy}</div>
+      <div style="font-size:11px;color:#999;margin-bottom:8px">${activeDcaZone.action}</div>
+      ${activeDcaZone.big3Req > 0 && !big3Met ? `<div style="font-size:10px;color:#fbbf24;border-top:1px solid #1a1a1a;padding-top:7px">⚠ Big 3 confirmation required (${latestBig3}/${activeDcaZone.big3Req}) before this zone fully unlocks</div>` : ''}
+      ${nextZone ? `<div style="font-size:10px;color:#666;border-top:1px solid #1a1a1a;padding-top:7px">Next: ${nextZone.perBuy} when price drops to $${nextZone.minPrice.toLocaleString()} (${nextZone.label})</div>` : ''}
+      <div style="margin-top:8px;font-size:10px;color:#555">Based on: live BTC price only — PLAN.dcaZones, independent of bear-week or on-chain score</div>
     </div>`;
   })()}
 
