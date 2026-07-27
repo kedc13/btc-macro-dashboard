@@ -3547,17 +3547,22 @@ function switchTab(tab) {
 // =====================================================================
 
 // Populate header from latest HISTORY_DATA (works everywhere)
+// Week/phase are computed from the live wall-clock date (same formula the AI
+// summary and Big3/DCA gating use) rather than the stored entry's `week`, so
+// the header never drifts behind reality between data refreshes.
 (function populateHeader() {
   var latest = HISTORY_DATA.length ? HISTORY_DATA[HISTORY_DATA.length - 1] : null;
   if (!latest) return;
   var el;
+  var bearWeekLive = Math.max(1, Math.floor((Date.now() - new Date(ATH_DATE).getTime()) / (7*86400000)) + 1);
+  var latestForPhase = Object.assign({}, latest, { week: bearWeekLive });
   var _sig = derivedSignalKey(latest);
-  var _ph  = computePhase(latest);
+  var _ph  = computePhase(latestForPhase);
   var _bc  = computeBottomConf(latest);
   el = document.getElementById('sig-dot');   if (el) el.style.background = sigColor(_sig);
-  el = document.getElementById('sig-text');  if (el) el.textContent = sigLabel(_sig) + ' — Week ' + latest.week;
+  el = document.getElementById('sig-text');  if (el) el.textContent = sigLabel(_sig) + ' — Week ' + bearWeekLive;
   el = document.getElementById('hdr-price'); if (el && !livePrice) el.textContent = '$' + latest.price.toLocaleString();
-  el = document.getElementById('hdr-week');  if (el) el.textContent = latest.week;
+  el = document.getElementById('hdr-week');  if (el) el.textContent = bearWeekLive;
   el = document.getElementById('hdr-phase'); if (el) {
     var phMap = { EARLY_BEAR:'EARLY BEAR', ENTERING_WINDOW:'ENTERING WINDOW', BOTTOM_WINDOW:'BOTTOM WINDOW', EXTENDED:'EXTENDED' };
     el.textContent = phMap[_ph] || _ph;
