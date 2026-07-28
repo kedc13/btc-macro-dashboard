@@ -4583,7 +4583,7 @@ function updateDeploymentPosture() {
 
   const inBottomWindow = bearWeek >= 44;
   const kdConverging   = kdGap <= 6;
-  const kdApproaching  = kdGap < 10;
+  const kdApproaching  = kdGap < 6;
 
   if (kdCrossed || (kdConverging && big3 >= 2 && sigScore >= 3)) {
     // MAX CONVICTION — K/D converged or crossed, multiple confirmations
