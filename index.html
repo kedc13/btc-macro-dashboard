@@ -821,6 +821,7 @@ const PLAN = {
     { price: 63201, label: 'T1', size:  8000, filled: true,  note: 'Filled Jun 3 @ $63,201' },
     { price: 59800, label: 'T2', size:  3000, filled: true,  note: 'Filled Jun 5 @ $59,800' },
     { price: 58168, label: 'T3', size:  4000, filled: true,  note: 'Filled Jun 25 @ $58,168' },
+    { price: 58000, label: 'T3d', size: 2000,  filled: false, note: 'Discretionary — manual $2K buy if ~$58K hit; shallower-bear thesis, offsets under-allocation from Jul 58-65K rally. Funded from T7 reserve, not a standing limit order.' },
     { price: 56512, label: 'T4a', size: 4085,  filled: false, note: 'Order set @ $56,512' },
     { price: 53696, label: 'T4b', size: 4085,  filled: false, note: 'Order set @ $53,696' },
     { price: 52252, label: 'T4c', size: 4085,  filled: false, note: 'Order set @ $52,252' },
@@ -831,6 +832,29 @@ const PLAN = {
     { price: 43015, label: 'T6b', size: 5000,  filled: false, note: 'Order set @ $43,015' },
     { price: 41000, label: 'T6c', size: 6666,  filled: false, note: '$41K · not yet loaded' },
     { price: 38000, label: 'T7',  size: null,   filled: false, note: 'Reserve — size at Week 44+' },
+  ]
+};
+
+// =====================================================================
+// GRAYSCALE BTC MINI TRUST ETF — separate brokerage account, tracked
+// independently of the spot BTC plan above. Update lots/pending manually
+// as fills happen or new limit orders are placed.
+// =====================================================================
+const GRAYSCALE_ETF = {
+  ticker: 'BTC',
+  name: 'Grayscale Bitcoin Mini Trust',
+  lastPrice: 28.14,   // derived from current value ÷ qty on latest statement — update manually
+  asOf: '2026-07-29',
+  positions: [
+    { acquired: '2026-06-05', term: 'Short', qty: 226, avgCost: 26.52, costBasisTotal: 5993.52, currentValue: 6359.64, gainLoss: 366.12,  gainLossPct: 6.11 },
+    { acquired: '2026-06-04', term: 'Short', qty: 139, avgCost: 27.94, costBasisTotal: 3883.66, currentValue: 3911.46, gainLoss: 27.80,   gainLossPct: 0.72 },
+    { acquired: '2026-04-09', term: 'Short', qty: 126, avgCost: 31.82, costBasisTotal: 4009.31, currentValue: 3545.64, gainLoss: -463.67, gainLossPct: -11.56 },
+  ],
+  pending: [
+    { date: '2026-06-05', qty: 145, limitPrice: 14.60, tif: 'GTC' },
+    { date: '2026-06-05', qty: 100, limitPrice: 24.31, tif: 'GTC' },
+    { date: '2026-04-09', qty: 252, limitPrice: 19.89, tif: 'GTC' },
+    { date: '2026-04-09', qty: 226, limitPrice: 22.10, tif: 'GTC' },
   ]
 };
 
@@ -3497,6 +3521,115 @@ function renderPlan() {
       </div>`;
     })()}
   </div>
+
+  <!-- ===================================================================
+       GRAYSCALE ETF TRACKER — separate account, separate section.
+       Not part of the spot BTC plan/tranche math above.
+  =================================================================== -->
+  <div style="display:flex;align-items:center;gap:10px;margin:22px 0 10px 0;padding-top:18px;border-top:2px dashed #2a2a2a">
+    <div style="font-size:13px;font-weight:800;color:#e5e5e5;text-transform:uppercase;letter-spacing:.06em">📈 Grayscale ${GRAYSCALE_ETF.ticker} — ${GRAYSCALE_ETF.name}</div>
+    <div style="font-size:10px;color:#666;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:20px;padding:2px 10px">Separate account · not part of spot BTC plan above</div>
+  </div>
+  ${(() => {
+    const pos = GRAYSCALE_ETF.positions || [];
+    const pend = GRAYSCALE_ETF.pending || [];
+    const totalQty        = pos.reduce((s,p) => s + p.qty, 0);
+    const totalCostBasis  = pos.reduce((s,p) => s + p.costBasisTotal, 0);
+    const totalValue      = pos.reduce((s,p) => s + p.currentValue, 0);
+    const totalGainLoss   = totalValue - totalCostBasis;
+    const totalGainLossPct= totalCostBasis ? (totalGainLoss / totalCostBasis * 100) : 0;
+    const avgCost         = totalQty ? (totalCostBasis / totalQty) : 0;
+    const pendQty         = pend.reduce((s,p) => s + p.qty, 0);
+    const pendCommitted   = pend.reduce((s,p) => s + (p.qty * p.limitPrice), 0);
+    const glColor = totalGainLoss >= 0 ? '#4ade80' : '#f87171';
+    const glSign  = totalGainLoss >= 0 ? '+' : '';
+
+    const posRows = pos.map(p => {
+      const d = new Date(p.acquired + 'T12:00:00');
+      const dateStr = d.toLocaleDateString('en-US', { month:'short', day:'2-digit', year:'numeric' });
+      const rowGl = p.gainLoss >= 0 ? '#4ade80' : '#f87171';
+      const rowSign = p.gainLoss >= 0 ? '+' : '';
+      return `<tr style="border-bottom:1px solid #161616">
+        <td style="padding:7px 8px;color:#999;white-space:nowrap">${dateStr}</td>
+        <td style="padding:7px 8px;color:#777">${p.term}</td>
+        <td style="padding:7px 8px;text-align:right;color:#bbb;font-variant-numeric:tabular-nums">${p.qty}</td>
+        <td style="padding:7px 8px;text-align:right;color:#777;font-variant-numeric:tabular-nums">$${p.avgCost.toFixed(2)}</td>
+        <td style="padding:7px 8px;text-align:right;color:#777;font-variant-numeric:tabular-nums">$${p.costBasisTotal.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+        <td style="padding:7px 8px;text-align:right;color:#bbb;font-variant-numeric:tabular-nums">$${p.currentValue.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+        <td style="padding:7px 8px;text-align:right;font-weight:700;color:${rowGl};font-variant-numeric:tabular-nums">${rowSign}$${Math.abs(p.gainLoss).toFixed(2)}</td>
+        <td style="padding:7px 8px;text-align:right;font-weight:700;color:${rowGl};font-variant-numeric:tabular-nums">${rowSign}${p.gainLossPct.toFixed(2)}%</td>
+      </tr>`;
+    }).join('');
+
+    const pendRows = [...pend].sort((a,b) => b.limitPrice - a.limitPrice).map(p => {
+      const d = new Date(p.date + 'T12:00:00');
+      const dateStr = d.toLocaleDateString('en-US', { month:'short', day:'2-digit', year:'numeric' });
+      const dist = GRAYSCALE_ETF.lastPrice ? (((GRAYSCALE_ETF.lastPrice - p.limitPrice) / GRAYSCALE_ETF.lastPrice) * 100).toFixed(1) : null;
+      return `<tr style="border-bottom:1px solid #161616">
+        <td style="padding:7px 8px;color:#999;white-space:nowrap">${dateStr}</td>
+        <td style="padding:7px 8px;text-align:right;color:#bbb;font-variant-numeric:tabular-nums">${p.qty}</td>
+        <td style="padding:7px 8px;text-align:right;color:#e5e5e5;font-weight:700;font-variant-numeric:tabular-nums">$${p.limitPrice.toFixed(2)}</td>
+        <td style="padding:7px 8px;text-align:right;color:#777;font-variant-numeric:tabular-nums">${dist!=null?dist+'% below':'—'}</td>
+        <td style="padding:7px 8px;text-align:right;color:#777;font-variant-numeric:tabular-nums">$${Math.round(p.qty*p.limitPrice).toLocaleString()}</td>
+        <td style="padding:7px 8px;color:#666">${p.tif}</td>
+        <td style="padding:7px 8px"><span style="font-size:10px;font-weight:700;color:#fbbf24;background:#fbbf2420;padding:2px 7px;border-radius:4px">Open</span></td>
+      </tr>`;
+    }).join('');
+
+    return `
+    <!-- ETF SUMMARY CARDS -->
+    <div class="cards-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:10px">
+      <div class="card"><div class="card-label">Shares Held</div><div class="card-value">${totalQty.toLocaleString()}</div><div class="card-sub">${GRAYSCALE_ETF.ticker}</div></div>
+      <div class="card"><div class="card-label">Avg Cost Basis</div><div class="card-value">$${avgCost.toFixed(2)}</div><div class="card-sub">per share</div></div>
+      <div class="card"><div class="card-label">Cost Basis Total</div><div class="card-value">$${totalCostBasis.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</div></div>
+      <div class="card"><div class="card-label">Current Value</div><div class="card-value">$${totalValue.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</div><div class="card-sub">@ $${GRAYSCALE_ETF.lastPrice.toFixed(2)}/sh</div></div>
+      <div class="card"><div class="card-label">Total Gain/Loss</div><div class="card-value" style="color:${glColor}">${glSign}$${Math.abs(totalGainLoss).toFixed(2)}</div><div class="card-sub" style="color:${glColor}">${glSign}${totalGainLossPct.toFixed(2)}%</div></div>
+    </div>
+
+    <!-- POSITIONS TABLE -->
+    <div class="chart-card" style="margin-bottom:10px">
+      <div style="font-size:11px;font-weight:700;color:#777;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Positions</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead>
+          <tr style="color:#666;font-size:10px;text-transform:uppercase;letter-spacing:.06em">
+            <th style="text-align:left;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Acquired</th>
+            <th style="text-align:left;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Term</th>
+            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Qty</th>
+            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Avg Cost</th>
+            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Cost Basis</th>
+            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Current Value</th>
+            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">$ Gain/Loss</th>
+            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">% Gain/Loss</th>
+          </tr>
+        </thead>
+        <tbody>${posRows}</tbody>
+      </table>
+    </div>
+
+    <!-- PENDING ORDERS TABLE -->
+    <div class="chart-card" style="margin-bottom:10px">
+      <div style="font-size:11px;font-weight:700;color:#777;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Pending Limit Orders</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead>
+          <tr style="color:#666;font-size:10px;text-transform:uppercase;letter-spacing:.06em">
+            <th style="text-align:left;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Date Set</th>
+            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Qty</th>
+            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Limit Price</th>
+            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Dist. from Spot</th>
+            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">$ Committed</th>
+            <th style="text-align:left;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">TIF</th>
+            <th style="text-align:left;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Status</th>
+          </tr>
+        </thead>
+        <tbody>${pendRows}</tbody>
+      </table>
+      <div style="margin-top:10px;display:flex;gap:20px;flex-wrap:wrap;font-size:11px;padding:8px 4px;border-top:1px solid #1e1e1e">
+        <span style="color:#777">Pending shares: <strong style="color:#e5e5e5">${pendQty.toLocaleString()}</strong></span>
+        <span style="color:#777">Capital committed if filled: <strong style="color:#e5e5e5">$${pendCommitted.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</strong></span>
+        <span style="color:#777">As of: <strong style="color:#e5e5e5">${GRAYSCALE_ETF.asOf}</strong></span>
+      </div>
+    </div>`;
+  })()}
 
   <!-- MILESTONE COUNTDOWN -->
   <div class="chart-card" style="margin-bottom:10px">
