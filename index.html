@@ -4752,8 +4752,8 @@ function updateDeploymentPosture() {
     posture     = 'AGGRESSIVE';
     borderColor = '#d97706';
     badgeStyle  = 'background:#1c1200;color:#fbbf24;border:1px solid #d97706';
-    actionText  = 'Increase DCA size. Pull limit orders up if price stabilises. Watch for K/D gap to narrow below 5.';
-    detailText  = `Week ${bearWeek}${inBottomWindow ? ' — inside historical bottom window' : ''}. K/D gap ${kdGap.toFixed(1)} pts${kdApproaching ? ' (approaching convergence)' : ''}. Big 3 ${big3}/3. Signal ${signal}. Conditions are aligning — size up DCA and be ready to act on T4–T5 tranches.`;
+    actionText  = 'Stay alert — do not increase DCA size yet. Per-buy amount still follows the price-zone card. Keep limit orders set and watch for K/D gap to narrow below 5.';
+    detailText  = `Week ${bearWeek}${inBottomWindow ? ' — inside historical bottom window' : ''}. K/D gap ${kdGap.toFixed(1)} pts${kdApproaching ? ' (approaching convergence)' : ''}. Big 3 ${big3}/3. Signal ${signal}. Conditions are aligning, but actual per-buy size is set by the price-zone card, not this posture read — it only changes if price drops into the T4–T5 band ($47K–$53.7K). This badge means: stay ready and don't relax discipline, not "size up now."`;
 
   } else if (sigScore >= 3 && bearWeek >= 35) {
     // ACTIVE — strong indicators but timing not there yet
