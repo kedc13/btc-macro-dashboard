@@ -516,9 +516,9 @@ Portfolio: $24,250 deployed of $150,000 total — 0.394 BTC at avg $61,549. Next
 
       <div id="kd-note" style="margin-top:8px;font-size:10px;color:#666;line-height:1.5;border-top:1px solid #111;padding-top:7px"></div>
     </div>
-    <!-- 300 DMA Card — rendered by render300DMA() -->
+    <!-- 300 WMA Card — rendered by render300WMA() -->
     <div id="dma300-card" style="margin-top:10px;background:#0d0d0d;border:1px solid #222;border-radius:10px;padding:12px 14px;min-height:60px">
-      <div style="font-size:11px;color:#666">300 DMA: calculating via API… <span style="color:#555">· Check TradingView if unavailable</span></div>
+      <div style="font-size:11px;color:#666">300 WMA: calculating via API… <span style="color:#555">· Check TradingView if unavailable</span></div>
     </div>
 
     <!-- Rally Caution Banner — shown/hidden by updateRallyCaution() -->
@@ -1815,7 +1815,7 @@ function updateRallyCaution() {
     });
   }
 
-  // 300 DMA is a standalone buy signal — not a rally filter. See dma300-card.
+  // 300 WMA is a standalone buy signal — not a rally filter. See dma300-card.
 
   // FIX 2: Funding rate gate — positive funding during Big 3 advance = rally signal
   const gateTotal  = hasKD5 ? (soprStreak === 1 ? 7 : 6) : (soprStreak === 1 ? 6 : 5);
@@ -4361,57 +4361,61 @@ async function fetchFundingRate() {
 setTimeout(fetchFundingRate, 2000);
 
 // =====================================================================
-// 300 DMA — AUTO CALCULATION FROM BINANCE DAILY CANDLES
-// When price touches the 300 DMA after a bear decline = historically near cycle bottom
+// 300 WMA — AUTO CALCULATION FROM BINANCE WEEKLY CANDLES
+// When price touches the 300-week MA after a bear decline = historically near cycle bottom.
+// NOTE: this was originally built as a 300-DAY average, which is a different,
+// much shorter-term (~10 month) number with no external reference point to
+// sanity-check against. Switched to true 300-week (~5.75yr) on 2026-08-10 to
+// match the commonly-cited "300 WMA" figure and pair with the 200WMA card.
 // =====================================================================
-let _dma300 = null; // { value, pctFromPrice, state }
+let _wma300 = null; // { value, pctFromPrice, state }
 
-async function fetchAndCompute300DMA() {
-  const cacheKey = 'btc_dma300_v1_' + new Date().toISOString().slice(0, 13);
+async function fetchAndCompute300WMA() {
+  const cacheKey = 'btc_wma300_v1_' + new Date().toISOString().slice(0, 13);
   try {
     const cached = sessionStorage.getItem(cacheKey);
-    if (cached) { _dma300 = JSON.parse(cached); render300DMA(); return; }
+    if (cached) { _wma300 = JSON.parse(cached); render300WMA(); return; }
   } catch(e) {}
 
   try {
-    // 320 daily candles — 300 for SMA + 20 buffer
-    const resp = await _fetchWithTimeout('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=320');
-    if (!resp.ok) throw new Error('Binance daily fetch failed');
+    // 320 weekly candles — 300 for SMA + 20 buffer
+    const resp = await _fetchWithTimeout('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1w&limit=320');
+    if (!resp.ok) throw new Error('Binance weekly fetch failed');
     const raw    = await resp.json();
     const closes = raw.map(c => parseFloat(c[4]));
 
-    // Simple 300-day SMA
+    // Simple 300-week SMA
     const last300 = closes.slice(-300);
-    const dma = last300.reduce((a, b) => a + b, 0) / last300.length;
+    const wma = last300.reduce((a, b) => a + b, 0) / last300.length;
 
     const curPrice   = livePrice || (HISTORY_DATA[HISTORY_DATA.length - 1]?.price) || 0;
-    const pctFromDMA = curPrice && dma ? ((curPrice - dma) / dma) * 100 : null;
+    const pctFromWMA = curPrice && wma ? ((curPrice - wma) / wma) * 100 : null;
 
-    // State: at (<= 5% above DMA), below (price < DMA), or above
+    // State: at (<= 5% above WMA), below (price < WMA), or above
     let state;
-    if (pctFromDMA === null)       state = 'unknown';
-    else if (pctFromDMA <= -5)     state = 'below';      // price well below 300 DMA
-    else if (pctFromDMA <= 5)      state = 'at';         // price AT the 300 DMA — historic buy zone
-    else if (pctFromDMA <= 25)     state = 'approaching';
+    if (pctFromWMA === null)       state = 'unknown';
+    else if (pctFromWMA <= -5)     state = 'below';      // price well below 300 WMA
+    else if (pctFromWMA <= 5)      state = 'at';         // price AT the 300 WMA — historic buy zone
+    else if (pctFromWMA <= 25)     state = 'approaching';
     else                           state = 'above';       // well above — not bottom territory
 
-    _dma300 = { value: Math.round(dma), pctFromPrice: pctFromDMA !== null ? +pctFromDMA.toFixed(1) : null, state };
-    try { sessionStorage.setItem(cacheKey, JSON.stringify(_dma300)); } catch(e) {}
-    render300DMA();
+    _wma300 = { value: Math.round(wma), pctFromPrice: pctFromWMA !== null ? +pctFromWMA.toFixed(1) : null, state };
+    try { sessionStorage.setItem(cacheKey, JSON.stringify(_wma300)); } catch(e) {}
+    render300WMA();
     updateRallyCaution();
   } catch(err) {
-    // Show fallback state — don't leave "Loading 300 DMA..." forever
+    // Show fallback state — don't leave "Loading 300 WMA..." forever
     const el = document.getElementById('dma300-card');
-    if (el) el.innerHTML = '<div style="font-size:11px;color:#555;padding:10px 14px">300 DMA unavailable — API unreachable. Check manually: price vs 300-day SMA on TradingView.</div>';
+    if (el) el.innerHTML = '<div style="font-size:11px;color:#555;padding:10px 14px">300 WMA unavailable — API unreachable. Check manually: price vs 300-week SMA on TradingView.</div>';
   }
 }
 
-function render300DMA() {
-  if (!_dma300) return;
+function render300WMA() {
+  if (!_wma300) return;
   const el = document.getElementById('dma300-card');
   if (!el) return;
 
-  const { value, pctFromPrice, state } = _dma300;
+  const { value, pctFromPrice, state } = _wma300;
   const curPrice = livePrice || (HISTORY_DATA[HISTORY_DATA.length-1]?.price) || 0;
   const pct      = pctFromPrice;
 
@@ -4419,50 +4423,50 @@ function render300DMA() {
 
   if (state === 'at') {
     borderColor = '#16a34a'; badgeColor = '#4ade80'; badgeBg = '#052e16';
-    badgeText   = '⚡ AT 300 DMA — BOTTOM ZONE';
-    alertHtml   = `<div style="background:#0c1a0c;border:1px solid #166534;border-radius:7px;padding:8px 11px;margin-bottom:9px;font-size:11px;color:#4ade80;font-weight:600;line-height:1.5">⚡ <strong>AT THE 300 DMA</strong> — Price touching the 300-day moving average. Historically this marks the cycle bottom zone for BTC. This is a confirmed BUY NOW signal.</div>`;
-    noteText    = `Price $${curPrice.toLocaleString()} is within 5% of the 300 DMA ($${value.toLocaleString()}). When BTC reaches this level after a bear cycle it confirms you are far from the top and near or at the bottom.`;
+    badgeText   = '⚡ AT 300 WMA — BOTTOM ZONE';
+    alertHtml   = `<div style="background:#0c1a0c;border:1px solid #166534;border-radius:7px;padding:8px 11px;margin-bottom:9px;font-size:11px;color:#4ade80;font-weight:600;line-height:1.5">⚡ <strong>AT THE 300 WMA</strong> — Price touching the 300-week moving average. Historically this marks the cycle bottom zone for BTC. This is a confirmed BUY NOW signal.</div>`;
+    noteText    = `Price $${curPrice.toLocaleString()} is within 5% of the 300 WMA ($${value.toLocaleString()}). When BTC reaches this level after a bear cycle it confirms you are far from the top and near or at the bottom.`;
   } else if (state === 'below') {
     borderColor = '#7f1d1d'; badgeColor = '#f87171'; badgeBg = '#1a0000';
-    badgeText   = `${Math.abs(pct).toFixed(1)}% BELOW 300 DMA`;
-    noteText    = `Price $${curPrice.toLocaleString()} is ${Math.abs(pct).toFixed(1)}% below the 300 DMA ($${value.toLocaleString()}). Deep bear territory — below the 300-day average. Recovery back to the 300 DMA would mark a significant milestone.`;
+    badgeText   = `${Math.abs(pct).toFixed(1)}% BELOW 300 WMA`;
+    noteText    = `Price $${curPrice.toLocaleString()} is ${Math.abs(pct).toFixed(1)}% below the 300 WMA ($${value.toLocaleString()}). Deep bear territory — below the 300-week average. Recovery back to the 300 WMA would mark a significant milestone.`;
   } else if (state === 'approaching') {
     borderColor = '#92400e'; badgeColor = '#fbbf24'; badgeBg = '#1c1200';
-    badgeText   = `${pct.toFixed(1)}% above 300 DMA`;
-    noteText    = `Price $${curPrice.toLocaleString()} is ${pct.toFixed(1)}% above the 300 DMA ($${value.toLocaleString()}). Approaching the long-term average — if price declines toward this level, historically a significant buy zone.`;
+    badgeText   = `${pct.toFixed(1)}% above 300 WMA`;
+    noteText    = `Price $${curPrice.toLocaleString()} is ${pct.toFixed(1)}% above the 300 WMA ($${value.toLocaleString()}). Approaching the long-term average — if price declines toward this level, historically a significant buy zone.`;
   } else {
     borderColor = '#222'; badgeColor = '#777'; badgeBg = '#0d0d0d';
-    badgeText   = `${pct !== null ? pct.toFixed(1)+'% above' : '—'} 300 DMA`;
-    noteText    = `300 DMA: $${value.toLocaleString()}. Price is well above the long-term average — not yet in historical bottom territory.`;
+    badgeText   = `${pct !== null ? pct.toFixed(1)+'% above' : '—'} 300 WMA`;
+    noteText    = `300 WMA: $${value.toLocaleString()}. Price is well above the long-term average — not yet in historical bottom territory.`;
   }
 
   el.style.borderColor = borderColor;
   el.innerHTML = `
     ${alertHtml}
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-      <span style="font-size:11px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.05em">300-Day Moving Average</span>
+      <span style="font-size:11px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.05em">300-Week Moving Average</span>
       <span style="margin-left:auto;font-size:10px;border-radius:4px;padding:2px 8px;font-weight:700;background:${badgeBg};color:${badgeColor};border:1px solid ${borderColor}">${badgeText}</span>
     </div>
     <div style="display:flex;align-items:center;gap:16px;margin-bottom:8px">
       <div style="flex:1">
         <div style="font-size:22px;font-weight:900;color:${badgeColor}">$${value.toLocaleString()}</div>
-        <div style="font-size:9px;color:#555;text-transform:uppercase;letter-spacing:.05em;margin-top:2px">300 DMA value</div>
+        <div style="font-size:9px;color:#555;text-transform:uppercase;letter-spacing:.05em;margin-top:2px">300 WMA value</div>
       </div>
       <div style="text-align:center">
         <div style="font-size:18px;font-weight:800;color:${badgeColor}">${pct !== null ? (pct > 0 ? '+' : '') + pct.toFixed(1) + '%' : '—'}</div>
-        <div style="font-size:9px;color:#555;text-transform:uppercase;letter-spacing:.05em;margin-top:2px">price vs DMA</div>
+        <div style="font-size:9px;color:#555;text-transform:uppercase;letter-spacing:.05em;margin-top:2px">price vs WMA</div>
       </div>
       <div style="flex:1">
         <div style="height:5px;background:#111;border-radius:3px;overflow:hidden;margin-bottom:3px">
           <div style="height:100%;border-radius:3px;background:${badgeColor};width:${Math.min(100, Math.max(0, 100 - (pct || 0)))  }%;transition:width .5s"></div>
         </div>
-        <div style="font-size:9px;color:#555">proximity to 300 DMA</div>
+        <div style="font-size:9px;color:#555">proximity to 300 WMA</div>
       </div>
     </div>
-    <div style="font-size:10px;color:#666;line-height:1.5;border-top:1px solid #111;padding-top:7px">${noteText} <span style="color:#555">· Auto-calculated from Binance daily candles.</span></div>`;
+    <div style="font-size:10px;color:#666;line-height:1.5;border-top:1px solid #111;padding-top:7px">${noteText} <span style="color:#555">· Auto-calculated from Binance weekly candles.</span></div>`;
 }
 
-setTimeout(fetchAndCompute300DMA, 500);
+setTimeout(fetchAndCompute300WMA, 500);
 
 function _calcRSI(closes, period) {
   const out = new Array(closes.length).fill(null);
