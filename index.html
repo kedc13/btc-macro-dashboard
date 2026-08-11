@@ -786,8 +786,8 @@ const CHART_END  = '2027-04-01';  // Chart horizon
 // =====================================================================
 const PLAN = {
   totalBudget:    150000,
-  deployed:        28500,   // total deployed Jul 31 2026 (incl Jul 12/22/23/27x2/31 DCA buys)
-  dcaDeployed:     10500,   // DCA only: Jun 5 $750 + Jun 16–Jul 31 DCA buys
+  deployed:        29000,   // total deployed Aug 11 2026 (incl Aug 11 DCA buy)
+  dcaDeployed:     11000,   // DCA only: Jun 5 $750 + Jun 16–Aug 11 DCA buys
   trancheDeployed: 18000,   // tranche fills: Jun 2 $2K + Jun 3 $8K + Jun 5 $3K + Jun 25 $4K + Jun 25 $1K
   dcaBudget:       64000,   // allocated to weekly DCA
   trancheBudget:   86000,   // allocated to limit-order tranches
@@ -801,8 +801,8 @@ const PLAN = {
     { minPrice: 0,     label: 'Lump Sum',   color: '#22c55e', amount: null, perBuy: 'Lump sum',   action: 'HALT weekly DCA — redeploy remaining DCA budget as T7 tranche if Big 3 confirmed', big3Req: 2 },
   ],
   doubleDropPct:     0.09,
-  btcQty:       0.460892,  // total BTC acquired — updated Jul 31 2026
-  avgPrice:    61838,      // weighted avg cost basis — updated Jul 31 2026
+  btcQty:       0.468782,  // total BTC acquired — updated Aug 11 2026
+  avgPrice:    61865,      // weighted avg cost basis — updated Aug 11 2026
   buys: [
     { date: '2026-06-02', price: 67358,   qty: 0.02969,    label: 'Tranche $2K', type: 'tranche', signal: 'STRONG_ACCUM', big3: 1, bottomConf: 3 },
     { date: '2026-06-03', price: 63201,   qty: 0.12658,    label: 'T1 $8K',      type: 'tranche', signal: 'WATCH',        big3: 0, bottomConf: 1 },
@@ -830,6 +830,7 @@ const PLAN = {
     { date: '2026-07-27', price: 64196,   qty: 0.007789,   label: 'DCA $500 (set Sun 7/26, filled below market)', type: 'dca', signal: 'STRONG_ACCUM', big3: 1, bottomConf: 3 },
     { date: '2026-07-27', price: 63099.20, qty: 0.0039614, label: 'DCA $250 (filled early for 7/28)', type: 'dca', signal: 'STRONG_ACCUM', big3: 1, bottomConf: 3 },
     { date: '2026-07-31', price: 64097,    qty: 0.00780067, label: 'DCA $500', type: 'dca', signal: 'STRONG_ACCUM', big3: 1, bottomConf: 4 },
+    { date: '2026-08-11', price: 63487,    qty: 0.00789029, label: 'DCA $500', type: 'dca', signal: 'STRONG_ACCUM', big3: 1, bottomConf: 4 },
   ],
   tranches: [
     { price: 63201, label: 'T1', size:  8000, filled: true,  note: 'Filled Jun 3 @ $63,201' },
