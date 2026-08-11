@@ -994,7 +994,16 @@ function valuationColor(h) {
 // =====================================================================
 
 // bottomConf 0–8: each point earned by a rule, not manually entered
+// SINGLE SOURCE OF TRUTH: the scheduled task hand-scores the actual 8 named
+// Bottom Confirmation Indicators from SKILL.md (Hash Ribbons, Weekly RSI
+// Divergence, SOPR, SSR, LTH Inflection, STH Divergence, Monthly Stoch RSI
+// Cross, Exchange Balance) and stores the count as h.bottomConf — that's the
+// same number reported in the Slack message. The threshold formula below
+// checks a DIFFERENT, narrower set of criteria (MVRV/weeklyK/F&G/Puell/
+// realized-price bands) and is not the same metric even though both render
+// as "X/8" — it's now only a fallback for entries missing the curated field.
 function computeBottomConf(h) {
+  if (h.bottomConf != null) return Math.max(0, Math.min(8, parseInt(h.bottomConf) || 0));
   const k     = parseFloat(h.weeklyK)         || 50;
   const mvrv  = parseFloat(h.mvrv)            || 1;
   const fg    = parseFloat(h.fearGreed)        || 50;
@@ -1115,7 +1124,7 @@ function computeTrueBottomGates(h) {
 
   const g1 = gap <= 6 && k < 20 && d < 30;          // K/D converged (actionable zone: gap ≤6 pts)
   const g2 = k > d  && k < 30;                      // K/D cross
-  const g3 = sopr >= 5;                             // SOPR sustained
+  const g3 = sopr >= 3;                             // SOPR sustained — must match Big3's 3-day threshold exactly (was 5, a separate, undocumented bar for the same underlying signal)
   const g4 = rp > 0 && price <= rp * 1.02;         // price at realized
   const g5 = hr === 'BUY';                          // hash ribbons buy
 
@@ -1136,12 +1145,12 @@ function computeTrueBottomGates(h) {
         alert: gap <= 6,
         detail: g2 ? 'K crossed above D in oversold zone — cycle bottom forming'
                : 'Waiting for K to cross above D below 30' },
-      { label:'SOPR Holds ≥5 Days',  met:g3,
-        value: sopr+'/5 days',
-        pct: Math.min(100,(sopr/5)*100),
-        alert: sopr >= 3,
+      { label:'SOPR Holds ≥3 Days',  met:g3,
+        value: sopr+'/3 days',
+        pct: Math.min(100,(sopr/3)*100),
+        alert: sopr >= 1,
         detail: sopr===0 ? 'SOPR not yet sustained above 1.0 — sellers still dominant'
-               : `${sopr} day streak — ${Math.max(0,5-sopr)} more days needed` },
+               : `${sopr} day streak — ${Math.max(0,3-sopr)} more days needed` },
       { label:'Price Tagged Realized',met:g4,
         value: rp>0 ? '$'+Math.round(price).toLocaleString()+' vs $'+Math.round(rp).toLocaleString()+' RP' : 'RP not set',
         pct: rp>0 ? Math.max(0,Math.min(100,(1-(price/rp-1.02)/0.30)*100)) : 0,
@@ -1161,7 +1170,17 @@ function computeTrueBottomGates(h) {
 }
 
 // derivedSignalKey: converts computed score → signal string for display
+// SINGLE SOURCE OF TRUTH: the scheduled task applies SKILL.md's actual Step 4
+// Alert Classification rules by hand every day (MVRV/RSI/F&G/Puell AND-gates,
+// "MOST of" macro/sentiment checks including Fed/DXY/ETF flows — none of
+// which computeScore() below accounts for) and stores the result as h.signal.
+// That stored value must always win when present. computeScore() is ONLY a
+// fallback for entries that predate consistent signal tracking, and must
+// never silently override a curated classification that was actually sent
+// to Slack — that divergence was the root cause of several dashboard/Slack
+// disagreements found on 2026-08-11.
 function derivedSignalKey(h) {
+  if (h.signal) return h.signal;
   const score = computeScore(h);
   if (score >= 80) return 'EXTREME_ACCUM';
   if (score >= 65) return 'STRONG_ACCUM';
@@ -1693,12 +1712,12 @@ async function fetchBig3Live(big3arr) {
     // sentiment recovering off extreme fear isn't the same as sellers stopping.
     const soprStreak = parseInt(latestEntry.soprStreak) || 0;
     const soprActive = soprStreak >= 1;
-    const soprPct    = Math.min(95, Math.max(5, Math.round((soprStreak / 5) * 100)));
+    const soprPct    = Math.min(95, Math.max(5, Math.round((soprStreak / 3) * 100)));
     const soprColor  = soprActive ? '#22c55e' : '#777';
     const soprHistVals = HISTORY_DATA.slice(-14).map(d => parseInt(d.soprStreak) || 0);
     const soprSpark  = makeSpark(soprHistVals, soprColor, 1);
     const soprExtra  = soprActive
-      ? `SOPR holding above 1.0 — ${soprStreak}/5 day streak toward Cycle Gate 3`
+      ? `SOPR holding above 1.0 — ${soprStreak}/3 day streak toward Cycle Gate 3`
       : 'Real on-chain SOPR still below 1.0 — sellers not yet exhausted';
 
     const liveData = [
@@ -1727,7 +1746,7 @@ async function fetchBig3Live(big3arr) {
 
     const soprStreak = parseInt(h.soprStreak) || 0;
     const soprActive = soprStreak >= 1;
-    const soprPct    = Math.min(95, Math.max(5, Math.round((soprStreak / 5) * 100)));
+    const soprPct    = Math.min(95, Math.max(5, Math.round((soprStreak / 3) * 100)));
     const soprColor  = soprActive ? '#22c55e' : '#777';
     const soprVals   = HISTORY_DATA.slice(-14).map(d => parseInt(d.soprStreak) || 0);
 
