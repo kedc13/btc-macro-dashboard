@@ -911,6 +911,22 @@ const SIG_CLR = {
 };
 const CLR = { green:'#22c55e', yellow:'#eab308', orange:'#f97316', red:'#ef4444', gray:'#999', blue:'#3b82f6' };
 
+// Moved here 2026-08-11: these two consts used to sit right before
+// computeAlertState() around line 4266, far below many functions that call
+// it (renderApathyMonitor, renderAccumulationPath, checkShallowBottomAlert,
+// the price-drop alert checker). `const` is not usable before its own
+// declaration line actually executes (temporal dead zone) — if any of those
+// callers ran during initial page load before script execution reached line
+// 4266, computeAlertState() would throw "Cannot access 'ACTION_TIER_RANK'
+// before initialization", aborting the rest of that script block's
+// top-level execution and leaving everything after the failure point
+// (AI summary toggle state, alert drawer wiring, live posture text, "Today"
+// reset) stuck on its static HTML placeholder. Declaring these at the very
+// top — before any function that could possibly call computeAlertState() —
+// removes the ordering risk entirely regardless of call order.
+const ACTION_TIER_RANK = { HOLD: 0, BUILDING: 1, WATCH: 2, PILE_IN: 3 };
+const ACTION_TIER_NAMES = ['HOLD', 'BUILDING', 'WATCH', 'PILE_IN'];
+
 function sigColor(s) {
   if (!s) return SIG_CLR.NEUTRAL;
   const u = s.toUpperCase();
@@ -4262,9 +4278,6 @@ function computeApathyCore() {
            fundingActive, volumeActive, flowsActive, fLive, vLive, bearWeek, cycleLow,
            mvrv7, mvrv7p, vol14, vol28, prices };
 }
-
-const ACTION_TIER_RANK = { HOLD: 0, BUILDING: 1, WATCH: 2, PILE_IN: 3 };
-const ACTION_TIER_NAMES = ['HOLD', 'BUILDING', 'WATCH', 'PILE_IN'];
 
 // rawActionLevel: the tier a single HISTORY_DATA entry would qualify for on
 // its own, using that entry's own classicScore/Big3/True-Bottom-Gates plus
