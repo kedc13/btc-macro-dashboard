@@ -1389,16 +1389,25 @@ function checkPriceAlerts(price) {
       const fg       = window._fngHistory?.length ? `F&G ${window._fngHistory[window._fngHistory.length-1]}` : `F&G ${latest.fearGreed||'—'}`;
       const curr     = computeAlertState ? computeAlertState() : null;
       const scores   = curr ? `Classic ${curr.classicScore}/8 · Apathy ${curr.apathyScore}/8 · Big 3: ${curr.big3Count}/3` : '';
-      const pileIn   = curr && (curr.classicScore >= 5 || curr.apathyScore >= 5 || curr.big3Count >= 2);
+      // Reuses computeAlertState()'s real, persistence-gated actionLevel —
+      // this used to be a separate, much looser threshold (any ONE of
+      // classicScore>=5 / apathyScore>=5 / Big3>=2) that could tell you
+      // "indicators support deployment" during a scary price drop while the
+      // real gate still said HOLD. Fixed 2026-08-11 — this is a price-drop
+      // popup, exactly the moment a false "go" signal is most dangerous.
+      const ACTION_TIER_TEXT = {
+        PILE_IN:  'PILE IN confirmed — indicators support deployment. Review reserve capital now.',
+        WATCH:    'WATCH — indicators building but not yet confirmed. Hold reserve, let tranches work.',
+        BUILDING: 'BUILDING — early signals only, not action territory yet. Hold reserve, continue DCA at current rate.',
+        HOLD:     'Indicators not yet confirming — hold reserve, let tranches work. Monitor closely.',
+      };
 
       const alert = {
         level:  lvl.urgency,
         icon:   lvl.icon,
         title:  `Price Alert — BTC at $${Math.round(price).toLocaleString()} (${lvl.label})`,
         body:   `${[mvrv, fg, scores].filter(Boolean).join(' · ')}\n\n${lvl.note}`,
-        action: pileIn
-          ? 'Indicators support deployment — review reserve capital now.'
-          : 'Indicators not yet confirming — hold reserve, let tranches work. Monitor closely.'
+        action: curr ? (ACTION_TIER_TEXT[curr.actionLevel] || ACTION_TIER_TEXT.HOLD) : 'Monitor closely.'
       };
 
       if (curr) {
@@ -1948,16 +1957,27 @@ function renderAccumulationPath() {
   const curr = typeof computeAlertState === 'function' ? computeAlertState() : null;
   if (!curr) return;
 
-  const { classicScore, apathyScore } = curr;
-  const price = livePrice || 0;
+  const { classicScore, apathyScore, autoScore, big3Count, tbGateCount, actionLevel } = curr;
+  const price = livePrice || curr.currentPrice || 0;
+
+  // Status labels below now derive from computeAlertState()'s actionLevel —
+  // the same persistence-gated, midRally-capped source of truth as every
+  // other card. Previously Path A said "PILE IN Ready" off classicScore>=6
+  // alone (no Big3/Cycle Gate requirement at all), and Path B said
+  // "Confirmed ✓ / Deploy Here" off apathyScore>=5 plus an arbitrary,
+  // undocumented "price > $48K" floor that wasn't part of the real gate.
+  // Both could have shown a "go" badge while the main engine still said
+  // WATCH or HOLD. Fixed 2026-08-11.
+  const classicMet = classicScore >= 6 && (big3Count >= 3 || tbGateCount >= 2);
+  const apathyMet  = apathyScore >= 6 && autoScore >= 4 && big3Count >= 2;
 
   // Path A: Classic bottom — lower tranches + PILE IN via MVRV Z negative + Hash Ribbons + SOPR
   const unfilledLower = PLAN.tranches.filter(t => !t.filled && t.price < (price * 0.97));
   const pathAActive   = unfilledLower.length > 0;
   const lowestUnfilled = unfilledLower.length ? Math.min(...unfilledLower.map(t => t.price)) : null;
-  const pathASignals  = classicScore;
-  const pathAStatus   = pathASignals >= 6 ? 'PILE IN Ready' : pathASignals >= 4 ? 'Building' : pathASignals >= 2 ? 'Watching' : 'Early';
-  const pathAColor    = pathASignals >= 6 ? '#22c55e' : pathASignals >= 4 ? '#f97316' : pathASignals >= 2 ? '#f59e0b' : '#666';
+  const pathAReady    = actionLevel === 'PILE_IN' && classicMet;
+  const pathAStatus   = pathAReady ? 'PILE IN Ready' : classicScore >= 5 ? 'Watch' : classicScore >= 4 ? 'Building' : classicScore >= 2 ? 'Watching' : 'Early';
+  const pathAColor    = pathAReady ? '#22c55e' : classicScore >= 5 ? '#f59e0b' : classicScore >= 4 ? '#f97316' : '#666';
   const pathABadge    = pathAActive ? 'Active' : 'Tranches Exhausted';
   const pathABadgeBg  = pathAActive ? '#22c55e' : '#777';
 
@@ -1965,8 +1985,8 @@ function renderAccumulationPath() {
   const recentPrices  = HISTORY_DATA.slice(-21).map(x => x.price).filter(Boolean);
   const recentLow     = recentPrices.length ? Math.min(...recentPrices) : null;
   const rangeHolding  = recentLow && price ? (price - recentLow) / recentLow < 0.08 : false;
-  const pathBForming  = apathyScore >= 3 && price > 48000;
-  const pathBConfirmed = apathyScore >= 5 && rangeHolding && price > 48000;
+  const pathBForming  = apathyScore >= 3;
+  const pathBConfirmed = actionLevel === 'PILE_IN' && apathyMet;
   const pathBColor    = pathBConfirmed ? '#22c55e' : pathBForming ? '#f97316' : '#666';
   const pathBStatus   = pathBConfirmed ? 'Confirmed ✓' : pathBForming ? 'Forming' : 'Watching';
   const pathBBadge    = pathBConfirmed ? 'Deploy Here' : pathBForming ? 'Signals Building' : 'Not Active';
@@ -1991,8 +2011,8 @@ function renderAccumulationPath() {
       </div>
       <div style="font-size:16px;font-weight:700;color:${pathBColor};margin-bottom:4px">${pathBStatus} · ${apathyScore}/8</div>
       <div style="font-size:10px;color:#666;line-height:1.5">
-        Range holding: ${rangeHolding ? '✓ Yes' : '✗ No'} · Price > $48K: ${price > 48000 ? '✓ Yes' : '✗ No'}
-        <br>${pathBConfirmed ? 'Move unfilled tranches UP · Do not wait for $38–50K' : pathBForming ? `Need apathy ${apathyScore >= 5 ? '✓' : `${apathyScore}/5`} + range hold` : 'No apathy consolidation yet'}
+        Range holding: ${rangeHolding ? '✓ Yes' : '✗ No'} · Auto signals: ${autoScore}/5 · Big 3: ${big3Count}/3
+        <br>${pathBConfirmed ? 'Move unfilled tranches UP · Do not wait for $38–50K' : pathBForming ? `Need apathy ${apathyScore >= 5 ? '✓' : `${apathyScore}/5`} + auto ${autoScore >= 4 ? '✓' : `${autoScore}/4`} + Big 3 ${big3Count >= 2 ? '✓' : `${big3Count}/2`}` : 'No apathy consolidation yet'}
       </div>
     </div>`;
 }
@@ -2134,7 +2154,7 @@ function checkShallowBottomAlert() {
   const curr = typeof computeAlertState === 'function' ? computeAlertState() : null;
   if (!curr) return;
 
-  const { apathyScore } = curr;
+  const { apathyScore, autoScore, actionLevel } = curr;
 
   // Range hold: livePrice is within 8% above the 3-week low (price consolidating)
   const recentPrices = HISTORY_DATA.slice(-21).map(x => x.price).filter(Boolean);
@@ -2143,7 +2163,13 @@ function checkShallowBottomAlert() {
 
   // Only fire above $48K — below that, price level alerts handle deployment decisions
   const priceIsShallow = livePrice && livePrice > 48000;
-  const shouldFire = apathyScore >= 5 && rangeHolding && priceIsShallow;
+  // apathyScore>=5 && autoScore>=3 matches the real WATCH-tier apathy branch
+  // in computeAlertState() — this used to fire off apathyScore alone (no
+  // autoScore check, no tie to actionLevel at all), so this popup could tell
+  // you to move tranches up and bump DCA before the main dashboard had even
+  // reached WATCH. Fixed 2026-08-11.
+  const shouldFire = apathyScore >= 5 && autoScore >= 3 && rangeHolding && priceIsShallow
+    && (actionLevel === 'WATCH' || actionLevel === 'PILE_IN');
 
   if (!shouldFire) return;
   localStorage.setItem('btc_shallow_alert_fired', Date.now().toString());
@@ -3120,6 +3146,23 @@ function buildHistoryTable() {
 // =====================================================================
 // MY PLAN — personal DCA strategy tracker
 // =====================================================================
+// getActiveDcaZone: single source of truth for DCA sizing — price-based
+// only, deliberately NOT tied to bear-week or on-chain score. Calendar-based
+// escalation was overriding this and forcing a higher rate during rallies,
+// fighting the "save cash for a leg down" strategy — removed 2026-07-23.
+// A second, never-updated copy of the old bear-week/score formula was found
+// still live inside renderApathyMonitor()'s action banner on 2026-08-11,
+// silently contradicting this card (e.g. showing "$1,000/buy" here while
+// the Price-Zone card correctly said "$500/buy Standard" at the same price)
+// — both now call this single function instead.
+function getActiveDcaZone(price) {
+  const dcaZones = PLAN.dcaZones || [];
+  const zone = price
+    ? dcaZones.find(z => price >= z.minPrice) || dcaZones[dcaZones.length - 1]
+    : dcaZones[0];
+  return { zone, index: dcaZones.indexOf(zone), dcaZones };
+}
+
 function renderPlan() {
   const el = document.getElementById('plan-content');
   if (!el) return;
@@ -3206,11 +3249,7 @@ function renderPlan() {
 
   // ── DCA Zone escalation (price-based — single source of truth) ────
   const latestBig3  = HISTORY_DATA.length ? computeBig3(HISTORY_DATA[HISTORY_DATA.length-1]) : 0;
-  const dcaZones    = PLAN.dcaZones || [];
-  const activeDcaZone = price
-    ? dcaZones.find(z => price >= z.minPrice) || dcaZones[dcaZones.length-1]
-    : dcaZones[0];
-  const dcaZoneIndex = dcaZones.indexOf(activeDcaZone);
+  const { zone: activeDcaZone, index: dcaZoneIndex, dcaZones } = getActiveDcaZone(price);
 
   // ── Price-zone DCA base rate (drives This Week's DCA) ────────────
   // Sizing is driven purely by PLAN.dcaZones / current BTC price.
@@ -3987,12 +4026,11 @@ function renderApathyMonitor() {
   // ── Action line ─────────────────────────────────────────────────
   // Auto score = signals that fire without human input (can't be gamed)
   const autoScore = core.autoScore;
-  // Dynamic DCA rate (mirrors Score-Based DCA card)
-  let _dcaRate;
-  if      (bearWeek >= 44 && classicScore >= 5) _dcaRate = '$1,500/buy';
-  else if (bearWeek >= 44 && classicScore >= 4) _dcaRate = '$1,000/buy';
-  else if (bearWeek >= 35 || classicScore >= 3)  _dcaRate = '$750/buy';
-  else                                            _dcaRate = '$500/buy';
+  // DCA rate: pulled from getActiveDcaZone() — the same price-only source
+  // of truth as the Price-Zone DCA Rate card. This used to be an orphaned
+  // bear-week/score formula that was retired from that card on 2026-07-23
+  // but kept running here, silently contradicting it. Fixed 2026-08-11.
+  const _dcaRate = getActiveDcaZone(livePrice || latest?.price || 0).zone?.perBuy || '$500/buy';
 
   const big3Ct       = computeBig3(latest);
   const tbGateCount2 = (() => { try { return computeTrueBottomGates(latest).count || 0; } catch(e) { return 0; } })();
@@ -4335,7 +4373,8 @@ function computeAlertState() {
     }
   }
 
-  return { classicScore, apathyScore, big3Count, actionLevel, rawLevel, midRally,
+  return { classicScore, apathyScore, big3Count, autoScore: autoCount, tbGateCount,
+           actionLevel, rawLevel, midRally,
            failedRally, failedRallyDetail,
            rallyPct: Math.round(rallyPct*100), cycleLow: Math.round(cycleLow),
            currentPrice: Math.round(currentPrice), bearWeek };
