@@ -3983,7 +3983,6 @@ function renderApathyMonitor() {
   // display array) so this number is always identical to what computeAlertState()
   // uses for the PILE_IN gate — no more display-vs-gate drift.
   const apathyScore = core.apathyScore;
-  const combined    = classicScore + apathyScore;
 
   // ── Action line ─────────────────────────────────────────────────
   // Auto score = signals that fire without human input (can't be gamed)
@@ -3997,22 +3996,31 @@ function renderApathyMonitor() {
 
   const big3Ct       = computeBig3(latest);
   const tbGateCount2 = (() => { try { return computeTrueBottomGates(latest).count || 0; } catch(e) { return 0; } })();
-  const pileInGated  = (classicScore >= 6 && (big3Ct >= 3 || tbGateCount2 >= 2)) ||
-                       (apathyScore >= 6 && autoScore >= 4 && big3Ct >= 2);
+
+  // Single source of truth: pull the persistence-gated, midRally-suppressed
+  // actionLevel from computeAlertState() instead of re-deriving a PILE_IN
+  // condition here. This is the second half of the 2026-08-11 consolidation —
+  // without it, this card's banner could disagree with the alert engine's
+  // 3-day persistence requirement and mid-rally cap.
+  const alertState = computeAlertState();
+  const level = alertState ? alertState.actionLevel : 'HOLD';
+  const nearPile = classicScore >= 6 || (alertState && alertState.rawLevel === 'PILE_IN' && level !== 'PILE_IN');
 
   let action, ac, ab, ae;
-  if (pileInGated) {
+  if (level === 'PILE_IN') {
     action='PILE IN — Cancel orders below current price. Redeploy into spot or compress ladder to $52–56K.'; ac='#4ade80'; ab='#16a34a'; ae='🟢';
-  } else if (classicScore >= 5 || (apathyScore >= 5 && autoScore >= 3)) {
-    const nearPile = classicScore >= 6;
+  } else if (level === 'WATCH') {
     action = nearPile
-      ? `NEAR PILE IN — Classic ${classicScore}/8 confirmed. Big 3: ${big3Ct}/3 · Cycle Gate: ${tbGateCount2}/5. Maintain ladder. PILE IN activates when Big 3 = 3/3 or ≥2 cycle gates confirm.`
+      ? `NEAR PILE IN — Classic ${classicScore}/8 confirmed. Big 3: ${big3Ct}/3 · Cycle Gate: ${tbGateCount2}/5. Maintain ladder. PILE IN activates when Big 3 = 3/3 or ≥2 cycle gates confirm, held 3 straight readings.`
       : 'WATCH — Review orders below $47K. Consider canceling T6c/T7. Bottom may form without full capitulation.';
     ac='#fb923c'; ab='#ea580c'; ae='🟠';
-  } else if (combined >= 7) {
+  } else if (level === 'BUILDING') {
     action=`BUILDING — Both tracks advancing. Hold full ladder. DCA ${_dcaRate}.`; ac='#fbbf24'; ab='#d97706'; ae='🟡';
   } else {
     action=`HOLD LADDER — Signals early. Keep all orders set. DCA ${_dcaRate}. Patience is the edge.`; ac='#777'; ab='#555'; ae='⚪';
+  }
+  if (alertState && alertState.failedRally) {
+    action = `⚠ FAILED RALLY (not the bottom) — ${action}`;
   }
 
   el.innerHTML = `
@@ -4238,6 +4246,26 @@ function computeApathyCore() {
            mvrv7, mvrv7p, vol14, vol28, prices };
 }
 
+const ACTION_TIER_RANK = { HOLD: 0, BUILDING: 1, WATCH: 2, PILE_IN: 3 };
+const ACTION_TIER_NAMES = ['HOLD', 'BUILDING', 'WATCH', 'PILE_IN'];
+
+// rawActionLevel: the tier a single HISTORY_DATA entry would qualify for on
+// its own, using that entry's own classicScore/Big3/True-Bottom-Gates plus
+// the apathy core passed in. Split out from computeAlertState() so the
+// persistence check below can replay it against recent entries without
+// duplicating the gate math (single source of truth for the gate itself).
+function rawActionLevel(h, apCore) {
+  const classicScore = computeBottomConf(h);
+  const big3Count     = computeBig3(h);
+  const tbGateCount   = computeTrueBottomGates(h).count || 0;
+  const { apathyScore, autoScore } = apCore;
+  if ((classicScore >= 6 && (big3Count >= 3 || tbGateCount >= 2)) ||
+      (apathyScore >= 6 && autoScore >= 4 && big3Count >= 2))    return 'PILE_IN';
+  if (classicScore >= 5 || (apathyScore >= 5 && autoScore >= 3)) return 'WATCH';
+  if (classicScore + apathyScore >= 7)                            return 'BUILDING';
+  return 'HOLD';
+}
+
 function computeAlertState() {
   if (!HISTORY_DATA.length) return null;
   const latest   = HISTORY_DATA[HISTORY_DATA.length - 1];
@@ -4247,29 +4275,83 @@ function computeAlertState() {
 
   const apCore = computeApathyCore();
   const { apathyScore, autoScore: autoCount, cycleLow, bearWeek } = apCore;
+  const tbGateCount = latest ? (computeTrueBottomGates(latest).count || 0) : 0;
 
-  // Action level
+  // Raw action level: what today's numbers alone would qualify for.
   // PILE_IN gated: Classic 6+/8 is necessary but not sufficient.
   // Also requires Big 3 complete (3/3) OR ≥2 True Bottom Gates confirmed.
   // This prevents premature PILE IN during mid-cycle apathy bottoms (weeks 35-43)
   // where accumulation zone is confirmed but the cycle low is not.
-  const tbGateCount = latest ? (computeTrueBottomGates(latest).count || 0) : 0;
-  let actionLevel = 'HOLD';
-  if      ((classicScore >= 6 && (big3Count >= 3 || tbGateCount >= 2)) ||
-           (apathyScore >= 6 && autoCount >= 4 && big3Count >= 2))    actionLevel = 'PILE_IN';
-  else if (classicScore >= 5 || (apathyScore >= 5 && autoCount >= 3)) actionLevel = 'WATCH';
-  else if (classicScore + apathyScore >= 7)                            actionLevel = 'BUILDING';
+  const rawLevel = rawActionLevel(latest, apCore);
+
+  // Persistence gate: escalating to a HIGHER tier requires that tier's raw
+  // condition to have held across the last 3 *logged* entries (not calendar
+  // days — logging has gaps), not just today. De-escalation is immediate —
+  // if any of the last 3 readings was weaker, we drop to that weaker tier
+  // right away. This closes a real bug found in the Aug 2026 backtest: on
+  // 2026-07-05 classicScore read 6/8 for one day (crossing WATCH) then
+  // reverted to 2/8 the next day, flipping the banner HOLD→WATCH→HOLD in
+  // 48 hours with nothing to smooth it. Added 2026-08-11.
+  const recentEntries = HISTORY_DATA.slice(-3);
+  const recentLevels  = recentEntries.map(h => rawActionLevel(h, apCore));
+  const minRecentRank = recentLevels.length
+    ? Math.min(...recentLevels.map(l => ACTION_TIER_RANK[l]))
+    : ACTION_TIER_RANK[rawLevel];
+  const persistedOk = recentEntries.length >= 3 && ACTION_TIER_RANK[rawLevel] <= minRecentRank;
+  let actionLevel = persistedOk ? rawLevel : ACTION_TIER_NAMES[minRecentRank];
 
   const rallyPct  = cycleLow > 0 ? (currentPrice - cycleLow) / cycleLow : 0;
   const midRally  = rallyPct >= 0.20 && classicScore < 4;
 
-  return { classicScore, apathyScore, big3Count, actionLevel, midRally,
+  // midRally is now a real suppressor, not just an alert: while price is
+  // 20%+ above the tracked cycle low and classicScore hasn't confirmed,
+  // cap the banner at BUILDING — don't let a bounce read as WATCH/PILE_IN.
+  if (midRally && ACTION_TIER_RANK[actionLevel] > ACTION_TIER_RANK.BUILDING) {
+    actionLevel = 'BUILDING';
+  }
+
+  // Failed-rally / lower-high detector: has price rallied 20%+ off the
+  // tracked cycle low and then round-tripped back near it, without Classic
+  // or Big 3 ever confirming a bottom along the way? That combination is
+  // the closest thing to a code-level "that WAS just a relief rally, not
+  // the bottom" confirmation. Added 2026-08-11.
+  let failedRally = false, failedRallyDetail = null;
+  if (cycleLow > 0 && HISTORY_DATA.length) {
+    const highIdx = HISTORY_DATA.reduce((best, d, i) =>
+      (d.price || 0) > (HISTORY_DATA[best].price || 0) ? i : best, 0);
+    const localHigh   = HISTORY_DATA[highIdx].price || 0;
+    const rallyOffLow = (localHigh - cycleLow) / cycleLow;
+    const backNearLow = currentPrice <= cycleLow * 1.10;
+    if (rallyOffLow >= 0.20 && backNearLow) {
+      const everConfirmed = HISTORY_DATA.slice(highIdx)
+        .some(d => ACTION_TIER_RANK[rawActionLevel(d, apCore)] >= ACTION_TIER_RANK.WATCH);
+      if (!everConfirmed) {
+        failedRally = true;
+        failedRallyDetail = `Rallied to $${Math.round(localHigh).toLocaleString()} `
+          + `(${Math.round(rallyOffLow*100)}% off the $${Math.round(cycleLow).toLocaleString()} low) `
+          + `on ${HISTORY_DATA[highIdx].date}, then gave it back without Classic or Big 3 ever `
+          + `confirming — reads as a failed relief rally, not a completed bottom.`;
+      }
+    }
+  }
+
+  return { classicScore, apathyScore, big3Count, actionLevel, rawLevel, midRally,
+           failedRally, failedRallyDetail,
            rallyPct: Math.round(rallyPct*100), cycleLow: Math.round(cycleLow),
            currentPrice: Math.round(currentPrice), bearWeek };
 }
 
 function buildAlerts(curr, prev) {
   const alerts = [];
+
+  // 0. Failed rally confirmed — price round-tripped back near the cycle low
+  // without Classic/Big 3 ever confirming along the way. The clearest
+  // available signal that a completed rally was a relief bounce, not the bottom.
+  if (curr.failedRally && (!prev || !prev.failedRally)) {
+    alerts.push({ level:'warn', icon:'🔁', title:'Failed Rally Confirmed',
+      body: curr.failedRallyDetail,
+      action:'Treat this as still-early accumulation. Hold ladder, keep DCA at score-based rate — no change from a confirmed bottom read.' });
+  }
 
   // 1. Mid-cycle rally risk
   if (curr.midRally) {
