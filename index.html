@@ -3930,40 +3930,17 @@ function renderApathyMonitor() {
   const el = document.getElementById('apathy-monitor');
   if (!el || !HISTORY_DATA.length) return;
 
-  const prices  = HISTORY_DATA.map(d => d.price).filter(Boolean);
-  const mvrvArr = HISTORY_DATA.map(d => parseFloat(d.mvrv)).filter(n => !isNaN(n));
   const latest  = HISTORY_DATA[HISTORY_DATA.length - 1];
-  const bearWeek = Math.max(1, Math.floor((Date.now() - new Date(ATH_DATE).getTime()) / (7*86400000)) + 1);
   const classicScore = latest ? computeBottomConf(latest) : 0;
 
   const tog = k => localStorage.getItem('apath_' + k) === '1';
-  const sd  = arr => { if(arr.length<2) return 0; const m=arr.reduce((a,b)=>a+b,0)/arr.length; return Math.sqrt(arr.map(x=>(x-m)**2).reduce((a,b)=>a+b,0)/arr.length); };
 
-  // ── Auto signals ────────────────────────────────────────────────
-  // 1. Range Hold: no new cycle low in last ~3 weeks of data points
-  const recentPx = prices.slice(-21), priorPx = prices.slice(0,-21);
-  const recentMin = Math.min(...recentPx);
-  const priorMin  = priorPx.length ? Math.min(...priorPx) : recentMin + 1;
-  const rangeHeld = prices.length >= 14 && recentMin >= priorMin * 0.98;
-
-  // 2. Vol Compression: std dev of last 14 entries < prior 14
-  const vol14 = sd(prices.slice(-14));
-  const vol28 = prices.length >= 28 ? sd(prices.slice(-28,-14)) : vol14 * 2;
-  const volComp = vol14 > 0 && vol14 < vol28 * 0.80;
-
-  // 3. MVRV Recovering: 7-day avg rising vs prior 7-day avg
-  const mvrv7  = mvrvArr.length >= 7  ? mvrvArr.slice(-7).reduce((a,b)=>a+b,0)/7 : null;
-  const mvrv7p = mvrvArr.length >= 14 ? mvrvArr.slice(-14,-7).reduce((a,b)=>a+b,0)/7 : null;
-  const mvrvUp = mvrv7 && mvrv7p && mvrv7 > mvrv7p;
-
-  // 4. Floor Tested 3+ Times: price revisited cycle low zone multiple times — still holding
-  const cycleLow  = Math.min(...prices);
-  const floorZone = cycleLow * 1.07;
-  const floorTests= prices.filter(p => p <= floorZone).length;
-  const floorHeld = floorTests >= 3; // 3+ bounces off the floor = confirmation regardless of current position
-
-  // 5. Time Signal: Week 44+ = inside historical bottom window
-  const timeSignal = bearWeek >= 44;
+  // All 5 auto-signals + funding/volume live-vs-manual state now come from
+  // computeApathyCore() — the same function computeAlertState() uses for the
+  // PILE_IN gate, so this card and that gate can never disagree again.
+  const core = computeApathyCore();
+  const { rangeHeld, volComp, mvrvUp, floorHeld, floorTests, timeSignal,
+          bearWeek, cycleLow, mvrv7, mvrv7p, vol14, vol28 } = core;
 
   const signals = [
     { key:'range',   label:'Range Hold',          auto:true,  active:rangeHeld,
@@ -4002,12 +3979,15 @@ function renderApathyMonitor() {
     })(),
   ];
 
-  const apathyScore = signals.filter(s => s.active).length;
+  // Pulled straight from computeApathyCore() (not re-derived from the signals[]
+  // display array) so this number is always identical to what computeAlertState()
+  // uses for the PILE_IN gate — no more display-vs-gate drift.
+  const apathyScore = core.apathyScore;
   const combined    = classicScore + apathyScore;
 
   // ── Action line ─────────────────────────────────────────────────
   // Auto score = signals that fire without human input (can't be gamed)
-  const autoScore = signals.filter(s => s.auto && s.active).length;
+  const autoScore = core.autoScore;
   // Dynamic DCA rate (mirrors Score-Based DCA card)
   let _dcaRate;
   if      (bearWeek >= 44 && classicScore >= 5) _dcaRate = '$1,500/buy';
@@ -4208,36 +4188,65 @@ window.clearAlertHistory = function() {
   updateBellBadge();
 };
 
+// SINGLE SOURCE OF TRUTH for Path B / Apathy signals — used by both the
+// Apathy Monitor card (renderApathyMonitor) and the PILE_IN gate
+// (computeAlertState). These were previously two independently hand-copied
+// implementations that disagreed on what counts as "auto": the monitor
+// credited live-sourced funding/volume data (from Bybit/Binance) toward the
+// auto-signal count, while the gate never did, capping it at 5 regardless.
+// That meant the two widgets could show contradictory PILE-IN status on the
+// same page for identical underlying data. Fixed 2026-08-11.
+function computeApathyCore() {
+  const prices   = HISTORY_DATA.map(d => d.price).filter(Boolean);
+  const mvrvArr  = HISTORY_DATA.map(d => parseFloat(d.mvrv)).filter(n => !isNaN(n));
+  const cycleLow = prices.length ? Math.min(...prices) : 0;
+  const bearWeek = Math.max(1, Math.floor((Date.now() - new Date(ATH_DATE).getTime()) / (7*86400000)) + 1);
+
+  const recentPx  = prices.slice(-21), priorPx = prices.slice(0, -21);
+  const recentMin = prices.length ? Math.min(...recentPx) : 0;
+  const priorMin  = priorPx.length ? Math.min(...priorPx) : recentMin + 1;
+  const rangeHeld = prices.length >= 14 && recentMin >= priorMin * 0.98;
+
+  const vol14 = _sdUtil(prices.slice(-14));
+  const vol28 = prices.length >= 28 ? _sdUtil(prices.slice(-28, -14)) : vol14 * 2;
+  const volComp = vol14 > 0 && vol14 < vol28 * 0.80;
+
+  const mvrv7   = mvrvArr.length >= 7  ? mvrvArr.slice(-7).reduce((a,b)=>a+b,0)/7 : null;
+  const mvrv7p  = mvrvArr.length >= 14 ? mvrvArr.slice(-14,-7).reduce((a,b)=>a+b,0)/7 : null;
+  const mvrvUp  = !!(mvrv7 && mvrv7p && mvrv7 > mvrv7p);
+
+  const floorTests = prices.filter(p => p <= cycleLow * 1.07).length;
+  const floorHeld  = floorTests >= 3;
+  const timeSignal = bearWeek >= 44;
+
+  const _al   = window._apathyLive || {};
+  const fLive = !!(_al.funding && !_al.funding._failed);
+  const vLive = !!(_al.volume  && !_al.volume._failed);
+  const fundingActive = fLive ? _al.funding.neutral : localStorage.getItem('apath_funding') === '1';
+  const volumeActive  = vLive ? _al.volume.good      : localStorage.getItem('apath_volume')  === '1';
+  const flowsActive   = localStorage.getItem('apath_flows') === '1';
+
+  const baseAuto = [rangeHeld, volComp, mvrvUp, floorHeld, timeSignal];
+  const apathyScore = baseAuto.filter(Boolean).length + [fundingActive, flowsActive, volumeActive].filter(Boolean).length;
+  // autoScore = signals that fired without any human input — the 5 base
+  // signals plus funding/volume ONLY when their live API actually succeeded
+  // (a manual toggle doesn't count as "auto" — it can be gamed).
+  const autoScore = baseAuto.filter(Boolean).length + (fLive && fundingActive ? 1 : 0) + (vLive && volumeActive ? 1 : 0);
+
+  return { apathyScore, autoScore, rangeHeld, volComp, mvrvUp, floorHeld, floorTests, timeSignal,
+           fundingActive, volumeActive, flowsActive, fLive, vLive, bearWeek, cycleLow,
+           mvrv7, mvrv7p, vol14, vol28, prices };
+}
+
 function computeAlertState() {
   if (!HISTORY_DATA.length) return null;
   const latest   = HISTORY_DATA[HISTORY_DATA.length - 1];
-  const prices   = HISTORY_DATA.map(d => d.price).filter(Boolean);
-  const mvrvArr  = HISTORY_DATA.map(d => parseFloat(d.mvrv)).filter(n => !isNaN(n));
-  const cycleLow = Math.min(...prices);
   const currentPrice = livePrice || latest?.price || 0;
   const classicScore = latest ? computeBottomConf(latest) : 0;
   const big3Count    = latest ? computeBig3(latest) : 0;
-  const bearWeek     = Math.max(1, Math.floor((Date.now() - new Date(ATH_DATE).getTime()) / (7*86400000)) + 1);
 
-  // Recompute apathy signals (mirrors renderApathyMonitor)
-  const recentPx  = prices.slice(-21), priorPx = prices.slice(0,-21);
-  const rangeHeld = prices.length >= 14 && Math.min(...recentPx) >= (priorPx.length ? Math.min(...priorPx) : Math.min(...recentPx)+1) * 0.98;
-  const vol14 = _sdUtil(prices.slice(-14));
-  const vol28 = prices.length >= 28 ? _sdUtil(prices.slice(-28,-14)) : vol14 * 2;
-  const volComp = vol14 > 0 && vol14 < vol28 * 0.80;
-  const mvrv7   = mvrvArr.length >= 7  ? mvrvArr.slice(-7).reduce((a,b)=>a+b,0)/7 : null;
-  const mvrv7p  = mvrvArr.length >= 14 ? mvrvArr.slice(-14,-7).reduce((a,b)=>a+b,0)/7 : null;
-  const mvrvUp  = mvrv7 && mvrv7p && mvrv7 > mvrv7p;
-  const floorTests = prices.filter(p => p <= cycleLow * 1.07).length;
-  const timeSignal = bearWeek >= 44;
-  const autoCount  = [rangeHeld, volComp, !!mvrvUp, floorTests >= 3, timeSignal].filter(Boolean).length;
-  // Use live API signals for funding/volume (same source as renderApathyMonitor UI)
-  // Fall back to manual localStorage toggle only if live data not yet loaded
-  const _al = window._apathyLive || {};
-  const fundingActive = _al.funding ? _al.funding.neutral : localStorage.getItem('apath_funding') === '1';
-  const volumeActive  = _al.volume  ? _al.volume.good    : localStorage.getItem('apath_volume')  === '1';
-  const flowsActive   = localStorage.getItem('apath_flows') === '1';
-  const apathyScore = autoCount + [fundingActive, flowsActive, volumeActive].filter(Boolean).length;
+  const apCore = computeApathyCore();
+  const { apathyScore, autoScore: autoCount, cycleLow, bearWeek } = apCore;
 
   // Action level
   // PILE_IN gated: Classic 6+/8 is necessary but not sufficient.
@@ -4266,7 +4275,7 @@ function buildAlerts(curr, prev) {
   if (curr.midRally) {
     alerts.push({ level:'warn', icon:'⚠️', title:'Mid-Cycle Rally Risk',
       body:`Price is ${curr.rallyPct}% above the cycle low ($${curr.cycleLow.toLocaleString()}) but Classic signals haven't confirmed (${curr.classicScore}/8). This matches bear market relief rally patterns — 2–3 of these are normal before the real bottom.`,
-      action:`Keep all tranche orders set. Do not touch the $61K reserve. DCA unchanged at score-based rate.` });
+      action:`Keep all tranche orders set. Do not touch the $${Math.round((PLAN.trancheBudget||0)-(PLAN.trancheDeployed||0)).toLocaleString()} reserve. DCA unchanged at score-based rate.` });
   }
 
   // 2. Action level changed
@@ -4278,7 +4287,7 @@ function buildAlerts(curr, prev) {
     else if (curr.actionLevel === 'PILE_IN')
       alerts.push({ level:'green', icon:'🟢', title:'Strategy Shift → PILE IN',
         body:`Confirmation reached PILE IN threshold. Both timing and signals align for maximum allocation.`,
-        action:'Cancel orders below current price. Deploy $61K reserve in $52–56K range. Switch DCA to $1,500/buy.' });
+        action:`Cancel orders below current price. Deploy $${Math.round((PLAN.trancheBudget||0)-(PLAN.trancheDeployed||0)).toLocaleString()} reserve in $52–56K range. Switch DCA to $1,500/buy.` });
     else if (curr.actionLevel === 'BUILDING')
       alerts.push({ level:'yellow', icon:'🟡', title:'Both Tracks Advancing',
         body:`Classic (${curr.classicScore}/8) and Apathy (${curr.apathyScore}/8) both building. Not action territory yet but trajectory is positive.`,
