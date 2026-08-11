@@ -902,7 +902,7 @@ const SIG_CLR = {
   ELEVATED:      '#f97316',
   EUPHORIC:      '#ef4444',
 };
-const CLR = { green:'#22c55e', yellow:'#eab308', orange:'#f97316', red:'#ef4444', gray:'#999' };
+const CLR = { green:'#22c55e', yellow:'#eab308', orange:'#f97316', red:'#ef4444', gray:'#999', blue:'#3b82f6' };
 
 function sigColor(s) {
   if (!s) return SIG_CLR.NEUTRAL;
@@ -3752,8 +3752,13 @@ function histToTodayData(h) {
     ACCUM_BOTTOM:'ACCUMULATE', WATCH:'WATCH',
     NEUTRAL:'NEUTRAL', ELEVATED:'ELEVATED', EUPHORIC:'EUPHORIC'
   };
+  // Must match Step 5 Signal Mapping exactly: EXTREME=green(heavy), STRONG=yellow
+  // (first tranche only), ACCUM_BOTTOM=blue. Previously EXTREME used 'darkgreen'
+  // and ACCUM_BOTTOM used 'blue' — neither existed in the CLR palette, so both
+  // silently fell back to gray, and STRONG_ACCUM was wrongly set to 'green',
+  // making a first-tranche-only signal display as if it were the heaviest tier.
   const sigDotMap = {
-    EXTREME_ACCUM:'darkgreen', STRONG_ACCUM:'green',
+    EXTREME_ACCUM:'green', STRONG_ACCUM:'yellow',
     ACCUM_BOTTOM:'blue', WATCH:'gray', NEUTRAL:'gray',
     ELEVATED:'orange', EUPHORIC:'red'
   };
