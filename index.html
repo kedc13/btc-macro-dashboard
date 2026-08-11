@@ -893,10 +893,16 @@ const V_MARKERS = [
 // =====================================================================
 // SIGNAL COLORS
 // =====================================================================
+// Must match Step 5 Signal Mapping (SKILL.md) and the CLR palette exactly.
+// Previously STRONG_ACCUM was set to the same green as EXTREME_ACCUM, making
+// a first-tranche-only signal render identically to the heaviest-buy tier —
+// this is the same conceptual bug fixed in sigDotMap (histToTodayData), just
+// duplicated here in the separate populateHeader() code path, which is the
+// one that actually runs unconditionally on every page load.
 const SIG_CLR = {
-  EXTREME_ACCUM: '#16a34a',
-  STRONG_ACCUM:  '#22c55e',
-  ACCUM_BOTTOM:  '#3b82f6',
+  EXTREME_ACCUM: '#22c55e',   // 🟢 BUY (heavy)
+  STRONG_ACCUM:  '#eab308',   // 🟡 BUY (first tranche only)
+  ACCUM_BOTTOM:  '#3b82f6',   // 🔔 ACCUMULATE
   WATCH:         '#999',
   NEUTRAL:       '#bbb',
   ELEVATED:      '#f97316',
