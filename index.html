@@ -891,7 +891,7 @@ const GRAYSCALE_ETF = {
 const MSTR_STOCK = {
   ticker: 'MSTR',
   name: 'Strategy Inc Common Stock Class A',
-  lastPrice: 95.90,   // NASDAQ close, 2026-08-13
+  lastPrice: 95.90,   // seed value — overwritten live by fetchMSTRPrice() on load (Yahoo Finance via CORS proxy)
   asOf: '2026-08-13',
   positions: [
     { acquired: '2026-06-04', term: 'Short', qty: 15.692, avgCost: 127.4503, costBasisTotal: 1999.95 },
@@ -1526,6 +1526,47 @@ function startLivePriceWS() {
   connectWS();
   restFallback(); // immediate first fetch
   fallbackInterval = setInterval(restFallback, 10000);
+}
+
+// Live MSTR (Strategy Inc) stock quote — no key-free CORS-open equities API
+// exists like the crypto exchanges above, so this routes Yahoo Finance's
+// public chart endpoint through a couple of keyless CORS proxies, in order.
+// If every proxy fails, MSTR_STOCK.lastPrice quietly stays at its last known
+// value (seeded in the data object) and mstrPriceLive stays false.
+async function fetchMSTRPrice() {
+  const target = 'https://query1.finance.yahoo.com/v8/finance/chart/MSTR?interval=1d&range=1d';
+  const proxies = [
+    async () => {
+      const r = await fetch('https://corsproxy.io/?url=' + encodeURIComponent(target));
+      if (!r.ok) throw new Error('corsproxy.io ' + r.status);
+      return r.json();
+    },
+    async () => {
+      const r = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(target));
+      if (!r.ok) throw new Error('allorigins/raw ' + r.status);
+      return r.json();
+    },
+    async () => {
+      const r = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(target));
+      if (!r.ok) throw new Error('allorigins/get ' + r.status);
+      const wrapped = await r.json();
+      return JSON.parse(wrapped.contents);
+    },
+  ];
+  for (const fn of proxies) {
+    try {
+      const data = await fn();
+      const meta = data?.chart?.result?.[0]?.meta;
+      const price = meta?.regularMarketPrice;
+      if (price && !isNaN(price)) {
+        MSTR_STOCK.lastPrice = price;
+        MSTR_STOCK.asOf = new Date().toISOString().slice(0, 10);
+        mstrPriceLive = true;
+        if (typeof renderPlan === 'function') renderPlan();
+        return;
+      }
+    } catch (_) { /* try next proxy */ }
+  }
 }
 
 // =====================================================================
@@ -2219,6 +2260,7 @@ let isLogScale = false;
 let allDates = [];
 let histMap  = {};
 let livePrice = null; // set after API fetch, used by renderPlan()
+let mstrPriceLive = false; // true once a live MSTR quote has been fetched this session
 let intraDates = [];   // hourly datetime strings "YYYY-MM-DDTHH" for 24h/1W views
 let intraPrices = [];  // matching hourly close prices
 
@@ -3764,6 +3806,9 @@ function renderPlan() {
   <div style="display:flex;align-items:center;gap:10px;margin:22px 0 10px 0;padding-top:18px;border-top:2px dashed #2a2a2a">
     <div style="font-size:13px;font-weight:800;color:#e5e5e5;text-transform:uppercase;letter-spacing:.06em">📈 ${MSTR_STOCK.ticker} — ${MSTR_STOCK.name}</div>
     <div style="font-size:10px;color:#666;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:20px;padding:2px 10px">Separate account · not part of spot BTC plan above</div>
+    ${typeof mstrPriceLive !== 'undefined' && mstrPriceLive
+      ? '<span class="live-badge">LIVE</span>'
+      : '<span style="font-size:9px;color:#888;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:20px;padding:2px 8px">last close</span>'}
   </div>
   ${(() => {
     const pos = MSTR_STOCK.positions || [];
@@ -4045,6 +4090,8 @@ const _sdUtil = arr => { if(arr.length<2) return 0; const m=arr.reduce((a,b)=>a+
   }
   fetchLiveFG();
   startLivePriceWS();
+  fetchMSTRPrice();
+  setInterval(fetchMSTRPrice, 60000); // stock quotes move slower than crypto — 60s is plenty
 })();
 // Must be set BEFORE switchTab so renderApathyMonitor doesn't throw
 window._apathyLive = { funding: null, volume: null };
