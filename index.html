@@ -809,8 +809,8 @@ const PLAN = {
     { minPrice: 0,     label: 'Lump Sum',   color: '#22c55e', amount: null, perBuy: 'Lump sum',   action: 'HALT weekly DCA — redeploy remaining DCA budget as T7 tranche if Big 3 confirmed', big3Req: 2 },
   ],
   doubleDropPct:     0.09,
-  btcQty:       0.484666,  // total BTC acquired — updated Aug 13 2026
-  avgPrice:    61904,      // weighted avg cost basis — updated Aug 13 2026
+  btcQty:       0.484680,  // total BTC acquired — corrected Aug 19 2026 (was 0.484666; Aug 12 fill qty reconciled against Kraken order history, +0.00001435 BTC)
+  avgPrice:    61904,      // weighted avg cost basis — updated Aug 13 2026 (impact of Aug 19 reconciliation <$0.01/unit, unchanged at this rounding)
   buys: [
     { date: '2026-06-02', price: 67358,   qty: 0.02969,    label: 'Tranche $2K', type: 'tranche', signal: 'STRONG_ACCUM', big3: 1, bottomConf: 3 },
     { date: '2026-06-03', price: 63201,   qty: 0.12658,    label: 'T1 $8K',      type: 'tranche', signal: 'WATCH',        big3: 0, bottomConf: 1 },
@@ -836,10 +836,10 @@ const PLAN = {
     { date: '2026-07-22', price: 65828,   qty: 0.00759555, label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 1, bottomConf: 4 },
     { date: '2026-07-23', price: 64627,   qty: 0.0077367,  label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 1, bottomConf: 4 },
     { date: '2026-07-27', price: 64196,   qty: 0.007789,   label: 'DCA $500 (set Sun 7/26, filled below market)', type: 'dca', signal: 'STRONG_ACCUM', big3: 1, bottomConf: 3 },
-    { date: '2026-07-27', price: 63099.20, qty: 0.0039614, label: 'DCA $250 (filled early for 7/28)', type: 'dca', signal: 'STRONG_ACCUM', big3: 1, bottomConf: 3 },
+    { date: '2026-07-27', price: 63109,    qty: 0.0039614, label: 'DCA $250 (filled early for 7/28)', type: 'dca', signal: 'STRONG_ACCUM', big3: 1, bottomConf: 3, note: 'Price corrected 2026-08-19 from 63099.20 to 63109 to match Kraken order history exactly' },
     { date: '2026-07-31', price: 64097,    qty: 0.00780067, label: 'DCA $500', type: 'dca', signal: 'STRONG_ACCUM', big3: 1, bottomConf: 4 },
     { date: '2026-08-11', price: 63487,    qty: 0.00789029, label: 'DCA $500', type: 'dca', signal: 'STRONG_ACCUM', big3: 1, bottomConf: 4 },
-    { date: '2026-08-12', price: 63497.30, qty: 0.00786,    label: 'DCA $500', type: 'dca', signal: 'STRONG_ACCUM', big3: 0, bottomConf: 4, note: 'Kraken split this into two limit fills (0.00418 + 0.00368 BTC), same price — combined into one entry here' },
+    { date: '2026-08-12', price: 63497.30, qty: 0.00787435, label: 'DCA $500', type: 'dca', signal: 'STRONG_ACCUM', big3: 0, bottomConf: 4, note: 'Qty corrected 2026-08-19 to match Kraken exact fill (0.00787435 BTC); was approximated as 0.00786 from a rounded two-fill split estimate' },
     { date: '2026-08-13', price: 62871,    qty: 0.008024,   label: 'DCA $500', type: 'dca', signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
   ],
   tranches: [
@@ -869,7 +869,7 @@ const GRAYSCALE_ETF = {
   ticker: 'BTC',
   name: 'Grayscale Bitcoin Mini Trust',
   lastPrice: 28.09,   // live market close — updated daily by the scheduled skill run
-  asOf: '2026-08-17',
+  asOf: '2026-08-19',
   // currentValue / gainLoss / gainLossPct are NOT stored here — they're derived live
   // from lastPrice in the render function below, so P&L updates automatically every
   // time lastPrice is refreshed. Only qty / avgCost / costBasisTotal are fixed inputs.
