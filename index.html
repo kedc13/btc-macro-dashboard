@@ -858,11 +858,11 @@ const PLAN = {
     { price: 63201, label: 'T1', size:  8000, filled: true,  note: 'Filled Jun 3 @ $63,201' },
     { price: 59800, label: 'T2', size:  3000, filled: true,  note: 'Filled Jun 5 @ $59,800' },
     { price: 58168, label: 'T3', size:  4000, filled: true,  note: 'Filled Jun 25 @ $58,168' },
-    { price: 68000, label: 'T4a', size: 4000, filled: false, note: 'Order set @ $68,000 — BMSB/200DMA retest tier, shallow half (split from T4, 2026-08-20 pivot)' },
-    { price: 64000, label: 'T4b', size: 4000, filled: false, note: 'Order set @ $64,000 — BMSB/200DMA retest tier, deep half near 200WMA (split from T4, 2026-08-20 pivot)' },
+    { price: 64000, label: 'T4', size: 4000, filled: false, note: 'Order set @ $64,000 — 200WMA retest support (2026-08-20 pivot; $68K chase-tranche dropped, freed capital redeployed to T6 $47K per Keith\'s skepticism that this pump sustains)' },
     { price: 58000, label: 'T5a', size: 4000, filled: false, note: 'Order set @ $58,000 — 53-59K absorption-zone thesis, top third (split from T5 into 3, 2026-08-20 pivot)' },
     { price: 56000, label: 'T5b', size: 4000, filled: false, note: 'Order set @ $56,000 — 53-59K absorption-zone thesis, middle third (split from T5 into 3, 2026-08-20 pivot)' },
     { price: 54000, label: 'T5c', size: 4000, filled: false, note: 'Order set @ $54,000 — 53-59K absorption-zone thesis, bottom third (split from T5 into 3, 2026-08-20 pivot)' },
+    { price: 49000, label: 'T6', size: 4000, filled: false, note: 'Order set @ $49,000 — first real-bear level beyond the absorption zone; matches Keith\'s own prior T5b level and sits just above the long-term Fib 0.618 retrace ($57,829) to 0.786 ($39,282) band (added 2026-08-20, replaces dropped $68K tranche)' },
   ]
 };
 
@@ -1420,10 +1420,12 @@ async function fetchLiveFG() {
 // PRICE LEVEL ALERTS — fire when live price crosses key decision thresholds
 // =====================================================================
 const PRICE_ALERT_LEVELS = [
-  { price: 68000, label: 'T4 retest zone ($68K-$64K)', icon: '⚡', urgency: 'orange',
-    note: 'BMSB/200DMA retest tier, two buys (T4a $68K, T4b $64K near 200WMA). Check whether the reclaim is holding as support before treating this as confirmation — could be a wick that recovers quickly.' },
+  { price: 64000, label: 'T4 retest zone ($64K)', icon: '⚡', urgency: 'orange',
+    note: '200WMA retest tier. Check whether the reclaim is holding as support before treating this as confirmation — could be a wick that recovers quickly.' },
   { price: 58000, label: 'T5 zone ($58K-$54K)', icon: '🔴', urgency: 'warn',
     note: 'Primary consolidated accumulation zone — the 53-59K absorption thesis, three buys (T5a $58K, T5b $56K, T5c $54K).' },
+  { price: 49000, label: 'T6 zone ($49K)', icon: '🚨', urgency: 'warn',
+    note: 'First real-bear level beyond the absorption zone (added 2026-08-20). Just above the long-term Fib 0.618-0.786 band — if Big 3 is also building here, strong confluence.' },
   { price: 45000, label: 'Confirmation reserve zone ($45K)', icon: '🚨', urgency: 'warn',
     note: 'No standing tranche here — the old T6 ladder was removed in the 2026-08-20 pivot. If Big 3 is confirming, strong case to deploy the $20K confirmation reserve as a lump sum.' },
   { price: 38000, label: 'Deep reserve zone ($38K)', icon: '🎯', urgency: 'green',
