@@ -794,17 +794,28 @@ const CHART_END  = '2027-04-01';  // Chart horizon
 // PERSONAL DCA PLAN — update PLAN.deployed as buys happen
 // =====================================================================
 const PLAN = {
-  totalBudget:    150000,
+  // ===== 2026-08-20 PIVOT =====
+  // Reclaimed BMSB + 200DMA/200WMA on a Treasury-buyback/SEC-news pump; Big3/bottomConf
+  // did not move. Restructured to lean harder on time-based DCA (guaranteed deployment)
+  // and thinner, higher-probability tranches, per Keith+Claude planning session.
+  // $20K carved off the original $150K total for near-term house expenses (offTableAmount,
+  // already excluded from totalBudget below). $20K held as a live confirmation reserve —
+  // NOT a limit order — deployed only if Big3 fires; replaces the old vague unsized T7 slot.
+  // See btc-macro-dashboard-BACKUP-2026-08-20-pre-pivot.html for the full pre-pivot plan.
+  offTableAmount: 20000,
+  confirmationReserve: 20000, // live, undeployed until Big3 all green — not in dcaBudget/trancheBudget
+  dcaTargetCompletionDate: '2026-11-01', // dcaZones[0]/dcaWeekly below sized to fully deploy remaining DCA budget by this date
+  totalBudget:    130000,
   deployed:        30003,   // total deployed Aug 13 2026 (incl Aug 13 DCA buy)
   dcaDeployed:     12003,   // DCA only: Jun 5 $750 + Jun 16–Aug 13 DCA buys
   trancheDeployed: 18000,   // tranche fills: Jun 2 $2K + Jun 3 $8K + Jun 5 $3K + Jun 25 $4K + Jun 25 $1K
-  dcaBudget:       64000,   // allocated to weekly DCA
-  trancheBudget:   86000,   // allocated to limit-order tranches
-  dcaWeekly:        1500,   // standard: 3 × $500/wk Sun / Tue / Thu
+  dcaBudget:       72000,   // allocated to weekly DCA (remaining $59,997 ≈ $60K, targeted to fully deploy by dcaTargetCompletionDate)
+  trancheBudget:   38000,   // allocated to limit-order tranches (remaining $20,000 across 2 consolidated levels)
+  dcaWeekly:        5775,   // elevated through dcaTargetCompletionDate: 3 × $1,925/wk Sun / Tue / Thu
   dcaDouble:        3000,   // aggressive: 3 × $1,000/wk on big drops
   dcaStartDate: '2026-06-09',
   dcaZones: [
-    { minPrice: 53697, label: 'Standard',   color: '#777', amount: 500,  perBuy: '$500/buy',   action: 'Standard cadence — 3× per week',                                         big3Req: 0 },
+    { minPrice: 53697, label: 'Standard',   color: '#777', amount: 1925, perBuy: '$1,925/buy', action: 'Elevated cadence through ~Nov 1 2026 target — 3× per week (2026-08-20 pivot)', big3Req: 0 },
     { minPrice: 47000, label: 'Aggressive', color: '#f97316', amount: 1000, perBuy: '$1K/buy',    action: 'T4–T5 zone — double up, keep limit orders set',                          big3Req: 0 },
     { minPrice: 41000, label: 'Heavy',      color: '#ef4444', amount: 1500, perBuy: '$1,500/buy', action: 'T6 zone — increase cadence, flag remaining DCA budget for lump sum',     big3Req: 1 },
     { minPrice: 0,     label: 'Lump Sum',   color: '#22c55e', amount: null, perBuy: 'Lump sum',   action: 'HALT weekly DCA — redeploy remaining DCA budget as T7 tranche if Big 3 confirmed', big3Req: 2 },
@@ -847,17 +858,8 @@ const PLAN = {
     { price: 63201, label: 'T1', size:  8000, filled: true,  note: 'Filled Jun 3 @ $63,201' },
     { price: 59800, label: 'T2', size:  3000, filled: true,  note: 'Filled Jun 5 @ $59,800' },
     { price: 58168, label: 'T3', size:  4000, filled: true,  note: 'Filled Jun 25 @ $58,168' },
-    { price: 58000, label: 'T3d', size: 2000,  filled: false, note: 'Discretionary — manual $2K buy if ~$58K hit; shallower-bear thesis, offsets under-allocation from Jul 58-65K rally. Funded from T7 reserve, not a standing limit order.' },
-    { price: 56512, label: 'T4a', size: 4085,  filled: false, note: 'Order set @ $56,512' },
-    { price: 53696, label: 'T4b', size: 4085,  filled: false, note: 'Order set @ $53,696' },
-    { price: 52252, label: 'T4c', size: 4085,  filled: false, note: 'Order set @ $52,252' },
-    { price: 51005, label: 'T5a', size: 5000,  filled: false, note: 'Order set @ $51,005' },
-    { price: 49005, label: 'T5b', size: 5000,  filled: false, note: 'Order set @ $49,005' },
-    { price: 47006, label: 'T5c', size: 5000,  filled: false, note: 'Order set @ $47,006' },
-    { price: 45002, label: 'T6a', size: 5000,  filled: false, note: 'Order set @ $45,002' },
-    { price: 43015, label: 'T6b', size: 5000,  filled: false, note: 'Order set @ $43,015' },
-    { price: 41000, label: 'T6c', size: 6666,  filled: false, note: '$41K · not yet loaded' },
-    { price: 38000, label: 'T7',  size: null,   filled: false, note: 'Reserve — size at Week 44+' },
+    { price: 66000, label: 'T4', size:  8000, filled: false, note: 'Order set @ $66,000 — BMSB/200DMA retest tier (2026-08-20 pivot, replaces old T3d/T4a-c ladder)' },
+    { price: 56000, label: 'T5', size: 12000, filled: false, note: 'Order set @ $56,000 — consolidated 53-59K absorption-zone thesis (2026-08-20 pivot, replaces old T4b/T4c/T5a-c/T6a-c/T7 ladder)' },
   ]
 };
 
@@ -1415,14 +1417,14 @@ async function fetchLiveFG() {
 // PRICE LEVEL ALERTS — fire when live price crosses key decision thresholds
 // =====================================================================
 const PRICE_ALERT_LEVELS = [
-  { price: 49000, label: 'T5b zone ($49K)',  icon: '⚡', urgency: 'orange',
-    note: 'This is your manual review level. Check all indicators before committing reserve capital — could be a wick that recovers quickly to $52–53K.' },
-  { price: 45000, label: 'T6a zone ($45K)',  icon: '🔴', urgency: 'warn',
-    note: 'Deep accumulation zone. T6a filling. If Classic 4+ or Apathy 5+, strong case to pull remaining DCA budget forward as lump sum.' },
-  { price: 41000, label: 'T6c zone ($41K)',  icon: '🚨', urgency: 'warn',
-    note: 'Maximum conventional deployment zone. T6c loading range. Big 3 confirmation here = deploy full reserve immediately.' },
-  { price: 38000, label: 'T7 reserve zone ($38K)', icon: '🎯', urgency: 'green',
-    note: 'T7 territory. If Big 3 are confirming, this is the maximum allocation signal. Deploy reserve now.' },
+  { price: 66000, label: 'T4 retest zone ($66K)', icon: '⚡', urgency: 'orange',
+    note: 'BMSB/200DMA retest tier (2026-08-20 pivot). Check whether the reclaim is holding as support before treating this as confirmation — could be a wick that recovers quickly.' },
+  { price: 56000, label: 'T5 zone ($56K)', icon: '🔴', urgency: 'warn',
+    note: 'Primary consolidated accumulation zone — the 53-59K absorption thesis. T5 filling.' },
+  { price: 45000, label: 'Confirmation reserve zone ($45K)', icon: '🚨', urgency: 'warn',
+    note: 'No standing tranche here — the old T6 ladder was removed in the 2026-08-20 pivot. If Big 3 is confirming, strong case to deploy the $20K confirmation reserve as a lump sum.' },
+  { price: 38000, label: 'Deep reserve zone ($38K)', icon: '🎯', urgency: 'green',
+    note: 'No standing tranche here — the old T7 slot was removed in the 2026-08-20 pivot. If Big 3 are confirming, deploy the confirmation reserve now — this is the maximum-conviction signal.' },
 ];
 
 let _lastPriceAlertCheck = 0;
