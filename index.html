@@ -886,12 +886,22 @@ const GRAYSCALE_ETF = {
     { acquired: '2026-04-09', term: 'Short', qty: 126, avgCost: 31.82, costBasisTotal: 4009.31 },
     { acquired: '2026-08-12', term: 'Short', qty: 26,  avgCost: 28.03, costBasisTotal: 728.78 },
   ],
+  // ===== 2026-08-20 pivot — mirrors the spot BTC restructure =====
+  // Trimmed pending from 4 orders/$14,555 to 2 orders/$5,000 (dropped the $19.89 and
+  // $14.60 orders — 34-52% below market, same "may never fill" issue as the old spot
+  // deep tranches). Freed $9,555 moved to a new dcaPlan below for guaranteed deployment.
   pending: [
-    { date: '2026-06-05', qty: 145, limitPrice: 14.60, tif: 'GTC' },
-    { date: '2026-06-05', qty: 100, limitPrice: 24.31, tif: 'GTC' },
-    { date: '2026-04-09', qty: 252, limitPrice: 19.89, tif: 'GTC' },
-    { date: '2026-04-09', qty: 226, limitPrice: 22.10, tif: 'GTC' },
-  ]
+    { date: '2026-06-05', qty: 103, limitPrice: 24.31, tif: 'GTC' },
+    { date: '2026-04-09', qty: 113, limitPrice: 22.10, tif: 'GTC' },
+  ],
+  dcaPlan: {
+    amount: 460,              // per buy
+    cadence: '2x/week',       // split from a single $920/wk buy, 2026-08-20, "to average in better"
+    weeklyTotal: 920,
+    remainingBudget: 9555,    // freed from trimming the pending ladder above
+    targetCompletionDate: '2026-11-01', // mirrors the spot BTC DCA target
+    note: 'Guaranteed, price-agnostic deployment — same rationale as the spot BTC DCA engine. Keith to set up as recurring buys at his broker; not an automated order placed by Claude.'
+  }
 };
 
 // =====================================================================
