@@ -5143,8 +5143,8 @@ function updateDeploymentPosture() {
     posture     = 'MAX CONVICTION';
     borderColor = '#16a34a';
     badgeStyle  = 'background:#052e16;color:#4ade80;border:1px solid #16a34a';
-    actionText  = 'Deploy remaining T6–T7 reserves. This is the cycle low window.';
-    detailText  = `K/D ${kdCrossed ? 'has crossed' : `gap ${kdGap.toFixed(1)} pts — convergence zone`}. Big 3 at ${big3}/3. Signal: ${signal}. Historically this confluence marks the actual cycle low. Size up remaining tranches, consider unlocking T7 reserve budget.`;
+    actionText  = 'Deploy the $20K confirmation reserve — this is the cycle low window. DCA and tranches continue on schedule.';
+    detailText  = `K/D ${kdCrossed ? 'has crossed' : `gap ${kdGap.toFixed(1)} pts — convergence zone`}. Big 3 at ${big3}/3. Signal: ${signal}. Historically this confluence marks the actual cycle low. Deploy the confirmation reserve now; DCA keeps running at its elevated cadence and remaining tranches stay on their existing limit orders.`;
 
   } else if ((inBottomWindow || kdApproaching) && big3 >= 1 && sigScore >= 3) {
     // AGGRESSIVE — bottom window + multiple signals aligning
@@ -5159,24 +5159,24 @@ function updateDeploymentPosture() {
     posture     = 'ACTIVE';
     borderColor = '#2563eb';
     badgeStyle  = 'background:#111;color:#60a5fa;border:1px solid #2563eb';
-    actionText  = 'Full DCA cadence on STRONG_ACCUM or better. Let limit orders sit. Do not chase price.';
-    detailText  = `Week ${bearWeek} — entering window. K/D gap ${kdGap.toFixed(1)} pts still wide. Signal ${signal}, Big 3 ${big3}/3. Deploy DCA at current levels. Tranches should only fill via limit orders at pre-set prices — no manual deployment yet.`;
+    actionText  = 'DCA continues on schedule (price-agnostic, targets ~Nov 1). Let tranche limit orders sit. Do not chase price.';
+    detailText  = `Week ${bearWeek} — entering window. K/D gap ${kdGap.toFixed(1)} pts still wide. Signal ${signal}, Big 3 ${big3}/3. Under the 2026-08-20 plan, DCA runs at its elevated cadence regardless of signal strength — it does not pause here. Tranches should only fill via limit orders at pre-set prices; confirmation reserve waits for Big 3 all green.`;
 
   } else if (sigScore >= 2) {
     // PATIENT — in bear but conditions not strong enough yet
     posture     = 'PATIENT';
     borderColor = '#666';
     badgeStyle  = 'background:#111;color:#999;border:1px solid #666';
-    actionText  = 'Minimum DCA only on STRONG_ACCUM. Tranches on limit orders only. Preserve dry powder.';
-    detailText  = `Week ${bearWeek}. Signal ${signal} — not yet at threshold for active deployment. K/D gap ${kdGap.toFixed(1)} pts. Big 3 ${big3}/3. The best prices and confirmation signals are likely still ahead. Patience protects your averaging power.`;
+    actionText  = 'DCA continues on schedule regardless of signal. Tranches on limit orders only. Confirmation reserve waits for Big 3.';
+    detailText  = `Week ${bearWeek}. Signal ${signal} — not at threshold for tranche/reserve deployment, but DCA no longer pauses on a weak signal under the current plan (price-agnostic, targets full deployment by ~Nov 1). K/D gap ${kdGap.toFixed(1)} pts. Big 3 ${big3}/3. Tranches stay limit-order only; the best prices and confirmation signals are likely still ahead for those and the reserve.`;
 
   } else {
     // HOLD — weak/neutral signal
     posture     = 'HOLD';
     borderColor = '#7f1d1d';
     badgeStyle  = 'background:#1a0000;color:#f87171;border:1px solid #7f1d1d';
-    actionText  = 'Pause DCA. Signal too weak. Wait for STRONG_ACCUM or better before deploying.';
-    detailText  = `Signal is ${signal} — below deployment threshold. Deploying capital here risks buying before the real accumulation zone. Let the indicators come to you.`;
+    actionText  = 'DCA continues on schedule — it\'s price-agnostic by design. Tranches and confirmation reserve stay parked until price/Big 3 confirm.';
+    detailText  = `Signal is ${signal} — below the threshold for tranche or reserve deployment. Under the 2026-08-20 plan this no longer pauses DCA: DCA runs at its elevated cadence regardless of signal so the ~Nov 1 target is met. Tranches only fill via their preset limit orders; the confirmation reserve only deploys on Big 3 all green.`;
   }
 
   card.style.borderColor = borderColor;
