@@ -3848,8 +3848,45 @@ function renderPlan() {
         <span style="color:#777">Capital committed if filled: <strong style="color:#e5e5e5">$${pendCommitted.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</strong></span>
         <span style="color:#777">As of: <strong style="color:#e5e5e5">${GRAYSCALE_ETF.asOf}</strong></span>
       </div>
+    </div>
+
+    <!-- DCA AUTO-INVEST SCHEDULE -->
+    ${(() => {
+      const dca = GRAYSCALE_ETF.dcaPlan || {};
+      const sched = dca.autoInvestSchedule || [];
+      const rows = sched.map(s => `<tr style="border-bottom:1px solid #161616">
+          <td style="padding:7px 8px;color:#e5e5e5;font-weight:600">${s.day}</td>
+          <td style="padding:7px 8px;text-align:right;color:#777">${s.firstBuy}</td>
+          <td style="padding:7px 8px;text-align:right;color:#777">${s.lastBuy}</td>
+          <td style="padding:7px 8px;text-align:right;color:#bbb;font-variant-numeric:tabular-nums">${s.occurrences}</td>
+          <td style="padding:7px 8px;text-align:right;color:#3b82f6;font-weight:700;font-variant-numeric:tabular-nums">$${(s.occurrences*(dca.amount||0)).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+        </tr>`).join('');
+      const totalOcc = sched.reduce((s,x) => s + x.occurrences, 0);
+      return `
+    <div class="chart-card" style="margin-bottom:10px">
+      <div style="font-size:11px;font-weight:700;color:#777;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">DCA Auto-Invest Schedule — ${dca.cadence || ''}</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead>
+          <tr style="color:#666;font-size:10px;text-transform:uppercase;letter-spacing:.06em">
+            <th style="text-align:left;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Day</th>
+            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">First Buy</th>
+            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Last Buy</th>
+            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Occurrences</th>
+            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div style="margin-top:10px;display:flex;gap:20px;flex-wrap:wrap;font-size:11px;padding:8px 4px;border-top:1px solid #1e1e1e">
+        <span style="color:#777">Per buy: <strong style="color:#e5e5e5">$${(dca.amount||0).toLocaleString()}</strong></span>
+        <span style="color:#777">Total occurrences: <strong style="color:#e5e5e5">${totalOcc}</strong></span>
+        <span style="color:#777">Auto-invest total: <strong style="color:#3b82f6">$${(dca.autoInvestTotal||0).toLocaleString()}</strong></span>
+        <span style="color:#777">DCA budget: <strong style="color:#e5e5e5">$${(dca.remainingBudget||0).toLocaleString()}</strong></span>
+        <span style="color:#777">Target completion: <strong style="color:#e5e5e5">${dca.targetCompletionDate || ''}</strong></span>
+      </div>
+      ${dca.manualTopUpPlanned ? `<div style="margin-top:8px;font-size:10.5px;color:#fbbf24">⚠ $${dca.manualTopUpPlanned} manual top-up still planned to close the gap to the full budget</div>` : ''}
     </div>`;
-  })()}
+    })()}
 
   <!-- ===================================================================
        MSTR TRACKER — separate personal brokerage account, BTC-adjacent
