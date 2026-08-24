@@ -893,27 +893,27 @@ const GRAYSCALE_ETF = {
     { acquired: '2026-04-09', term: 'Short', qty: 126, avgCost: 31.82, costBasisTotal: 4009.31 },
     { acquired: '2026-08-12', term: 'Short', qty: 26,  avgCost: 28.03, costBasisTotal: 728.78 },
   ],
-  // ===== 2026-08-20 pivot plan vs. 2026-08-24 reality =====
-  // Plan was to trim pending from 4 orders/$13,980 to 2 orders/$4,862 (cancel the $19.89
-  // and $14.60 orders — 34-52% below market) and free the rest for the dcaPlan below.
-  // CONFIRMED VIA FIDELITY SCREENSHOT 2026-08-24: that cancellation was never actually
-  // placed — all 4 original orders are still open. Quantities below corrected to match
-  // Fidelity exactly (were previously logged as 103sh/113sh — actual is 100sh/200sh).
-  // dcaPlan.remainingBudget ($9,555) assumes $19.89 + $14.60 get cancelled — until Keith
-  // actually cancels them at Fidelity, that budget is not really freed.
+  // ===== 2026-08-24 full re-do =====
+  // Replaced the entire legacy 4-order ladder ($24.31/$22.10/$19.89/$14.60, all still
+  // open per Fidelity screenshot) with a fresh 3-level ladder sized to BTC-equivalent
+  // price levels Keith picked ($72K/$68K/$62K), using the live ratio implied by
+  // Fidelity's own current value ($18,069.15 / 517 sh = $34.95/sh) against BTC ~$79,300
+  // (Mon 24 Aug weekly close): ratio ~0.00044 BTC/share. $5,000 budget split evenly
+  // across the 3 levels (~$1,667 each). ACTION NEEDED: Keith must cancel all 4 legacy
+  // orders at Fidelity and place these 3 new GTC limit buys — not yet placed as of
+  // 2026-08-24, this is the target state.
   pending: [
-    { date: '2026-06-05', qty: 100, limitPrice: 24.31, tif: 'GTC', keep: true },
-    { date: '2026-08-12', qty: 200, limitPrice: 22.10, tif: 'GTC', keep: true },
-    { date: '2026-04-09', qty: 252, limitPrice: 19.89, tif: 'GTC', keep: false, note: 'Planned for cancellation 2026-08-20 to free budget for DCA — NOT yet cancelled as of 2026-08-24, still open per Fidelity' },
-    { date: '2026-06-05', qty: 145, limitPrice: 14.60, tif: 'GTC', keep: false, note: 'Planned for cancellation 2026-08-20 to free budget for DCA — NOT yet cancelled as of 2026-08-24, still open per Fidelity' },
+    { date: '2026-08-24', qty: 53, limitPrice: 31.73, tif: 'GTC', note: 'BTC-equivalent $72,000 — new ladder, replaces legacy orders' },
+    { date: '2026-08-24', qty: 56, limitPrice: 29.97, tif: 'GTC', note: 'BTC-equivalent $68,000 — new ladder, replaces legacy orders' },
+    { date: '2026-08-24', qty: 61, limitPrice: 27.33, tif: 'GTC', note: 'BTC-equivalent $62,000 — new ladder, replaces legacy orders' },
   ],
   dcaPlan: {
     amount: 356,               // per buy — changed 2026-08-24 to 4x/week ($1,423/wk over ~6.7 weeks to Oct 10)
     cadence: '4x/week',        // changed from 2x/week — Keith setting these up as auto-buys at Fidelity
     weeklyTotal: 1423,
-    remainingBudget: 9555,     // still assumes the $19.89/$14.60 orders get cancelled to free this — NOT yet confirmed done at Fidelity, see pending[] note
+    remainingBudget: 9555,     // still assumes all 4 legacy orders get cancelled and replaced by the new 3-level ladder in pending[] below to free this
     targetCompletionDate: '2026-10-10',
-    note: 'Guaranteed, price-agnostic deployment — same rationale as the spot BTC DCA engine. Keith setting up as automated recurring buys at Fidelity (4x/week), not an automated order placed by Claude. Tranches left parked, not folded into DCA. IMPORTANT: this $9,555 budget assumes the $19.89 (252sh) and $14.60 (145sh) legacy orders get cancelled — as of 2026-08-24 Fidelity still shows all 4 original orders open (see pending[] below), so this budget is not yet actually freed.'
+    note: 'Guaranteed, price-agnostic deployment — same rationale as the spot BTC DCA engine. Keith setting up as automated recurring buys at Fidelity (4x/week), not an automated order placed by Claude. IMPORTANT: this $9,555 budget assumes the 4 legacy orders (now replaced in pending[] below with a new 3-level $72K/$68K/$62K ladder totaling ~$5,027) actually get cancelled and re-entered — as of 2026-08-24 the old orders are still open at Fidelity, so this budget is not yet actually freed.'
   }
 };
 
