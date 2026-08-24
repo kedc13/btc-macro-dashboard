@@ -905,6 +905,7 @@ const GRAYSCALE_ETF = {
     { date: '2026-08-24', qty: 53, limitPrice: 31.73, tif: 'GTC', note: 'BTC-equivalent $72,000' },
     { date: '2026-08-24', qty: 56, limitPrice: 29.97, tif: 'GTC', note: 'BTC-equivalent $68,000' },
     { date: '2026-08-24', qty: 61, limitPrice: 27.33, tif: 'GTC', note: 'BTC-equivalent $62,000' },
+    { date: '2026-08-24', qty: 8, limitPrice: 34.27, tif: 'GTC', note: 'Added 2026-08-24 near current market, standing in for the ~$280 DCA manual top-up gap ($274.16) — this is a LIMIT order (contingent on price dipping to $34.27, not a guaranteed same-day fill) despite functioning like the planned DCA top-up' },
   ],
   dcaPlan: {
     amount: 265,               // per buy — Fidelity rounded to whole dollars ($265, not $265.42)
@@ -918,8 +919,8 @@ const GRAYSCALE_ETF = {
       { day: 'Friday',    firstBuy: '2026-09-04', lastBuy: '2026-10-09', occurrences: 6 },
     ],
     autoInvestTotal: 9275,     // 35 occurrences x $265
-    manualTopUpPlanned: 280,   // Keith placing manually this week (2026-08-24 or 08-25) to close the gap to the full $9,555 budget — NOT yet executed, log as a PLAN.buys-style entry once confirmed
-    plannedTotal: 9555,        // autoInvestTotal + manualTopUpPlanned — matches remainingBudget exactly once the manual top-up is placed
+    manualTopUpPlanned: 0,     // was $280 — Keith instead placed a 4th tranche-style limit order (8sh @ $34.27 = $274.16, see pending[] below) to cover this gap rather than a guaranteed market buy. Note this makes the gap-fill price-contingent, not guaranteed like a true DCA buy.
+    plannedTotal: 9275,        // DCA total is now just the 35 auto-buys; the ~$280 gap is covered (contingently) by the 4th tranche order instead
     remainingBudget: 9555,     // freed and confirmed — legacy orders cancelled, new 3-level ladder ($5,027) live at Fidelity as of 2026-08-24
     targetCompletionDate: '2026-10-15',
     note: 'Guaranteed, price-agnostic deployment — same rationale as the spot BTC DCA engine. Keith setting up as automated recurring buys at Fidelity (4x/week), not an automated order placed by Claude. Tranche ladder confirmed live 2026-08-24 (see pending[] above) — legacy orders fully replaced, $9,555 DCA budget now genuinely available.'
