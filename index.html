@@ -827,38 +827,39 @@ const PLAN = {
   btcQty:       0.504875,  // total BTC acquired — updated Aug 24 2026 (+0.01040 BTC from Aug 24 DCA buy)
   avgPrice:    61904,      // weighted avg cost basis — updated Aug 13 2026 (impact of Aug 19 reconciliation <$0.01/unit, unchanged at this rounding)
   buys: [
-    { date: '2026-06-02', price: 67358,   qty: 0.02969,    label: 'Tranche $2K', type: 'tranche', signal: 'STRONG_ACCUM', big3: 1, bottomConf: 3 },
-    { date: '2026-06-03', price: 63201,   qty: 0.12658,    label: 'T1 $8K',      type: 'tranche', signal: 'WATCH',        big3: 0, bottomConf: 1 },
-    { date: '2026-06-05', price: 61214,   qty: 0.01225,    label: 'DCA $750',    type: 'dca',     signal: 'WATCH',        big3: 0, bottomConf: 2 },
-    { date: '2026-06-05', price: 59800,   qty: 0.05017,    label: 'T2 $3K',      type: 'tranche', signal: 'WATCH',        big3: 0, bottomConf: 2 },
-    { date: '2026-06-16', price: 65557,   qty: 0.007627,   label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
-    { date: '2026-06-17', price: 64952,   qty: 0.00769776, label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
-    { date: '2026-06-18', price: 62578,   qty: 0.00799,    label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 3 },
-    { date: '2026-06-22', price: 63691,   qty: 0.00785,    label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 1, bottomConf: 3 },
-    { date: '2026-06-23', price: 62315,   qty: 0.008024,   label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 3 },
-    { date: '2026-06-24', price: 61215,   qty: 0.008168,   label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
-    { date: '2026-06-25', price: 59622,   qty: 0.01677,    label: 'T3b $1K',     type: 'tranche', signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
-    { date: '2026-06-25', price: 58168,   qty: 0.06877,    label: 'T3a $4K',     type: 'tranche', signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
-    { date: '2026-06-25', price: 58886,   qty: 0.008491,   label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
-    { date: '2026-06-25', price: 59901,   qty: 0.008347,   label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
-    { date: '2026-06-28', price: 59221,   qty: 0.008443,   label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
-    { date: '2026-06-30', price: 58623,   qty: 0.004265,   label: 'DCA $250',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 1, bottomConf: 3 },
-    { date: '2026-06-30', price: 58341,   qty: 0.01286,    label: 'DCA $750',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 1, bottomConf: 3 },
-    { date: '2026-07-06', price: 62198,   qty: 0.008039,   label: 'DCA $500 (delayed Sun 7/5 fill)', type: 'dca', signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
-    { date: '2026-07-06', price: 61532,   qty: 0.008126,   label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
-    { date: '2026-07-08', price: 62981,   qty: 0.007939,   label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
-    { date: '2026-07-12', price: 63197,   qty: 0.007912,   label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
-    { date: '2026-07-22', price: 65828,   qty: 0.00759555, label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 1, bottomConf: 4 },
-    { date: '2026-07-23', price: 64627,   qty: 0.0077367,  label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 1, bottomConf: 4 },
-    { date: '2026-07-27', price: 64196,   qty: 0.007789,   label: 'DCA $500 (set Sun 7/26, filled below market)', type: 'dca', signal: 'STRONG_ACCUM', big3: 1, bottomConf: 3 },
-    { date: '2026-07-27', price: 63109,    qty: 0.0039614, label: 'DCA $250 (filled early for 7/28)', type: 'dca', signal: 'STRONG_ACCUM', big3: 1, bottomConf: 3, note: 'Price corrected 2026-08-19 from 63099.20 to 63109 to match Kraken order history exactly' },
-    { date: '2026-07-31', price: 64097,    qty: 0.00780067, label: 'DCA $500', type: 'dca', signal: 'STRONG_ACCUM', big3: 1, bottomConf: 4 },
-    { date: '2026-08-11', price: 63487,    qty: 0.00789029, label: 'DCA $500', type: 'dca', signal: 'STRONG_ACCUM', big3: 1, bottomConf: 4 },
-    { date: '2026-08-12', price: 63497.30, qty: 0.00787435, label: 'DCA $500', type: 'dca', signal: 'STRONG_ACCUM', big3: 0, bottomConf: 4, note: 'Qty corrected 2026-08-19 to match Kraken exact fill (0.00787435 BTC); was approximated as 0.00786 from a rounded two-fill split estimate' },
-    { date: '2026-08-13', price: 62871,    qty: 0.008024,   label: 'DCA $500', type: 'dca', signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
-    { date: '2026-08-22', price: 76392,    qty: 0.00979521, label: 'DCA $750', type: 'dca', signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2, note: 'Kraken limit buy, cost $748.27568 + $1.49655 fee, filled 10:08pm; logged from screenshot' },
-    { date: '2026-08-24', price: 79201,    qty: 0.01040,    label: 'DCA $825', type: 'dca', signal: 'WATCH', big3: 0, bottomConf: 2, note: 'Kraken limit buy @ $79,201, filled 4:51pm as 3 partial fills on the same order (0.00489+0.00540+0.00011), combined into one entry here' },
+    { date: '2026-06-02', price: 67358,   qty: 0.02969,    fee: 5.00,  label: 'Tranche $2K', type: 'tranche', signal: 'STRONG_ACCUM', big3: 1, bottomConf: 3 },
+    { date: '2026-06-03', price: 63201,   qty: 0.12658,    fee: 20.00, label: 'T1 $8K',      type: 'tranche', signal: 'WATCH',        big3: 0, bottomConf: 1, note: 'Kraken filled as 8 partial fills on the same order; fee is the sum of all 8 ($12.2707+4.0206+0.0378+0.0277+0.0236+0.0173+0.0148+3.5871)' },
+    { date: '2026-06-05', price: 61214,   qty: 0.01225,    fee: 1.88,  label: 'DCA $750',    type: 'dca',     signal: 'WATCH',        big3: 0, bottomConf: 2 },
+    { date: '2026-06-05', price: 59800,   qty: 0.05017,    fee: 6.00,  label: 'T2 $3K',      type: 'tranche', signal: 'WATCH',        big3: 0, bottomConf: 2 },
+    { date: '2026-06-16', price: 65557,   qty: 0.007627,   fee: 1.00,  label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2, note: 'Kraken filled as 2 partial fills same order; fee combined ($0.3481+$0.6518)' },
+    { date: '2026-06-17', price: 64952,   qty: 0.00769776, fee: 1.00,  label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
+    { date: '2026-06-18', price: 62578,   qty: 0.00799,    fee: 1.00,  label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 3 },
+    { date: '2026-06-22', price: 63691,   qty: 0.00785,    fee: 1.00,  label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 1, bottomConf: 3, note: 'Kraken filled as 3 partial fills same order; fee combined ($0.8607+0.0398+0.0994)' },
+    { date: '2026-06-23', price: 62315,   qty: 0.008024,   fee: 1.00,  label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 3 },
+    { date: '2026-06-24', price: 61215,   qty: 0.008168,   fee: 1.00,  label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
+    { date: '2026-06-25', price: 59622,   qty: 0.01677,    fee: 2.00,  label: 'T3b $1K',     type: 'tranche', signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2, note: 'Kraken filled as 3 partial fills same order; fee combined ($0.0006+0.0080+1.9913)' },
+    { date: '2026-06-25', price: 58168,   qty: 0.06877,    fee: 8.00,  label: 'T3a $4K',     type: 'tranche', signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
+    { date: '2026-06-25', price: 58886,   qty: 0.008491,   fee: 1.00,  label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
+    { date: '2026-06-25', price: 59901,   qty: 0.008347,   fee: 1.00,  label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
+    { date: '2026-06-28', price: 59221,   qty: 0.008443,   fee: 1.00,  label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
+    { date: '2026-06-30', price: 58623,   qty: 0.004265,   fee: 0.50,  label: 'DCA $250',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 1, bottomConf: 3 },
+    { date: '2026-06-30', price: 58341,   qty: 0.01286,    fee: 1.50,  label: 'DCA $750',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 1, bottomConf: 3 },
+    { date: '2026-07-06', price: 62198,   qty: 0.008039,   fee: 1.00,  label: 'DCA $500 (delayed Sun 7/5 fill)', type: 'dca', signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
+    { date: '2026-07-06', price: 61532,   qty: 0.008126,   fee: 1.00,  label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2, note: 'Kraken filled as 2 partial fills same order; fee combined ($0.2814+0.7185)' },
+    { date: '2026-07-08', price: 62981,   qty: 0.007939,   fee: 1.00,  label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2, note: 'Kraken filled as 2 partial fills same order; fee combined ($0.3856+0.6143)' },
+    { date: '2026-07-12', price: 63197,   qty: 0.007912,   fee: 1.10,  label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
+    { date: '2026-07-22', price: 65828,   qty: 0.00759555, fee: 1.10,  label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 1, bottomConf: 4, note: 'Kraken filled as 3 partial fills across 7/22-7/23 same order; fee combined ($0.0166+0.0000+1.0832)' },
+    { date: '2026-07-23', price: 64627,   qty: 0.0077367,  fee: 1.10,  label: 'DCA $500',    type: 'dca',     signal: 'STRONG_ACCUM', big3: 1, bottomConf: 4 },
+    { date: '2026-07-27', price: 64196,   qty: 0.007789,   fee: 1.10,  label: 'DCA $500 (set Sun 7/26, filled below market)', type: 'dca', signal: 'STRONG_ACCUM', big3: 1, bottomConf: 3 },
+    { date: '2026-07-27', price: 63099.20, qty: 0.0039614, fee: 0.95,  label: 'DCA $250 (filled early for 7/28)', type: 'dca', signal: 'STRONG_ACCUM', big3: 1, bottomConf: 3, note: 'Price reverted 2026-08-24 back to 63099.20 — a fresh Kraken order-history screenshot shows the exact fill as 63,099.1997, which contradicts the 2026-08-19 "correction" to 63109 (that correction was wrong; this screenshot is authoritative)' },
+    { date: '2026-07-31', price: 64097,    qty: 0.00780067, fee: 1.10,  label: 'DCA $500', type: 'dca', signal: 'STRONG_ACCUM', big3: 1, bottomConf: 4 },
+    { date: '2026-08-11', price: 63487,    qty: 0.00789029, fee: 1.02,  label: 'DCA $500', type: 'dca', signal: 'STRONG_ACCUM', big3: 1, bottomConf: 4 },
+    { date: '2026-08-12', price: 63497.30, qty: 0.00787435, fee: 1.10,  label: 'DCA $500', type: 'dca', signal: 'STRONG_ACCUM', big3: 0, bottomConf: 4, note: 'Qty corrected 2026-08-19 to match Kraken exact fill (0.00787435 BTC); was approximated as 0.00786 from a rounded two-fill split estimate. Kraken filled as 2 partial fills same order; fee combined ($0.5852+0.5147)' },
+    { date: '2026-08-13', price: 62871,    qty: 0.008024,   fee: 1.11,  label: 'DCA $500', type: 'dca', signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
+    { date: '2026-08-22', price: 76392,    qty: 0.00979521, fee: 1.50,  label: 'DCA $750', type: 'dca', signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2, note: 'Kraken limit buy, cost $748.27568 + $1.49655 fee, filled 10:08pm; logged from screenshot' },
+    { date: '2026-08-24', price: 79201,    qty: 0.01040,    fee: 1.65,  label: 'DCA $825', type: 'dca', signal: 'WATCH', big3: 0, bottomConf: 2, note: 'Kraken limit buy @ $79,201, filled 4:51pm as 3 partial fills on the same order (0.00489+0.00540+0.00011), combined into one entry here; fee combined ($0.7747+0.8564+0.0188)' },
   ],
+  totalFeesPaid: 69.70, // sum of all buys[].fee — reconciled 2026-08-24 against full Kraken order history (3 screenshots). Not included in deployed/dcaDeployed/trancheDeployed, which track trade cost only (qty×price); this is the separate fee overhead on top.
   tranches: [
     { price: 63201, label: 'T1', size:  8000, filled: true,  note: 'Filled Jun 3 @ $63,201' },
     { price: 59800, label: 'T2', size:  3000, filled: true,  note: 'Filled Jun 5 @ $59,800' },
@@ -3679,12 +3680,14 @@ function renderPlan() {
         const typeLabel = isTranche ? 'Tranche' : 'DCA';
         const d = new Date(b.date + 'T12:00:00');
         const dateStr = d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+        const feeStr = (b.fee != null) ? '$' + b.fee.toFixed(2) : '—';
         return `<tr style="border-bottom:1px solid #161616">
           <td style="padding:7px 8px;color:#999;white-space:nowrap">${dateStr}</td>
           <td style="padding:7px 8px"><span style="font-size:10px;font-weight:700;color:${typeColor};background:${typeColor}20;padding:2px 7px;border-radius:4px;white-space:nowrap">${typeLabel}</span></td>
           <td style="padding:7px 8px;text-align:right;color:#777;font-variant-numeric:tabular-nums">$${b.price.toLocaleString()}</td>
           <td style="padding:7px 8px;text-align:right;color:#bbb;font-weight:600;font-variant-numeric:tabular-nums">${b.qty.toFixed(5)}</td>
           <td style="padding:7px 8px;text-align:right;font-weight:700;color:${typeColor};font-variant-numeric:tabular-nums">$${usd.toLocaleString()}</td>
+          <td style="padding:7px 8px;text-align:right;color:#666;font-variant-numeric:tabular-nums">${feeStr}</td>
         </tr>`;
       }).join('');
       const totalBtc = (PLAN.btcQty || 0).toFixed(4);
@@ -3697,6 +3700,7 @@ function renderPlan() {
             <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Price</th>
             <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">BTC</th>
             <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">USD</th>
+            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Fee</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
@@ -3706,6 +3710,7 @@ function renderPlan() {
         <span style="color:#777">DCA: <strong style="color:#3b82f6">$${(PLAN.dcaDeployed||0).toLocaleString()}</strong></span>
         <span style="color:#777">BTC held: <strong style="color:#e5e5e5">${totalBtc} BTC</strong></span>
         <span style="color:#777">Avg cost: <strong style="color:#e5e5e5">$${(PLAN.avgPrice||0).toLocaleString()}</strong></span>
+        <span style="color:#777">Total fees: <strong style="color:#e5e5e5">$${(PLAN.totalFeesPaid||0).toFixed(2)}</strong></span>
       </div>`;
     })()}
   </div>
