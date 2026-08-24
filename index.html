@@ -893,21 +893,27 @@ const GRAYSCALE_ETF = {
     { acquired: '2026-04-09', term: 'Short', qty: 126, avgCost: 31.82, costBasisTotal: 4009.31 },
     { acquired: '2026-08-12', term: 'Short', qty: 26,  avgCost: 28.03, costBasisTotal: 728.78 },
   ],
-  // ===== 2026-08-20 pivot — mirrors the spot BTC restructure =====
-  // Trimmed pending from 4 orders/$14,555 to 2 orders/$5,000 (dropped the $19.89 and
-  // $14.60 orders — 34-52% below market, same "may never fill" issue as the old spot
-  // deep tranches). Freed $9,555 moved to a new dcaPlan below for guaranteed deployment.
+  // ===== 2026-08-20 pivot plan vs. 2026-08-24 reality =====
+  // Plan was to trim pending from 4 orders/$13,980 to 2 orders/$4,862 (cancel the $19.89
+  // and $14.60 orders — 34-52% below market) and free the rest for the dcaPlan below.
+  // CONFIRMED VIA FIDELITY SCREENSHOT 2026-08-24: that cancellation was never actually
+  // placed — all 4 original orders are still open. Quantities below corrected to match
+  // Fidelity exactly (were previously logged as 103sh/113sh — actual is 100sh/200sh).
+  // dcaPlan.remainingBudget ($9,555) assumes $19.89 + $14.60 get cancelled — until Keith
+  // actually cancels them at Fidelity, that budget is not really freed.
   pending: [
-    { date: '2026-06-05', qty: 103, limitPrice: 24.31, tif: 'GTC' },
-    { date: '2026-04-09', qty: 113, limitPrice: 22.10, tif: 'GTC' },
+    { date: '2026-06-05', qty: 100, limitPrice: 24.31, tif: 'GTC', keep: true },
+    { date: '2026-08-12', qty: 200, limitPrice: 22.10, tif: 'GTC', keep: true },
+    { date: '2026-04-09', qty: 252, limitPrice: 19.89, tif: 'GTC', keep: false, note: 'Planned for cancellation 2026-08-20 to free budget for DCA — NOT yet cancelled as of 2026-08-24, still open per Fidelity' },
+    { date: '2026-06-05', qty: 145, limitPrice: 14.60, tif: 'GTC', keep: false, note: 'Planned for cancellation 2026-08-20 to free budget for DCA — NOT yet cancelled as of 2026-08-24, still open per Fidelity' },
   ],
   dcaPlan: {
-    amount: 712,               // per buy — bumped 2026-08-24 from $460 to hit the new Oct 10 target (was $920/wk over ~10 weeks, now $1,424/wk over ~6.7 weeks)
-    cadence: '2x/week',        // unchanged — still split into 2 buys/week "to average in better"
-    weeklyTotal: 1424,
-    remainingBudget: 9555,     // unchanged — same $9,555 DCA budget, just compressed into a shorter window
-    targetCompletionDate: '2026-10-10', // moved up from 2026-11-01 per Keith's request 2026-08-24
-    note: 'Guaranteed, price-agnostic deployment — same rationale as the spot BTC DCA engine. Keith to set up as recurring buys at his broker; not an automated order placed by Claude. Tranches ($5,000 live, $24.31 x103 + $22.10 x113) left parked unchanged — kept as free optionality, not folded into DCA.'
+    amount: 356,               // per buy — changed 2026-08-24 to 4x/week ($1,423/wk over ~6.7 weeks to Oct 10)
+    cadence: '4x/week',        // changed from 2x/week — Keith setting these up as auto-buys at Fidelity
+    weeklyTotal: 1423,
+    remainingBudget: 9555,     // still assumes the $19.89/$14.60 orders get cancelled to free this — NOT yet confirmed done at Fidelity, see pending[] note
+    targetCompletionDate: '2026-10-10',
+    note: 'Guaranteed, price-agnostic deployment — same rationale as the spot BTC DCA engine. Keith setting up as automated recurring buys at Fidelity (4x/week), not an automated order placed by Claude. Tranches left parked, not folded into DCA. IMPORTANT: this $9,555 budget assumes the $19.89 (252sh) and $14.60 (145sh) legacy orders get cancelled — as of 2026-08-24 Fidelity still shows all 4 original orders open (see pending[] below), so this budget is not yet actually freed.'
   }
 };
 
