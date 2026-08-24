@@ -809,8 +809,8 @@ const PLAN = {
   confirmationReserve: 20000, // live, undeployed until Big3 all green — not in dcaBudget/trancheBudget
   dcaTargetCompletionDate: '2026-11-01', // dcaZones[0]/dcaWeekly below sized to fully deploy remaining DCA budget by this date
   totalBudget:    130000,
-  deployed:        30751,   // total deployed Aug 22 2026 (incl Aug 22 DCA buy)
-  dcaDeployed:     12751,   // DCA only: Jun 5 $750 + Jun 16–Aug 22 DCA buys
+  deployed:        31575,   // total deployed Aug 24 2026 (incl Aug 24 DCA buy)
+  dcaDeployed:     13575,   // DCA only: Jun 5 $750 + Jun 16–Aug 24 DCA buys
   trancheDeployed: 18000,   // tranche fills: Jun 2 $2K + Jun 3 $8K + Jun 5 $3K + Jun 25 $4K + Jun 25 $1K
   dcaBudget:       72000,   // allocated to weekly DCA (remaining $59,997 ≈ $60K, targeted to fully deploy by dcaTargetCompletionDate)
   trancheBudget:   38000,   // allocated to limit-order tranches (remaining $20,000 across 2 consolidated levels)
@@ -824,7 +824,7 @@ const PLAN = {
     { minPrice: 0,     label: 'Lump Sum',   color: '#22c55e', amount: null, perBuy: 'Lump sum',   action: 'HALT weekly DCA — redeploy remaining DCA budget as T7 tranche if Big 3 confirmed', big3Req: 2 },
   ],
   doubleDropPct:     0.09,
-  btcQty:       0.494475,  // total BTC acquired — updated Aug 22 2026 (+0.00979521 BTC from Aug 22 DCA buy)
+  btcQty:       0.504875,  // total BTC acquired — updated Aug 24 2026 (+0.01040 BTC from Aug 24 DCA buy)
   avgPrice:    61904,      // weighted avg cost basis — updated Aug 13 2026 (impact of Aug 19 reconciliation <$0.01/unit, unchanged at this rounding)
   buys: [
     { date: '2026-06-02', price: 67358,   qty: 0.02969,    label: 'Tranche $2K', type: 'tranche', signal: 'STRONG_ACCUM', big3: 1, bottomConf: 3 },
@@ -857,6 +857,7 @@ const PLAN = {
     { date: '2026-08-12', price: 63497.30, qty: 0.00787435, label: 'DCA $500', type: 'dca', signal: 'STRONG_ACCUM', big3: 0, bottomConf: 4, note: 'Qty corrected 2026-08-19 to match Kraken exact fill (0.00787435 BTC); was approximated as 0.00786 from a rounded two-fill split estimate' },
     { date: '2026-08-13', price: 62871,    qty: 0.008024,   label: 'DCA $500', type: 'dca', signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2 },
     { date: '2026-08-22', price: 76392,    qty: 0.00979521, label: 'DCA $750', type: 'dca', signal: 'STRONG_ACCUM', big3: 0, bottomConf: 2, note: 'Kraken limit buy, cost $748.27568 + $1.49655 fee, filled 10:08pm; logged from screenshot' },
+    { date: '2026-08-24', price: 79201,    qty: 0.01040,    label: 'DCA $825', type: 'dca', signal: 'WATCH', big3: 0, bottomConf: 2, note: 'Kraken limit buy @ $79,201, filled 4:51pm as 3 partial fills on the same order (0.00489+0.00540+0.00011), combined into one entry here' },
   ],
   tranches: [
     { price: 63201, label: 'T1', size:  8000, filled: true,  note: 'Filled Jun 3 @ $63,201' },
