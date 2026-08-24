@@ -907,9 +907,9 @@ const GRAYSCALE_ETF = {
     { date: '2026-08-24', qty: 61, limitPrice: 27.33, tif: 'GTC', note: 'BTC-equivalent $62,000' },
   ],
   dcaPlan: {
-    amount: 281.03,            // per buy — changed 2026-08-24 to 5x/week (Mon-Fri) to smooth further. 5 separate Fidelity weekly auto-invest plans, all starting Mon 2026-08-31 (next occurrence, today's date can't be used retroactively) through 2026-10-15 = 34 weekday occurrences, $9,555/34
-    cadence: '5x/week (Mon-Fri, 5 separate Fidelity auto-invest plans)',
-    weeklyTotal: 1405.15,
+    amount: 265.42,            // per buy — changed 2026-08-24, starts this Thu 2026-08-27 (not next Monday) through 2026-10-15 = 36 weekday occurrences, $9,555/36. 5 separate Fidelity weekly auto-invest plans (Mon-Fri), no manual reserve carved out this week.
+    cadence: '5x/week (Mon-Fri, 5 separate Fidelity auto-invest plans, starting Thu Aug 27)',
+    weeklyTotal: 1327.10,
     remainingBudget: 9555,     // freed and confirmed — legacy orders cancelled, new 3-level ladder ($5,027) live at Fidelity as of 2026-08-24
     targetCompletionDate: '2026-10-15',
     note: 'Guaranteed, price-agnostic deployment — same rationale as the spot BTC DCA engine. Keith setting up as automated recurring buys at Fidelity (4x/week), not an automated order placed by Claude. Tranche ladder confirmed live 2026-08-24 (see pending[] above) — legacy orders fully replaced, $9,555 DCA budget now genuinely available.'
