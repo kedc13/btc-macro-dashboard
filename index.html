@@ -825,7 +825,7 @@ const PLAN = {
   ],
   doubleDropPct:     0.09,
   btcQty:       0.504875,  // total BTC acquired — updated Aug 24 2026 (+0.01040 BTC from Aug 24 DCA buy)
-  avgPrice:    62678,      // weighted avg cost basis, fee-inclusive — updated Aug 24 2026 (was stale at 61904 since Aug 13; now reflects the Aug 22 $76,392 and Aug 24 $79,201 buys plus all fees rolled in)
+  avgPrice:    62540,      // weighted avg cost basis, fee-EXCLUSIVE (pure price×qty / qty) — reverted 2026-08-24 per Keith's request to keep this separate from fees; Total Deployed/dcaDeployed/trancheDeployed still include fees, avgPrice/BTC P&L math does not. Fees shown separately via totalFeesPaid.
   buys: [
     { date: '2026-06-02', price: 67358,   qty: 0.02969,    fee: 5.00,  label: 'Tranche $2K', type: 'tranche', signal: 'STRONG_ACCUM', big3: 1, bottomConf: 3 },
     { date: '2026-06-03', price: 63201,   qty: 0.12658,    fee: 20.00, label: 'T1 $8K',      type: 'tranche', signal: 'WATCH',        big3: 0, bottomConf: 1, note: 'Kraken filled as 8 partial fills on the same order; fee is the sum of all 8 ($12.2707+4.0206+0.0378+0.0277+0.0236+0.0173+0.0148+3.5871)' },
@@ -3451,7 +3451,8 @@ function renderPlan() {
         const pnlSign = pnl >= 0 ? '+' : '';
         return `
       <div class="card"><div class="card-label">BTC Acquired</div><div class="card-value">${qty.toFixed(4)} BTC</div><div class="card-sub">${nowPrice ? '≈ $' + Math.round(mktVal).toLocaleString() + ' mkt value' : 'update btcQty in PLAN'}</div></div>
-      <div class="card"><div class="card-label">Avg Cost Basis</div><div class="card-value">$${avg.toLocaleString()}</div><div class="card-sub" style="color:${pnlColor}">${nowPrice && qty ? pnlSign + '$' + Math.round(pnl).toLocaleString() + ' (' + pnlSign + pnlPct.toFixed(1) + '%)' : 'update avgPrice in PLAN'}</div></div>`;
+      <div class="card"><div class="card-label">Avg Cost Basis</div><div class="card-value">$${avg.toLocaleString()}</div><div class="card-sub" style="color:${pnlColor}">${nowPrice && qty ? pnlSign + '$' + Math.round(pnl).toLocaleString() + ' (' + pnlSign + pnlPct.toFixed(1) + '%)' : 'update avgPrice in PLAN'}</div></div>
+      <div class="card"><div class="card-label">Total Fees Paid</div><div class="card-value">$${(PLAN.totalFeesPaid||0).toFixed(2)}</div><div class="card-sub">excluded from avg cost basis · included in Total Deployed</div></div>`;
       })()}
     </div>
   </div>
