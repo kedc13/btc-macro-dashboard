@@ -907,9 +907,19 @@ const GRAYSCALE_ETF = {
     { date: '2026-08-24', qty: 61, limitPrice: 27.33, tif: 'GTC', note: 'BTC-equivalent $62,000' },
   ],
   dcaPlan: {
-    amount: 265.42,            // per buy — changed 2026-08-24, starts this Thu 2026-08-27 (not next Monday) through 2026-10-15 = 36 weekday occurrences, $9,555/36. 5 separate Fidelity weekly auto-invest plans (Mon-Fri), no manual reserve carved out this week.
-    cadence: '5x/week (Mon-Fri, 5 separate Fidelity auto-invest plans, starting Thu Aug 27)',
-    weeklyTotal: 1327.10,
+    amount: 265,               // per buy — Fidelity rounded to whole dollars ($265, not $265.42)
+    cadence: '5x/week (Mon-Fri, 5 separate Fidelity auto-invest plans) — CONFIRMED LIVE 2026-08-24',
+    weeklyTotal: 1325,
+    autoInvestSchedule: [
+      { day: 'Monday',    firstBuy: '2026-08-31', lastBuy: '2026-10-12', occurrences: 7 },
+      { day: 'Tuesday',   firstBuy: '2026-09-01', lastBuy: '2026-10-13', occurrences: 7 },
+      { day: 'Wednesday', firstBuy: '2026-09-02', lastBuy: '2026-10-14', occurrences: 7 },
+      { day: 'Thursday',  firstBuy: '2026-08-27', lastBuy: '2026-10-15', occurrences: 8, note: 'Thursday was the earliest first-buy date the Fidelity system would allow when set up 2026-08-24' },
+      { day: 'Friday',    firstBuy: '2026-09-04', lastBuy: '2026-10-09', occurrences: 6 },
+    ],
+    autoInvestTotal: 9275,     // 35 occurrences x $265
+    manualTopUpPlanned: 280,   // Keith placing manually this week (2026-08-24 or 08-25) to close the gap to the full $9,555 budget — NOT yet executed, log as a PLAN.buys-style entry once confirmed
+    plannedTotal: 9555,        // autoInvestTotal + manualTopUpPlanned — matches remainingBudget exactly once the manual top-up is placed
     remainingBudget: 9555,     // freed and confirmed — legacy orders cancelled, new 3-level ladder ($5,027) live at Fidelity as of 2026-08-24
     targetCompletionDate: '2026-10-15',
     note: 'Guaranteed, price-agnostic deployment — same rationale as the spot BTC DCA engine. Keith setting up as automated recurring buys at Fidelity (4x/week), not an automated order placed by Claude. Tranche ladder confirmed live 2026-08-24 (see pending[] above) — legacy orders fully replaced, $9,555 DCA budget now genuinely available.'
