@@ -4064,6 +4064,9 @@ function switchTab(tab) {
     // Render plan with latest live price if available
     setTimeout(() => renderPlan(), 30);
   }
+  // Remember the active tab so a reload/refresh reopens on the same tab
+  // instead of always reverting to Today. Local to this browser only.
+  try { localStorage.setItem('btc_dash_active_tab', tab); } catch(e) {}
 }
 
 // =====================================================================
@@ -4190,7 +4193,10 @@ const _sdUtil = arr => { if(arr.length<2) return 0; const m=arr.reduce((a,b)=>a+
 })();
 // Must be set BEFORE switchTab so renderApathyMonitor doesn't throw
 window._apathyLive = { funding: null, volume: null };
-switchTab('today');
+// Reopen on whichever tab was active before the last reload, if remembered.
+var _savedTab = 'today';
+try { _savedTab = localStorage.getItem('btc_dash_active_tab') || 'today'; } catch(e) {}
+switchTab(_savedTab);
 
 // =====================================================================
 // BOTTOM PATH MONITOR — Live signal fetcher
