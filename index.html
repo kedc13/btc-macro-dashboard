@@ -908,7 +908,7 @@ const GRAYSCALE_ETF = {
     { date: '2026-08-24', qty: 53, limitPrice: 31.73, tif: 'GTC', note: 'BTC-equivalent $72,000' },
     { date: '2026-08-24', qty: 56, limitPrice: 29.97, tif: 'GTC', note: 'BTC-equivalent $68,000' },
     { date: '2026-08-24', qty: 61, limitPrice: 27.33, tif: 'GTC', note: 'BTC-equivalent $62,000' },
-    { date: '2026-08-24', qty: 8, limitPrice: 34.27, tif: 'GTC', note: 'Added 2026-08-24 near current market, standing in for the ~$280 DCA manual top-up gap ($274.16) — this is a LIMIT order (contingent on price dipping to $34.27, not a guaranteed same-day fill) despite functioning like the planned DCA top-up' },
+    { date: '2026-08-26', qty: 8, limitPrice: 32.25, tif: 'GTC', note: 'Replaced 2026-08-26 (was $34.27, set 2026-08-24) — standing in for the ~$280 DCA manual top-up gap; this is a LIMIT order (contingent on price dipping to $32.25, not a guaranteed same-day fill) despite functioning like the planned DCA top-up' },
   ],
   dcaPlan: {
     amount: 265,               // per buy — Fidelity rounded to whole dollars ($265, not $265.42)
@@ -922,7 +922,7 @@ const GRAYSCALE_ETF = {
       { day: 'Friday',    firstBuy: '2026-09-04', lastBuy: '2026-10-09', occurrences: 6 },
     ],
     autoInvestTotal: 9275,     // 35 occurrences x $265
-    manualTopUpPlanned: 0,     // was $280 — Keith instead placed a 4th tranche-style limit order (8sh @ $34.27 = $274.16, see pending[] below) to cover this gap rather than a guaranteed market buy. Note this makes the gap-fill price-contingent, not guaranteed like a true DCA buy.
+    manualTopUpPlanned: 0,     // was $280 — Keith instead placed a 4th tranche-style limit order (8sh @ $32.25 = $258.00, replaced 2026-08-26, originally $34.27, see pending[] below) to cover this gap rather than a guaranteed market buy. Note this makes the gap-fill price-contingent, not guaranteed like a true DCA buy.
     plannedTotal: 9275,        // DCA total is now just the 35 auto-buys; the ~$280 gap is covered (contingently) by the 4th tranche order instead
     remainingBudget: 9555,     // freed and confirmed — legacy orders cancelled, new 3-level ladder ($5,027) live at Fidelity as of 2026-08-24
     targetCompletionDate: '2026-10-15',
