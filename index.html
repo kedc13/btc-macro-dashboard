@@ -884,8 +884,8 @@ const PLAN = {
 const GRAYSCALE_ETF = {
   ticker: 'BTC',
   name: 'Grayscale Bitcoin Mini Trust',
-  lastPrice: 34.48,   // live market close — updated daily by the scheduled skill run; 2026-08-23 value is a derived estimate (BTC-per-share cross-check), direct search returned an unreliable $52.00 quote — see HISTORY_DATA note for that date
-  asOf: '2026-08-23',
+  lastPrice: 34.515,  // live market close — reconfirmed 2026-08-26 from Keith's own Fidelity fill (Buy 6 Shares of BTC at Market, filled $34.515)
+  asOf: '2026-08-26',
   // currentValue / gainLoss / gainLossPct are NOT stored here — they're derived live
   // from lastPrice in the render function below, so P&L updates automatically every
   // time lastPrice is refreshed. Only qty / avgCost / costBasisTotal are fixed inputs.
@@ -894,6 +894,7 @@ const GRAYSCALE_ETF = {
     { acquired: '2026-06-04', term: 'Short', qty: 139, avgCost: 27.94, costBasisTotal: 3883.66 },
     { acquired: '2026-04-09', term: 'Short', qty: 126, avgCost: 31.82, costBasisTotal: 4009.31 },
     { acquired: '2026-08-12', term: 'Short', qty: 26,  avgCost: 28.03, costBasisTotal: 728.78 },
+    { acquired: '2026-08-26', term: 'Short', qty: 6,   avgCost: 34.515, costBasisTotal: 207.09, note: 'Buy 6 Shares of BTC at Market (Day), filled $34.515; reported directly by Keith via Fidelity screenshot' },
   ],
   // ===== 2026-08-24 full re-do — CONFIRMED LIVE at Fidelity =====
   // Replaced the entire legacy 4-order ladder ($24.31/$22.10/$19.89/$14.60) with this
