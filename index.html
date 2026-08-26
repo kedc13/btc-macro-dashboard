@@ -816,11 +816,11 @@ const PLAN = {
   trancheDeployed: 18041.00, // tranche fills, fee-inclusive: Jun 2 $2K + Jun 3 $8K + Jun 5 $3K + Jun 25 $4K + Jun 25 $1K + $41.00 tranche fees
   dcaBudget:       72000,   // allocated to weekly DCA (remaining $59,997 ≈ $60K, targeted to fully deploy by dcaTargetCompletionDate)
   trancheBudget:   38000,   // allocated to limit-order tranches (remaining $20,000 across 2 consolidated levels)
-  dcaWeekly:        5775,   // elevated through dcaTargetCompletionDate: 3 × $1,925/wk Sun / Tue / Thu
+  dcaWeekly:        5775,   // elevated through dcaTargetCompletionDate: 7 × $825/day (switched from 3×$1,925/wk Sun/Tue/Thu to daily 2026-08-26 for smoother averaging — same $5,775/wk total)
   dcaDouble:        3000,   // aggressive: 3 × $1,000/wk on big drops
   dcaStartDate: '2026-06-09',
   dcaZones: [
-    { minPrice: 53697, label: 'Standard',   color: '#777', amount: 1925, perBuy: '$1,925/buy', action: 'Elevated cadence through ~Nov 1 2026 target — 3× per week (2026-08-20 pivot)', big3Req: 0 },
+    { minPrice: 53697, label: 'Standard',   color: '#777', amount: 825, perBuy: '$825/buy', action: 'Elevated cadence through ~Nov 1 2026 target — 7× per week / daily (switched from 3×/wk 2026-08-26 to average out entries better)', big3Req: 0 },
     { minPrice: 47000, label: 'Aggressive', color: '#f97316', amount: 1000, perBuy: '$1K/buy',    action: 'T4–T5 zone — double up, keep limit orders set',                          big3Req: 0 },
     { minPrice: 41000, label: 'Heavy',      color: '#ef4444', amount: 1500, perBuy: '$1,500/buy', action: 'T6 zone — increase cadence, flag remaining DCA budget for lump sum',     big3Req: 1 },
     { minPrice: 0,     label: 'Lump Sum',   color: '#22c55e', amount: null, perBuy: 'Lump sum',   action: 'HALT weekly DCA — redeploy remaining DCA budget as T7 tranche if Big 3 confirmed', big3Req: 2 },
@@ -3341,10 +3341,10 @@ function renderPlan() {
     windowLabel = `$${dcaRemaining.toLocaleString()} remaining · bottom window closed`;
   }
 
-  // Day-of-week labels for Sun/Tue/Thu (0=Sun,2=Tue,4=Thu)
+  // Day-of-week labels — daily cadence (switched from Sun/Tue/Thu 2026-08-26)
   const dayNames  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const todayDow  = now.getDay(); // 0-6
-  const buyDays   = [0, 2, 4];   // Sun, Tue, Thu
+  const buyDays   = [0, 1, 2, 3, 4, 5, 6];   // every day
   const buyLabels = buyDays.map(d => {
     const diff = ((d - todayDow + 7) % 7);
     const date = new Date(now); date.setDate(date.getDate() + diff);
@@ -4037,7 +4037,7 @@ function renderPlan() {
   <!-- STRATEGY REMINDER -->
   <div style="background:#111;border-radius:10px;padding:14px 16px;color:#999;font-size:11px;line-height:1.7">
     <div style="color:#e5e5e5;font-weight:700;margin-bottom:6px">Your Strategy in Plain Terms</div>
-    $${(dcaAmount).toLocaleString()} × Sun/Tue/Thu (${scoreBaseLabel}). If price drops 9%+ from the last DCA buy price, doubles to $${(dcaAmount*2).toLocaleString()}/buy. Resets automatically when a new buy is recorded at the lower level.
+    $${(dcaAmount).toLocaleString()} × daily (${scoreBaseLabel}). If price drops 9%+ from the last DCA buy price, doubles to $${(dcaAmount*2).toLocaleString()}/buy. Resets automatically when a new buy is recorded at the lower level.
     Tranches at $58K, $53K, $49K, $43K, $38K are set — they fill automatically when price hits them.
     The emotional job of this dashboard: <span style="color:#60a5fa">remind you the plan is working when it feels like it isn't.</span>
     Bear markets are won by people who don't panic. Your average cost matters more than any single entry.
