@@ -816,8 +816,8 @@ const PLAN = {
   confirmationReserve: 20000, // live, undeployed until Big3 all green — not in dcaBudget/trancheBudget
   dcaTargetCompletionDate: '2026-11-01', // dcaZones[0]/dcaWeekly below sized to fully deploy remaining DCA budget by this date
   totalBudget:    130000,
-  deployed:        34888.73, // total deployed Aug 28 2026, fee-inclusive (trade cost + $76.81 in fees, rolled in 2026-08-28)
-  dcaDeployed:     16847.73, // DCA only, fee-inclusive: Jun 5 $750 + Jun 16–Aug 28 DCA buys + $35.81 DCA fees
+  deployed:        34888.73, // total deployed through Aug 30 2026, fee-inclusive (trade cost + $76.81 in fees)
+  dcaDeployed:     16847.73, // DCA only, fee-inclusive: Jun 5 $750 + Jun 16–Aug 30 DCA buys + $35.81 DCA fees
   trancheDeployed: 18041.00, // tranche fills, fee-inclusive: Jun 2 $2K + Jun 3 $8K + Jun 5 $3K + Jun 25 $4K + Jun 25 $1K + $41.00 tranche fees
   dcaBudget:       72000,   // allocated to weekly DCA (remaining $59,997 ≈ $60K, targeted to fully deploy by dcaTargetCompletionDate)
   trancheBudget:   38000,   // allocated to limit-order tranches (remaining $20,000 across 2 consolidated levels)
@@ -831,7 +831,7 @@ const PLAN = {
     { minPrice: 0,     label: 'Lump Sum',   color: '#22c55e', amount: null, perBuy: 'Lump sum',   action: 'HALT weekly DCA — redeploy remaining DCA budget as T7 tranche if Big 3 confirmed', big3Req: 2 },
   ],
   doubleDropPct:     0.09,
-  btcQty:       0.54644,  // total BTC acquired — updated Aug 28 2026 (+0.01071 +0.01062 +0.009715 BTC from three Aug 28 DCA buys)
+  btcQty:       0.54644,  // total BTC acquired — updated Aug 30 2026 (+0.01071 +0.01062 BTC from two Aug 28 DCA buys, +0.009715 BTC from Aug 30 DCA buy)
   avgPrice:    63706.55,   // weighted avg cost basis, fee-EXCLUSIVE (pure price×qty / qty) — reverted 2026-08-24 per Keith's request to keep this separate from fees; Total Deployed/dcaDeployed/trancheDeployed still include fees, avgPrice/BTC P&L math does not. Fees shown separately via totalFeesPaid.
   buys: [
     { date: '2026-06-02', price: 67358,   qty: 0.02969,    fee: 5.00,  label: 'Tranche $2K', type: 'tranche', signal: 'STRONG_ACCUM', big3: 1, bottomConf: 3 },
@@ -868,7 +868,7 @@ const PLAN = {
     { date: '2026-08-26', price: 78385,    qty: 0.01052,    fee: 1.815, label: 'DCA $825', type: 'dca', signal: 'WATCH', big3: 0, bottomConf: 1, note: 'Kraken buy @ $78,385, filled 6:42am; reported directly by Keith' },
     { date: '2026-08-28', price: 78213,    qty: 0.01071,    fee: 1.815, label: 'DCA $825', type: 'dca', signal: 'WATCH', big3: 0, bottomConf: 1, note: 'Kraken buy @ $78,213, filled 9:01am; reported directly by Keith' },
     { date: '2026-08-28', price: 77650,    qty: 0.01062,    fee: 1.815, label: 'DCA $825', type: 'dca', signal: 'WATCH', big3: 0, bottomConf: 1, note: 'Kraken buy @ $77,650, filled 9:17am (2nd daily fill, limit set the prior day per Keith); reported directly by Keith' },
-    { date: '2026-08-28', price: 77201,    qty: 0.009715,   fee: 1.65,  label: 'DCA', type: 'dca', signal: 'WATCH', big3: 0, bottomConf: 1, note: 'Kraken buy @ $77,201, filled 4:47pm (3rd daily fill, new limit order); reported directly by Keith' },
+    { date: '2026-08-30', price: 77201,    qty: 0.009715,   fee: 1.65,  label: 'DCA', type: 'dca', signal: 'WATCH', big3: 0, bottomConf: 1, note: 'Kraken limit buy @ $77,201, filled 4:47pm Aug 30 (date corrected — originally logged as Aug 28); reported directly by Keith' },
   ],
   totalFeesPaid: 76.81, // sum of all buys[].fee — reconciled 2026-08-24 against full Kraken order history (3 screenshots), + $1.815 Aug 26 fee + $1.815 x2 + $1.65 Aug 28 fees. Now rolled into deployed/dcaDeployed/trancheDeployed above (kept here as a reference breakdown, not an additional add-on).
   tranches: [
