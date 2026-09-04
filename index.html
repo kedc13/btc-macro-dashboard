@@ -974,7 +974,10 @@ const MSTR_STOCK = {
     { acquired: '2026-09-01', term: 'Short', qty: 4,      avgCost: 125.755,  costBasisTotal: 503.02, note: 'Additional MSTR buy same day; reported directly by Keith via Fidelity screenshot' },
     { acquired: '2026-09-02', term: 'Short', qty: 3,      avgCost: 121.89,   costBasisTotal: 365.67, note: 'Buy 3 Shares of MSTR at Market (Day), filled at $121.89; Personal - TOD account; reported directly by Keith via screenshot' },
   ],
-  pending: []
+  pending: [
+    { date: '2026-08-25', qty: 4, limitPrice: 119.13, tif: 'GTC', note: 'Buy 4 Shares of MSTR Limit at $119.13 (Good \'til Canceled); reported directly by Keith via Fidelity screenshot' },
+    { date: '2026-09-04', qty: 3, limitPrice: 132.95, tif: 'GTC', note: 'Buy 3 Shares of MSTR Limit at $132.95 (Good \'til Canceled); reported directly by Keith via Fidelity screenshot' },
+  ]
 };
 
 const PHASE_ZONES = [
@@ -4045,6 +4048,90 @@ function renderPlan() {
         <span style="color:#777">As of: <strong style="color:#e5e5e5">${MSTR_STOCK.asOf}</strong></span>
       </div>
     </div>`;
+  })()}
+
+  <!-- ===================================================================
+       COMBINED CAPITAL DEPLOYMENT — rolls up all 3 accounts (spot BTC
+       DCA/tranches, Grayscale BTC ETF, MSTR) into one deployed/value/P&L
+       summary. Independently computed here (not reused from the per-account
+       IIFEs above, which are out of scope) but mirrors their exact math:
+       spot BTC P&L uses fee-exclusive cost basis (qty × avgPrice), same as
+       the Capital Deployment card above; Grayscale/MSTR use costBasisTotal
+       as-is (already fee-inclusive, no separate fee field on those accounts).
+  =================================================================== -->
+  ${(() => {
+    const btcQty       = PLAN.btcQty || 0;
+    const btcAvg        = PLAN.avgPrice || 0;
+    const btcPrice       = price || 0;
+    const btcCostBasis   = btcQty * btcAvg;
+    const btcValue       = btcQty * btcPrice;
+    const btcPnl         = btcValue - btcCostBasis;
+    const btcPnlPct      = btcCostBasis ? (btcPnl / btcCostBasis * 100) : 0;
+    const btcDeployed    = PLAN.deployed || 0;
+
+    const gsPos          = GRAYSCALE_ETF.positions || [];
+    const gsQty          = gsPos.reduce((s,p) => s + p.qty, 0);
+    const gsCostBasis    = gsPos.reduce((s,p) => s + p.costBasisTotal, 0);
+    const gsPrice        = GRAYSCALE_ETF.lastPrice || 0;
+    const gsValue        = gsQty * gsPrice;
+    const gsPnl          = gsValue - gsCostBasis;
+    const gsPnlPct       = gsCostBasis ? (gsPnl / gsCostBasis * 100) : 0;
+
+    const mstrPos        = MSTR_STOCK.positions || [];
+    const mstrQty        = mstrPos.reduce((s,p) => s + p.qty, 0);
+    const mstrCostBasis  = mstrPos.reduce((s,p) => s + p.costBasisTotal, 0);
+    const mstrPrice      = MSTR_STOCK.lastPrice || 0;
+    const mstrValue      = mstrQty * mstrPrice;
+    const mstrPnl        = mstrValue - mstrCostBasis;
+    const mstrPnlPct     = mstrCostBasis ? (mstrPnl / mstrCostBasis * 100) : 0;
+
+    const rows = [
+      { name: 'Spot BTC (DCA + Tranches)', sub: 'Kraken', deployed: btcDeployed, value: btcValue, pnl: btcPnl, pnlPct: btcPnlPct, color: '#f7931a' },
+      { name: 'Grayscale BTC Mini Trust',  sub: GRAYSCALE_ETF.ticker + ' · Fidelity SEP-IRA', deployed: gsCostBasis, value: gsValue, pnl: gsPnl, pnlPct: gsPnlPct, color: '#3b82f6' },
+      { name: 'Strategy Inc (MSTR)',       sub: MSTR_STOCK.ticker + ' · Fidelity', deployed: mstrCostBasis, value: mstrValue, pnl: mstrPnl, pnlPct: mstrPnlPct, color: '#a855f7' },
+    ];
+
+    const totalDeployed = rows.reduce((s,r) => s + r.deployed, 0);
+    const totalValue    = rows.reduce((s,r) => s + r.value, 0);
+    const totalPnl      = rows.reduce((s,r) => s + r.pnl, 0);
+    const totalPnlPct   = totalDeployed ? (totalPnl / totalDeployed * 100) : 0;
+    const totalColor    = totalPnl >= 0 ? '#4ade80' : '#f87171';
+    const totalSign     = totalPnl >= 0 ? '+' : '';
+
+    const rowsHtml = rows.map(r => {
+      const rc   = r.pnl >= 0 ? '#4ade80' : '#f87171';
+      const sign = r.pnl >= 0 ? '+' : '';
+      return `<tr style="border-bottom:1px solid #161616">
+        <td style="padding:8px;color:#e5e5e5;font-weight:700"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${r.color};margin-right:7px"></span>${r.name}<div style="font-size:10px;color:#666;font-weight:400;margin-left:15px">${r.sub}</div></td>
+        <td style="padding:8px;text-align:right;color:#bbb;font-variant-numeric:tabular-nums">$${r.deployed.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+        <td style="padding:8px;text-align:right;color:#e5e5e5;font-variant-numeric:tabular-nums">$${r.value.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+        <td style="padding:8px;text-align:right;font-weight:700;color:${rc};font-variant-numeric:tabular-nums">${sign}$${Math.abs(r.pnl).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+        <td style="padding:8px;text-align:right;font-weight:700;color:${rc};font-variant-numeric:tabular-nums">${sign}${r.pnlPct.toFixed(2)}%</td>
+      </tr>`;
+    }).join('');
+
+    return `
+  <div class="chart-card" style="margin-bottom:10px;border:1px solid #2a2a2a">
+    <div style="font-size:11px;font-weight:700;color:#777;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">💰 All Accounts — Combined Capital Deployment</div>
+    <div class="cards-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:12px">
+      <div class="card"><div class="card-label">Total Deployed</div><div class="card-value">$${totalDeployed.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</div><div class="card-sub">across 3 accounts</div></div>
+      <div class="card"><div class="card-label">Total Current Value</div><div class="card-value">$${totalValue.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</div></div>
+      <div class="card"><div class="card-label">Total Gain/Loss</div><div class="card-value" style="color:${totalColor}">${totalSign}$${Math.abs(totalPnl).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</div><div class="card-sub" style="color:${totalColor}">${totalSign}${totalPnlPct.toFixed(2)}%</div></div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead>
+        <tr style="color:#666;font-size:10px;text-transform:uppercase;letter-spacing:.06em">
+          <th style="text-align:left;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Account</th>
+          <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Deployed</th>
+          <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Current Value</th>
+          <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">$ Gain/Loss</th>
+          <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">% Gain/Loss</th>
+        </tr>
+      </thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>
+    <div style="margin-top:8px;font-size:10px;color:#555">Spot BTC "Deployed" is fee-inclusive (PLAN.deployed); its Gain/Loss uses fee-exclusive cost basis (qty × avg price), matching the Capital Deployment section above. Grayscale/MSTR use cost basis as reported.</div>
+  </div>`;
   })()}
 
   <!-- MILESTONE COUNTDOWN -->
