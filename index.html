@@ -821,8 +821,8 @@ const PLAN = {
   confirmationReserve: 20000, // live, undeployed until Big3 all green — not in dcaBudget/trancheBudget
   dcaTargetCompletionDate: '2026-11-01', // dcaZones[0]/dcaWeekly below sized to fully deploy remaining DCA budget by this date
   totalBudget:    130000,
-  deployed:        37143.68, // total deployed through Sep 3 2026, fee-inclusive (trade cost + $81.76 in fees)
-  dcaDeployed:     19102.68, // DCA only, fee-inclusive: Jun 5 $750 + Jun 16–Sep 3 DCA buys + $40.76 DCA fees
+  deployed:        37143.68, // total deployed through Sep 4 2026, fee-inclusive (trade cost + $81.76 in fees)
+  dcaDeployed:     19102.68, // DCA only, fee-inclusive: Jun 5 $750 + Jun 16–Sep 4 DCA buys + $40.76 DCA fees
   trancheDeployed: 18041.00, // tranche fills, fee-inclusive: Jun 2 $2K + Jun 3 $8K + Jun 5 $3K + Jun 25 $4K + Jun 25 $1K + $41.00 tranche fees
   dcaBudget:       72000,   // allocated to weekly DCA (remaining $59,997 ≈ $60K, targeted to fully deploy by dcaTargetCompletionDate)
   trancheBudget:   38000,   // allocated to limit-order tranches (remaining $20,000 across 2 consolidated levels)
@@ -836,8 +836,8 @@ const PLAN = {
     { minPrice: 0,     label: 'Lump Sum',   color: '#22c55e', amount: null, perBuy: 'Lump sum',   action: 'HALT weekly DCA — redeploy remaining DCA budget as T7 tranche if Big 3 confirmed', big3Req: 2 },
   ],
   doubleDropPct:     0.09,
-  btcQty:       0.5754251, // total BTC acquired — updated Sep 3 2026 (+0.009501 BTC from Sep 3 DCA buy)
-  avgPrice:    64407.70,   // weighted avg cost basis, fee-EXCLUSIVE (pure price×qty / qty) — reverted 2026-08-24 per Keith's request to keep this separate from fees; Total Deployed/dcaDeployed/trancheDeployed still include fees, avgPrice/BTC P&L math does not. Fees shown separately via totalFeesPaid.
+  btcQty:       0.57542615, // total BTC acquired — updated Sep 4 2026 (+0.00950112 BTC from Sep 4 DCA buy; date corrected from Sep 3 — Kraken trade confirmation shows Executed Sep 4, 2026 7:44am, not Sep 3)
+  avgPrice:    64412.38,   // weighted avg cost basis, fee-EXCLUSIVE (pure price×qty / qty) — reverted 2026-08-24 per Keith's request to keep this separate from fees; Total Deployed/dcaDeployed/trancheDeployed still include fees, avgPrice/BTC P&L math does not. Fees shown separately via totalFeesPaid.
   buys: [
     { date: '2026-06-02', price: 67358,   qty: 0.02969,    fee: 5.00,  label: 'Tranche $2K', type: 'tranche', signal: 'STRONG_ACCUM', big3: 1, bottomConf: 3 },
     { date: '2026-06-03', price: 63201,   qty: 0.12658,    fee: 20.00, label: 'T1 $8K',      type: 'tranche', signal: 'WATCH',        big3: 0, bottomConf: 1, note: 'Kraken filled as 8 partial fills on the same order; fee is the sum of all 8 ($12.2707+4.0206+0.0378+0.0277+0.0236+0.0173+0.0148+3.5871)' },
@@ -876,9 +876,9 @@ const PLAN = {
     { date: '2026-08-30', price: 77201,    qty: 0.009715,   fee: 1.65,  label: 'DCA', type: 'dca', signal: 'WATCH', big3: 0, bottomConf: 1, note: 'Kraken limit buy @ $77,201, filled 4:47pm Aug 30 (date corrected — originally logged as Aug 28); reported directly by Keith' },
     { date: '2026-09-01', price: 77681,    qty: 0.009655,   fee: 1.65,  label: 'DCA', type: 'dca', signal: 'WATCH', big3: 0, bottomConf: 1, note: 'Kraken buy @ $77,681, filled 6:06am; reported directly by Keith' },
     { date: '2026-09-02', price: 76304,    qty: 0.0098291,  fee: 1.65,  label: 'DCA', type: 'dca', signal: 'WATCH', big3: 0, bottomConf: 1, note: 'Kraken limit buy, BTC/USDC, 0.0098291 BTC @ limit $76,304.00, cost $749.99965 + $1.65 fee, executed Sep 2 2026 3:51am; Trade ID T4XVSM-TIJFL-DISUZ6, Order ID O3FKDR-KE6FQ-TQM5XL; reported directly by Keith via screenshot' },
-    { date: '2026-09-03', price: 78938,    qty: 0.009501,   fee: 1.65,  label: 'DCA', type: 'dca', signal: 'WATCH', big3: 0, bottomConf: 1, note: 'Buy 0.009501 BTC @ 78,938.00 USDC, filled 7:44am; reported directly by Keith via screenshot' },
+    { date: '2026-09-04', price: 78938,    qty: 0.00950112, fee: 1.65,  label: 'DCA', type: 'dca', signal: 'WATCH', big3: 0, bottomConf: 1, note: 'Kraken limit buy, BTC/USDC, 0.00950112 BTC @ limit $78,938.00, cost $749.99941 + $1.65 fee, executed Sep 4 2026 7:44am; Trade ID TTUW2O-7YEHS-XDQDRP, Order ID O2L2HT-BJ6P2-YLXEM2; reported directly by Keith via screenshot (date corrected from Sep 3 — trade confirmation shows Sep 4 execution)' },
   ],
-  totalFeesPaid: 81.76, // sum of all buys[].fee — reconciled 2026-08-24 against full Kraken order history (3 screenshots), + $1.815 Aug 26 fee + $1.815 x2 + $1.65 Aug 28/30 fees + $1.65 Sep 1 fee + $1.65 Sep 2 fee + $1.65 Sep 3 fee. Now rolled into deployed/dcaDeployed/trancheDeployed above (kept here as a reference breakdown, not an additional add-on).
+  totalFeesPaid: 81.76, // sum of all buys[].fee — reconciled 2026-08-24 against full Kraken order history (3 screenshots), + $1.815 Aug 26 fee + $1.815 x2 + $1.65 Aug 28/30 fees + $1.65 Sep 1 fee + $1.65 Sep 2 fee + $1.65 Sep 4 fee. Now rolled into deployed/dcaDeployed/trancheDeployed above (kept here as a reference breakdown, not an additional add-on).
   tranches: [
     { price: 63201, label: 'T1', size:  8000, filled: true,  note: 'Filled Jun 3 @ $63,201' },
     { price: 59800, label: 'T2', size:  3000, filled: true,  note: 'Filled Jun 5 @ $59,800' },
