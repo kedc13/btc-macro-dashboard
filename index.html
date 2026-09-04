@@ -899,8 +899,8 @@ const PLAN = {
 const GRAYSCALE_ETF = {
   ticker: 'BTC',
   name: 'Grayscale Bitcoin Mini Trust',
-  lastPrice: 34.19023936,   // Sep 2 2026 SEP-IRA auto-invest fill price, reported directly by Keith via account screenshot (more authoritative than the Aug31 Fidelity current-value implied estimate)
-  asOf: '2026-09-02',
+  lastPrice: 35.88,   // Sep 3 2026 SEP-IRA auto-invest fill price (2nd of 2 partial fills), reported directly by Keith via account screenshot
+  asOf: '2026-09-03',
   // currentValue / gainLoss / gainLossPct are NOT stored here — they're derived live
   // from lastPrice in the render function below, so P&L updates automatically every
   // time lastPrice is refreshed. Only qty / avgCost / costBasisTotal are fixed inputs.
@@ -915,6 +915,7 @@ const GRAYSCALE_ETF = {
     { acquired: '2026-08-31', term: 'Short', qty: 7.594, avgCost: 34.8960, costBasisTotal: 265.00, note: 'Monday $265 auto-invest DCA fill (first scheduled Monday occurrence per autoInvestSchedule), executed as 2 partial fills (7 sh @ $244.27 + 0.594 sh @ $20.73); confirmed via Fidelity purchase-history screenshot' },
     { acquired: '2026-09-01', term: 'Short', qty: 7.754, avgCost: 34.1759, costBasisTotal: 265.00, note: 'Tuesday $265 auto-invest DCA fill, Buy $265.00 of BTC at Market (Day), filled at $34.175; reported directly by Keith via Fidelity screenshot' },
     { acquired: '2026-09-02', term: 'Short', qty: 7.750165, avgCost: 34.19023936, costBasisTotal: 264.98, note: 'Wednesday $265 auto-invest DCA fill (first scheduled Wednesday occurrence per autoInvestSchedule), Buy $265.00 of BTC at Market (Day), filled at $34.19023936; SEP-IRA account; reported directly by Keith via screenshot' },
+    { acquired: '2026-09-03', term: 'Short', qty: 7.387, avgCost: 35.8697712197103, costBasisTotal: 264.97, note: 'Thursday $265 auto-invest DCA fill (2nd scheduled Thursday occurrence per autoInvestSchedule), executed as 2 partial fills (7.000 sh @ $35.87 + 0.387 sh @ $35.88); SEP-IRA account; confirmed via Fidelity purchase-history screenshot, settlement 2026-09-04' },
   ],
   // ===== 2026-08-24 full re-do — CONFIRMED LIVE at Fidelity =====
   // Replaced the entire legacy 4-order ladder ($24.31/$22.10/$19.89/$14.60) with this
@@ -944,7 +945,7 @@ const GRAYSCALE_ETF = {
     autoInvestTotal: 9275,     // 35 occurrences x $265
     manualTopUpPlanned: 0,     // was $280 — Keith instead placed a 4th tranche-style limit order (8sh @ $32.25 = $258.00, replaced 2026-08-26, originally $34.27, see pending[] below) to cover this gap rather than a guaranteed market buy. Note this makes the gap-fill price-contingent, not guaranteed like a true DCA buy.
     plannedTotal: 9275,        // DCA total is now just the 35 auto-buys; the ~$280 gap is covered (contingently) by the 4th tranche order instead
-    remainingBudget: 8495.02,  // 9555 minus confirmed fills: 2026-08-27 Thu ($264.98) + 2026-08-31 Mon ($265.00) + 2026-09-01 Tue ($265.00) + 2026-09-02 Wed ($264.98) auto-invest fills (see positions[] above) — decremented only on Keith's explicit fill reports, not assumed
+    remainingBudget: 8230.05,  // 9555 minus confirmed fills: 2026-08-27 Thu ($264.98) + 2026-08-31 Mon ($265.00) + 2026-09-01 Tue ($265.00) + 2026-09-02 Wed ($264.98) + 2026-09-03 Thu ($264.97) auto-invest fills (see positions[] above) — decremented only on Keith's explicit fill reports, not assumed
     targetCompletionDate: '2026-10-15',
     note: 'Guaranteed, price-agnostic deployment — same rationale as the spot BTC DCA engine. Keith setting up as automated recurring buys at Fidelity (4x/week), not an automated order placed by Claude. Tranche ladder confirmed live 2026-08-24 (see pending[] above) — legacy orders fully replaced, $9,555 DCA budget now genuinely available. Auto-invest fills confirmed: Thursday $264.98 (2026-08-27), Monday $265.00 (2026-08-31), Tuesday $265.00 (2026-09-01), Wednesday $264.98 (2026-09-02); remainingBudget decremented accordingly.'
   }
