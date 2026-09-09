@@ -826,8 +826,8 @@ const PLAN = {
   confirmationReserve: 20000, // live, undeployed until Big3 all green — not in dcaBudget/trancheBudget
   dcaTargetCompletionDate: '2026-11-01', // dcaZones[0]/dcaWeekly below sized to fully deploy remaining DCA budget by this date
   totalBudget:    130000,
-  deployed:        38646.98, // total deployed through Sep 7 2026, fee-inclusive (trade cost + $85.06 in fees)
-  dcaDeployed:     20605.98, // DCA only, fee-inclusive: Jun 5 $750 + Jun 16–Sep 7 DCA buys + $44.06 DCA fees
+  deployed:        39473.79, // total deployed through Sep 9 2026, fee-inclusive (trade cost + $86.875 in fees)
+  dcaDeployed:     21432.79, // DCA only, fee-inclusive: Jun 5 $750 + Jun 16–Sep 9 DCA buys + $45.875 DCA fees
   trancheDeployed: 18041.00, // tranche fills, fee-inclusive: Jun 2 $2K + Jun 3 $8K + Jun 5 $3K + Jun 25 $4K + Jun 25 $1K + $41.00 tranche fees
   dcaBudget:       72000,   // allocated to weekly DCA (remaining $59,997 ≈ $60K, targeted to fully deploy by dcaTargetCompletionDate)
   trancheBudget:   38000,   // allocated to limit-order tranches (remaining $20,000 across 2 consolidated levels)
@@ -841,8 +841,8 @@ const PLAN = {
     { minPrice: 0,     label: 'Lump Sum',   color: '#22c55e', amount: null, perBuy: 'Lump sum',   action: 'HALT weekly DCA — redeploy remaining DCA budget as T7 tranche if Big 3 confirmed', big3Req: 2 },
   ],
   doubleDropPct:     0.09,
-  btcQty:       0.59444117, // total BTC acquired — updated Sep 7 2026 (+0.00950112 BTC @ $78,938 8:18am + 0.0095139 BTC @ $78,832 3:40pm, both Sep 7 DCA buys)
-  avgPrice:    64875.33,   // weighted avg cost basis, fee-EXCLUSIVE (pure price×qty / qty) — reverted 2026-08-24 per Keith's request to keep this separate from fees; Total Deployed/dcaDeployed/trancheDeployed still include fees, avgPrice/BTC P&L math does not. Fees shown separately via totalFeesPaid.
+  btcQty:       0.60498349, // total BTC acquired — updated Sep 9 2026 (+0.01054232 BTC @ $78,256 8:21am Kraken DCA buy)
+  avgPrice:    65108.50,   // weighted avg cost basis, fee-EXCLUSIVE (pure price×qty / qty) — reverted 2026-08-24 per Keith's request to keep this separate from fees; Total Deployed/dcaDeployed/trancheDeployed still include fees, avgPrice/BTC P&L math does not. Fees shown separately via totalFeesPaid.
   buys: [
     { date: '2026-06-02', price: 67358,   qty: 0.02969,    fee: 5.00,  label: 'Tranche $2K', type: 'tranche', signal: 'STRONG_ACCUM', big3: 1, bottomConf: 3 },
     { date: '2026-06-03', price: 63201,   qty: 0.12658,    fee: 20.00, label: 'T1 $8K',      type: 'tranche', signal: 'WATCH',        big3: 0, bottomConf: 1, note: 'Kraken filled as 8 partial fills on the same order; fee is the sum of all 8 ($12.2707+4.0206+0.0378+0.0277+0.0236+0.0173+0.0148+3.5871)' },
@@ -884,8 +884,9 @@ const PLAN = {
     { date: '2026-09-04', price: 78938,    qty: 0.00950112, fee: 1.65,  label: 'DCA', type: 'dca', signal: 'WATCH', big3: 0, bottomConf: 1, note: 'Kraken limit buy, BTC/USDC, 0.00950112 BTC @ limit $78,938.00, cost $749.99941 + $1.65 fee, executed Sep 4 2026 7:44am; Trade ID TTUW2O-7YEHS-XDQDRP, Order ID O2L2HT-BJ6P2-YLXEM2; reported directly by Keith via screenshot (date corrected from Sep 3 — trade confirmation shows Sep 4 execution)' },
     { date: '2026-09-07', price: 78938,    qty: 0.00950112, fee: 1.65,  label: 'DCA', type: 'dca', signal: 'WATCH', big3: 0, bottomConf: 1, note: 'Kraken limit buy, BTC/USDC, 0.00950112 BTC @ limit $78,938.00, cost $749.99941 + $1.65 fee, executed Sep 7 2026 8:18am; Trade ID TPM4HP-7TNQU-7PWIW7, Order ID OMYGZC-UWVFE-UO42AD; reported directly by Keith via screenshot. Note: qty/price/fee are an exact match to the Sep 4 entry above — coincidental (Trade ID and Order ID are both distinct from the Sep 4 fill, so this is a genuinely separate execution, not a duplicate), most likely the same limit price getting hit on two different days.' },
     { date: '2026-09-07', price: 78832,    qty: 0.0095139,  fee: 1.65,  label: 'DCA', type: 'dca', signal: 'WATCH', big3: 0, bottomConf: 1, note: 'Kraken limit buy, BTC/USDC, 0.0095139 BTC @ limit $78,832.00, cost $749.99976 + $1.65 fee, executed Sep 7 2026 3:40pm; Trade ID THPUE6-MTTA5-EVSTBT, Order ID ON2MSF-UQGRT-DN7NWA; reported directly by Keith via screenshot' },
+    { date: '2026-09-09', price: 78256,    qty: 0.01054232, fee: 1.815, label: 'DCA', type: 'dca', signal: 'WATCH', big3: 1, bottomConf: 2, note: 'Kraken limit buy, BTC/USDC, 0.01054232 BTC @ limit $78,256.00, cost $824.99979 + $1.815 fee, executed Sep 9 2026 8:21am; Trade ID T2D7Q4-7HNLK-BIVWQT, Order ID OD4OF7-T5JJN-HPVRTY; reported directly by Keith via screenshot' },
   ],
-  totalFeesPaid: 85.06, // sum of all buys[].fee — reconciled 2026-08-24 against full Kraken order history (3 screenshots), + $1.815 Aug 26 fee + $1.815 x2 + $1.65 Aug 28/30 fees + $1.65 Sep 1 fee + $1.65 Sep 2 fee + $1.65 Sep 4 fee + $1.65 x2 Sep 7 fees. Now rolled into deployed/dcaDeployed/trancheDeployed above (kept here as a reference breakdown, not an additional add-on).
+  totalFeesPaid: 86.875, // sum of all buys[].fee — reconciled 2026-08-24 against full Kraken order history (3 screenshots), + $1.815 Aug 26 fee + $1.815 x2 + $1.65 Aug 28/30 fees + $1.65 Sep 1 fee + $1.65 Sep 2 fee + $1.65 Sep 4 fee + $1.65 x2 Sep 7 fees + $1.815 Sep 9 fee. Now rolled into deployed/dcaDeployed/trancheDeployed above (kept here as a reference breakdown, not an additional add-on).
   tranches: [
     { price: 63201, label: 'T1', size:  8000, filled: true,  note: 'Filled Jun 3 @ $63,201' },
     { price: 59800, label: 'T2', size:  3000, filled: true,  note: 'Filled Jun 5 @ $59,800' },
@@ -907,8 +908,8 @@ const PLAN = {
 const GRAYSCALE_ETF = {
   ticker: 'BTC',
   name: 'Grayscale Bitcoin Mini Trust',
-  lastPrice: 34.70949306,   // Sep 8 2026 SEP-IRA auto-invest weighted avg fill price, reported directly by Keith via account screenshot
-  asOf: '2026-09-08',
+  lastPrice: 34.80950604,   // Sep 9 2026 SEP-IRA auto-invest weighted avg fill price, reported directly by Keith via account screenshot
+  asOf: '2026-09-09',
   // currentValue / gainLoss / gainLossPct are NOT stored here — they're derived live
   // from lastPrice in the render function below, so P&L updates automatically every
   // time lastPrice is refreshed. Only qty / avgCost / costBasisTotal are fixed inputs.
@@ -927,6 +928,7 @@ const GRAYSCALE_ETF = {
     { acquired: '2026-09-04', term: 'Short', qty: 7.545, avgCost: 35.1182582, costBasisTotal: 264.96, note: 'Friday $265 auto-invest DCA fill (first scheduled Friday occurrence per autoInvestSchedule), Buy $265.00 of BTC at Market (Day), filled at $35.1182582 as 3 partial fills (7.000 sh @ $35.1183 + 0.507 sh @ $35.1183 + 0.038 sh @ $35.11); SEP-IRA account; confirmed via Fidelity purchase-history screenshot, order #2C71JJVB' },
     { acquired: '2026-09-08', term: 'Short', qty: 7.634, avgCost: 34.70949306, costBasisTotal: 264.97, note: 'Tuesday $265 auto-invest DCA fill (2nd scheduled Tuesday occurrence per autoInvestSchedule), Buy $265.00 of BTC at Market (Day), filled at $34.70949306 as 2 partial fills (7.000 sh @ $34.7099 = $242.97 + 0.634 sh @ $34.705 = $22.00); SEP-IRA account; confirmed via Fidelity order confirmation, order #1CB1GTY7. No Monday Sep 7 fill reported — Sep 7 2026 was Labor Day (market holiday), so the Monday auto-invest occurrence likely did not execute; confirmed by Keith.' },
     { acquired: '2026-09-08', term: 'Short', qty: 7.634, avgCost: 34.70898612, costBasisTotal: 264.97, note: 'SECOND $265 Buy $265.00 of BTC at Market (Day), filled at $34.70898612 as 2 partial fills (7.000 sh @ $34.7098 = $242.97 + 0.634 sh @ $34.70 = $22.00); confirmed via Fidelity order confirmation, order #1CB1Q6G8, order date Sep-08-2026 01:50:13 PM ET — exactly 2 seconds after the first Sep 8 order (#1CB1GTY7, 01:50:11 PM ET). Given the 2-second gap and identical $265 amount/share count, this looks more like an accidental double-submission (e.g. double-clicked buy) than a deliberate second top-up or a duplicate scheduled auto-invest firing twice — not confirmed with Keith, flagging as the more likely explanation rather than asserting it.' },
+    { acquired: '2026-09-09', term: 'Short', qty: 7.612, avgCost: 34.80950604, costBasisTotal: 264.97, note: 'Wednesday $265 auto-invest DCA fill (2nd scheduled Wednesday occurrence per autoInvestSchedule), Buy $265.00 of BTC at Market (Day), filled at $34.80950604 as 3 partial fills (7.000 sh @ $34.8099 = $243.67 + 0.426 sh @ $34.805 = $14.83 + 0.186 sh @ $34.805 = $6.47); SEP-IRA account; confirmed via Fidelity purchase-history screenshot, order #1CC15B2Z' },
   ],
   // ===== 2026-08-24 full re-do — CONFIRMED LIVE at Fidelity =====
   // Replaced the entire legacy 4-order ladder ($24.31/$22.10/$19.89/$14.60) with this
@@ -956,9 +958,9 @@ const GRAYSCALE_ETF = {
     autoInvestTotal: 9275,     // 35 occurrences x $265
     manualTopUpPlanned: 0,     // was $280 — Keith instead placed a 4th tranche-style limit order (8sh @ $32.25 = $258.00, replaced 2026-08-26, originally $34.27, see pending[] below) to cover this gap rather than a guaranteed market buy. Note this makes the gap-fill price-contingent, not guaranteed like a true DCA buy.
     plannedTotal: 9275,        // DCA total is now just the 35 auto-buys; the ~$280 gap is covered (contingently) by the 4th tranche order instead
-    remainingBudget: 7435.15,  // 9555 minus confirmed fills: 2026-08-27 Thu ($264.98) + 2026-08-31 Mon ($265.00) + 2026-09-01 Tue ($265.00) + 2026-09-02 Wed ($264.98) + 2026-09-03 Thu ($264.97) + 2026-09-04 Fri ($264.96) + 2026-09-08 Tue x2 ($264.97 + $264.97) auto-invest fills (see positions[] above) — decremented only on Keith's explicit fill reports, not assumed. Two same-day Sep 8 fills noted above as unusual — flagged, not yet explained.
+    remainingBudget: 7170.18,  // 9555 minus confirmed fills: 2026-08-27 Thu ($264.98) + 2026-08-31 Mon ($265.00) + 2026-09-01 Tue ($265.00) + 2026-09-02 Wed ($264.98) + 2026-09-03 Thu ($264.97) + 2026-09-04 Fri ($264.96) + 2026-09-08 Tue x2 ($264.97 + $264.97) + 2026-09-09 Wed ($264.97) auto-invest fills (see positions[] above) — decremented only on Keith's explicit fill reports, not assumed. Two same-day Sep 8 fills noted above as unusual — flagged, not yet explained.
     targetCompletionDate: '2026-10-15',
-    note: 'Guaranteed, price-agnostic deployment — same rationale as the spot BTC DCA engine. Keith setting up as automated recurring buys at Fidelity (4x/week), not an automated order placed by Claude. Tranche ladder confirmed live 2026-08-24 (see pending[] above) — legacy orders fully replaced, $9,555 DCA budget now genuinely available. Auto-invest fills confirmed: Thursday $264.98 (2026-08-27), Monday $265.00 (2026-08-31), Tuesday $265.00 (2026-09-01), Wednesday $264.98 (2026-09-02); remainingBudget decremented accordingly.'
+    note: 'Guaranteed, price-agnostic deployment — same rationale as the spot BTC DCA engine. Keith setting up as automated recurring buys at Fidelity (4x/week), not an automated order placed by Claude. Tranche ladder confirmed live 2026-08-24 (see pending[] above) — legacy orders fully replaced, $9,555 DCA budget now genuinely available. Auto-invest fills confirmed: Thursday $264.98 (2026-08-27), Monday $265.00 (2026-08-31), Tuesday $265.00 (2026-09-01), Wednesday $264.98 (2026-09-02), Wednesday $264.97 (2026-09-09); remainingBudget decremented accordingly.'
   }
 };
 
@@ -984,10 +986,11 @@ const MSTR_STOCK = {
     { acquired: '2026-09-01', term: 'Short', qty: 3,      avgCost: 127.23,   costBasisTotal: 381.69, note: 'Buy 3 Shares of MSTR Limit at $127.23 (Day), filled at $127.23; reported directly by Keith via Fidelity screenshot' },
     { acquired: '2026-09-01', term: 'Short', qty: 4,      avgCost: 125.755,  costBasisTotal: 503.02, note: 'Additional MSTR buy same day; reported directly by Keith via Fidelity screenshot' },
     { acquired: '2026-09-02', term: 'Short', qty: 3,      avgCost: 121.89,   costBasisTotal: 365.67, note: 'Buy 3 Shares of MSTR at Market (Day), filled at $121.89; Personal - TOD account; reported directly by Keith via screenshot' },
+    { acquired: '2026-09-04', term: 'Short', qty: 3,      avgCost: 132.95,   costBasisTotal: 398.85, note: 'Buy 3 Shares of MSTR Limit at $132.95 (Good \'til Canceled), filled at $132.95; moved from pending — reported directly by Keith via Fidelity screenshot' },
+    { acquired: '2026-09-09', term: 'Short', qty: 3,      avgCost: 135.00,   costBasisTotal: 405.00, note: 'Buy 3 Shares of MSTR at Market (Day), filled at $135.00; reported directly by Keith via Fidelity screenshot' },
   ],
   pending: [
     { date: '2026-08-25', qty: 4, limitPrice: 119.13, tif: 'GTC', note: 'Buy 4 Shares of MSTR Limit at $119.13 (Good \'til Canceled); reported directly by Keith via Fidelity screenshot' },
-    { date: '2026-09-04', qty: 3, limitPrice: 132.95, tif: 'GTC', note: 'Buy 3 Shares of MSTR Limit at $132.95 (Good \'til Canceled); reported directly by Keith via Fidelity screenshot' },
   ]
 };
 
