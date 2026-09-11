@@ -824,7 +824,7 @@ const PLAN = {
   // NOT a limit order — deployed only if Big3 fires; replaces the old vague unsized T7 slot.
   // See btc-macro-dashboard-BACKUP-2026-08-20-pre-pivot.html for the full pre-pivot plan.
   offTableAmount: 20000,
-  confirmationReserve: 20000, // live, undeployed until Big3 all green — not in dcaBudget/trancheBudget
+  confirmationReserve: 20000, // live, undeployed — not in dcaBudget/trancheBudget. Deployment trigger per Keith 2026-09-10: either Big3 hits 3/3, OR spot drops below $55,000 (whichever comes first) — this broadens the original Big3-only gate to also cover a fast/deep price-driven capitulation move, since the tranche ladder as of the 2026-09-10 re-ladder no longer has any rungs below $58,000.
   dcaTargetCompletionDate: '2026-11-01', // dcaZones[0]/dcaWeekly below sized to fully deploy remaining DCA budget by this date
   totalBudget:    130000,
   deployed:        41052.25, // total deployed through Sep 10 2026, fee-inclusive (trade cost + $90.34 in fees)
