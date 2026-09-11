@@ -832,7 +832,7 @@ const PLAN = {
   trancheDeployed: 18041.00, // tranche fills, fee-inclusive: Jun 2 $2K + Jun 3 $8K + Jun 5 $3K + Jun 25 $4K + Jun 25 $1K + $41.00 tranche fees
   dcaBudget:       72000,   // allocated to weekly DCA (remaining $59,997 ≈ $60K, targeted to fully deploy by dcaTargetCompletionDate)
   trancheBudget:   38000,   // allocated to limit-order tranches (remaining $20,000 across 2 consolidated levels)
-  dcaWeekly:        5775,   // elevated through dcaTargetCompletionDate: 7 × $825/day (switched from 3×$1,925/wk Sun/Tue/Thu to daily 2026-08-26 for smoother averaging — same $5,775/wk total)
+  dcaWeekly:        5775,   // elevated through dcaTargetCompletionDate: 7 × $825/day (switched from 3×$1,925/wk Sun/Tue/Thu to daily 2026-08-26 for smoother averaging — same $5,775/wk total). MECHANISM per Keith 2026-09-10: executed as a standing ~$825 Kraken limit order placed close to spot (not a market buy) — it sometimes doesn't fill same-day, in which case Keith resets/waits rather than chasing price. So actual fill cadence can run a bit behind this $825/day target pace; buys[] only reflects confirmed fills, not the daily attempt.
   dcaDouble:        3000,   // aggressive: 3 × $1,000/wk on big drops
   dcaStartDate: '2026-06-09',
   dcaZones: [
