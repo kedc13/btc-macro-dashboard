@@ -1675,6 +1675,49 @@ async function fetchMSTRPrice() {
 }
 
 // =====================================================================
+// GRAYSCALE BTC MINI TRUST — live price fetch, same pattern as MSTR above.
+// Yahoo Finance ticker "BTC" (NYSE Arca) resolves to the equity/ETF, not
+// the BTC-USD crypto pair, so this is safe to reuse the chart endpoint.
+// If every proxy fails, GRAYSCALE_ETF.lastPrice quietly stays at its last
+// known value (the daily skill-run-updated seed) and gsPriceLive stays false.
+// =====================================================================
+async function fetchGSPrice() {
+  const target = 'https://query1.finance.yahoo.com/v8/finance/chart/BTC?interval=1d&range=1d';
+  const proxies = [
+    async () => {
+      const r = await fetch('https://corsproxy.io/?url=' + encodeURIComponent(target));
+      if (!r.ok) throw new Error('corsproxy.io ' + r.status);
+      return r.json();
+    },
+    async () => {
+      const r = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(target));
+      if (!r.ok) throw new Error('allorigins/raw ' + r.status);
+      return r.json();
+    },
+    async () => {
+      const r = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(target));
+      if (!r.ok) throw new Error('allorigins/get ' + r.status);
+      const wrapped = await r.json();
+      return JSON.parse(wrapped.contents);
+    },
+  ];
+  for (const fn of proxies) {
+    try {
+      const data = await fn();
+      const meta = data?.chart?.result?.[0]?.meta;
+      const price = meta?.regularMarketPrice;
+      if (price && !isNaN(price)) {
+        GRAYSCALE_ETF.lastPrice = price;
+        GRAYSCALE_ETF.asOf = new Date().toISOString().slice(0, 10);
+        gsPriceLive = true;
+        if (typeof renderPlan === 'function') renderPlan();
+        return;
+      }
+    } catch (_) { /* try next proxy */ }
+  }
+}
+
+// =====================================================================
 // SLACK PARSER (unchanged from v2)
 // =====================================================================
 function colorBefore(text, label) {
@@ -2366,6 +2409,7 @@ let allDates = [];
 let histMap  = {};
 let livePrice = null; // set after API fetch, used by renderPlan()
 let mstrPriceLive = false; // true once a live MSTR quote has been fetched this session
+let gsPriceLive = false; // true once a live Grayscale BTC ETF quote has been fetched this session
 let intraDates = [];   // hourly datetime strings "YYYY-MM-DDTHH" for 24h/1W views
 let intraPrices = [];  // matching hourly close prices
 
@@ -3798,6 +3842,9 @@ function renderPlan() {
   <div style="display:flex;align-items:center;gap:10px;margin:22px 0 10px 0;padding-top:18px;border-top:2px dashed #2a2a2a">
     <div style="font-size:13px;font-weight:800;color:#e5e5e5;text-transform:uppercase;letter-spacing:.06em">📈 Grayscale ${GRAYSCALE_ETF.ticker} — ${GRAYSCALE_ETF.name}</div>
     <div style="font-size:10px;color:#666;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:20px;padding:2px 10px">Separate account · not part of spot BTC plan above</div>
+    ${typeof gsPriceLive !== 'undefined' && gsPriceLive
+      ? '<span class="live-badge">LIVE</span>'
+      : '<span style="font-size:9px;color:#888;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:20px;padding:2px 8px">last close</span>'}
   </div>
   ${(() => {
     const pos = GRAYSCALE_ETF.positions || [];
@@ -4327,6 +4374,8 @@ const _sdUtil = arr => { if(arr.length<2) return 0; const m=arr.reduce((a,b)=>a+
   startLivePriceWS();
   fetchMSTRPrice();
   setInterval(fetchMSTRPrice, 60000); // stock quotes move slower than crypto — 60s is plenty
+  fetchGSPrice();
+  setInterval(fetchGSPrice, 60000); // same cadence as MSTR
 })();
 // Must be set BEFORE switchTab so renderApathyMonitor doesn't throw
 window._apathyLive = { funding: null, volume: null };
