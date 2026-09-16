@@ -925,7 +925,7 @@ const PLAN = {
 const GRAYSCALE_ETF = {
   ticker: 'BTC',
   name: 'Grayscale Bitcoin Mini Trust',
-  lastPrice: 34.92,   // Sep 16 2026 close, NYSE Arca — Motley Fool/heygotrade sourcing, +2.26% (+$0.77), day's range $34.40-$35.07; prior Sep14 value ($34.35) was a stale cached Yahoo snapshot per Sep15's note, this is the first clean refresh since
+  lastPrice: 33.62,   // Corrected same-day: Keith's live Fidelity account screenshot (per-lot gain/loss table, Sep16 lot showing $267.30 current value / 7.953 sh = $33.616/sh, consistent across all open lots) supersedes the earlier $34.92 web-search "close" figure, which was wrong/mistimed — Fidelity's live quote is the authoritative source per house convention
   asOf: '2026-09-16',
   // currentValue / gainLoss / gainLossPct are NOT stored here — they're derived live
   // from lastPrice in the render function below, so P&L updates automatically every
