@@ -846,8 +846,8 @@ const PLAN = {
   confirmationReserve: 20000, // live, undeployed — not in dcaBudget/trancheBudget. Deployment trigger per Keith 2026-09-10: either Big3 hits 3/3, OR spot drops below $55,000 (whichever comes first) — this broadens the original Big3-only gate to also cover a fast/deep price-driven capitulation move, since the tranche ladder as of the 2026-09-10 re-ladder no longer has any rungs below $58,000.
   dcaTargetCompletionDate: '2026-11-01', // dcaZones[0]/dcaWeekly below sized to fully deploy remaining DCA budget by this date
   totalBudget:    130000,
-  deployed:        51710.39, // total deployed through Sep 25 2026, fee-inclusive (trade cost + ~$113.76 in fees)
-  dcaDeployed:     33669.39, // DCA only, fee-inclusive: Jun 5 $750 + Jun 16–Sep 25 DCA buys + ~$74.76 DCA fees
+  deployed:        53303.48, // total deployed through Sep 28 2026, fee-inclusive (trade cost + ~$116.68 in fees)
+  dcaDeployed:     34997.51, // DCA only, fee-inclusive: Jun 5 $750 + Jun 16–Sep 27 DCA buys + ~$116.68 DCA fees
   trancheDeployed: 18041.00, // tranche fills, fee-inclusive: Jun 2 $2K + Jun 3 $8K + Jun 5 $3K + Jun 25 $4K + Jun 25 $1K + $41.00 tranche fees
   dcaBudget:       72000,   // allocated to weekly DCA (remaining $59,997 ≈ $60K, targeted to fully deploy by dcaTargetCompletionDate)
   trancheBudget:   38000,   // allocated to limit-order tranches (remaining $20,000 across 2 consolidated levels)
@@ -861,8 +861,8 @@ const PLAN = {
     { minPrice: 0,     label: 'Lump Sum',   color: '#22c55e', amount: null, perBuy: 'Lump sum',   action: 'HALT weekly DCA — redeploy remaining DCA budget as T7 tranche if Big 3 confirmed', big3Req: 2 },
   ],
   doubleDropPct:     0.09,
-  btcQty:       0.75952012, // total BTC acquired — updated Sep 25 2026 (+0.00984710 BTC @ $83,386 Sep 24 + 0.00980467 BTC @ $83,894 Sep 25 Kraken DCA buys)
-  avgPrice:    67933.03,   // weighted avg cost basis, fee-EXCLUSIVE (pure price×qty / qty) — reverted 2026-08-24 per Keith's request to keep this separate from fees; Total Deployed/dcaDeployed/trancheDeployed still include fees, avgPrice/BTC P&L math does not. Fees shown separately via totalFeesPaid.
+  btcQty:       0.77530732, // total BTC acquired — updated Sep 28 2026 (+0.00978322 BTC @ $84,328 Sep 27 + 0.00600398 BTC @ $83,313 Sep 27 Kraken DCA buys)
+  avgPrice:    68259.00,   // weighted avg cost basis, fee-EXCLUSIVE (pure price×qty / qty) — reverted 2026-08-24 per Keith's request to keep this separate from fees; Total Deployed/dcaDeployed/trancheDeployed still include fees, avgPrice/BTC P&L math does not. Fees shown separately via totalFeesPaid.
   buys: [
     { date: '2026-06-02', price: 67358,   qty: 0.02969,    fee: 5.00,  label: 'Tranche $2K', type: 'tranche', signal: 'STRONG_ACCUM', big3: 1, bottomConf: 3 },
     { date: '2026-06-03', price: 63201,   qty: 0.12658,    fee: 20.00, label: 'T1 $8K',      type: 'tranche', signal: 'WATCH',        big3: 0, bottomConf: 1, note: 'Kraken filled as 8 partial fills on the same order; fee is the sum of all 8 ($12.2707+4.0206+0.0378+0.0277+0.0236+0.0173+0.0148+3.5871)' },
@@ -920,8 +920,10 @@ const PLAN = {
     { date: '2026-09-23', price: 83890.99, qty: 0.00983418, fee: 1.815, label: 'DCA $825', type: 'dca', signal: 'WATCH', big3: 2, bottomConf: 3, note: 'Kraken limit buy, BTC/USDC, 0.00983418 BTC @ limit $83,891.00 (avg fill $83,890.99), cost $824.99919 + $1.815 fee, opened Sep 23 2026 9:08pm UTC (2:08pm PDT), closed Sep 24 2:07am UTC (7:07pm PDT); Order ID OQ6JP5-PVHRB-CJXEUK; reported directly by Keith via screenshot' },
     { date: '2026-09-24', price: 83385.99, qty: 0.00984710, fee: 1.80644, label: 'DCA $825', type: 'dca', signal: 'WATCH', big3: 2, bottomConf: 3, note: 'Kraken limit buy, BTC/USDC, 0.00984710 BTC @ limit $83,386.00 (avg $83,385.99), cost $821.11028 + $1.80644 fee, opened Sep 24 2026 6:47am UTC, closed 8:49am UTC; reported directly by Keith via screenshot' },
     { date: '2026-09-25', price: 83893.99, qty: 0.00980467, fee: 1.80962, label: 'DCA $825', type: 'dca', signal: 'WATCH', big3: 2, bottomConf: 3, note: 'Kraken limit buy, BTC/USDC, 0.00980467 BTC @ limit $83,894.00 (avg $83,893.99), cost $822.55298 + $1.80962 fee, opened Sep 24 2026 7:37pm UTC, closed Sep 25 7:08am UTC; reported directly by Keith via screenshot' },
+    { date: '2026-09-27', price: 84328.00, qty: 0.00978322, fee: 1.815, label: 'DCA $825', type: 'dca', signal: 'WATCH', big3: 2, bottomConf: 3, note: 'Kraken limit buy, BTC/USDC, 0.00978322 BTC @ limit $84,328.00, cost $824.99938 + $1.815 fee, executed Sep 27 2026 3:14pm; Trade ID TLGPTN-GDKHJ-3T4GPR, Order ID OZP7EY-CMWOS-ON26N4; reported directly by Keith via screenshot' },
+    { date: '2026-09-27', price: 83313.00, qty: 0.00600398, fee: 1.10046, label: 'DCA $500', type: 'dca', signal: 'WATCH', big3: 2, bottomConf: 3, note: 'Kraken limit buy, BTC/USDC, 2 partial fills same order @ limit $83,313.00 — 0.00593898 BTC ($494.79424 + $1.08855 fee, Trade ID TUOIMD-6RAEX-23RRLS) + 0.000065 BTC ($5.41535 + $0.01191 fee, Trade ID TACT4L-K3LHJ-IBP3SR), combined qty 0.00600398 BTC, cost $500.20959 + $1.10046 fee, executed Sep 27 2026 10:13pm; Order ID OEMVPN-GGR5J-4QWJSN; reported directly by Keith via screenshot' },
   ],
-  totalFeesPaid: 113.76, // sum of all buys[].fee — reconciled 2026-08-24 against full Kraken order history (3 screenshots), + $1.815 Aug 26 fee + $1.815 x2 + $1.65 Aug 28/30 fees + $1.65 Sep 1 fee + $1.65 Sep 2 fee + $1.65 Sep 4 fee + $1.65 x2 Sep 7 fees + $1.815 Sep 9 fee + $1.815 + $1.65 Sep 10 fees + $1.65001 Sep 11 fee (corrected 2026-09-14 to include a 3rd missed partial fill) + $1.81486 Sep 12 fee + $1.815 Sep 14 fee + $1.815 + $1.80588 + $1.815 Sep 15 fees (3 fills) + $1.815 Sep 16 fee + ~$1.80 Sep 17 fee (estimated) + $1.815 x3 Sep 23 fees + $1.80644 Sep 24 fee + $1.80962 Sep 25 fee. Now rolled into deployed/dcaDeployed/trancheDeployed above (kept here as a reference breakdown, not an additional add-on).
+  totalFeesPaid: 116.68, // sum of all buys[].fee — reconciled 2026-08-24 against full Kraken order history (3 screenshots), + $1.815 Aug 26 fee + $1.815 x2 + $1.65 Aug 28/30 fees + $1.65 Sep 1 fee + $1.65 Sep 2 fee + $1.65 Sep 4 fee + $1.65 x2 Sep 7 fees + $1.815 Sep 9 fee + $1.815 + $1.65 Sep 10 fees + $1.65001 Sep 11 fee (corrected 2026-09-14 to include a 3rd missed partial fill) + $1.81486 Sep 12 fee + $1.815 Sep 14 fee + $1.815 + $1.80588 + $1.815 Sep 15 fees (3 fills) + $1.815 Sep 16 fee + ~$1.80 Sep 17 fee (estimated) + $1.815 x3 Sep 23 fees + $1.80644 Sep 24 fee + $1.80962 Sep 25 fee + $1.815 Sep 27 fee + $1.10046 Sep 27 fee (2 partials). Now rolled into deployed/dcaDeployed/trancheDeployed above (kept here as a reference breakdown, not an additional add-on).
   tranches: [
     { price: 63201, label: 'T1', size:  8000, filled: true,  note: 'Filled Jun 3 @ $63,201' },
     { price: 59800, label: 'T2', size:  3000, filled: true,  note: 'Filled Jun 5 @ $59,800' },
@@ -943,8 +945,8 @@ const PLAN = {
 const GRAYSCALE_ETF = {
   ticker: 'BTC',
   name: 'Grayscale Bitcoin Mini Trust',
-  lastPrice: 37.03,   // Refreshed 2026-09-25: Sep 25 Fidelity auto-invest fill price ($37.03); supersedes $37.29/2026-09-24.
-  asOf: '2026-09-25',
+  lastPrice: 37.11,   // Refreshed 2026-09-28: Sep 28 Fidelity auto-invest fill price ($37.11); supersedes $37.03/2026-09-25.
+  asOf: '2026-09-28',
   // currentValue / gainLoss / gainLossPct are NOT stored here — they're derived live
   // from lastPrice in the render function below, so P&L updates automatically every
   // time lastPrice is refreshed. Only qty / avgCost / costBasisTotal are fixed inputs.
@@ -974,7 +976,8 @@ const GRAYSCALE_ETF = {
     { acquired: '2026-09-22', term: 'Short', qty: 6.918, avgCost: 38.31, costBasisTotal: 264.99, note: 'Tuesday $265 auto-invest DCA fill, executed as 2 partial fills (6.000 sh @ $38.31 = $229.83 + 0.918 sh @ $38.31 = $35.16); settlement Sep-23-2026; confirmed via Fidelity screenshot' },
     { acquired: '2026-09-23', term: 'Short', qty: 7.107, avgCost: 37.29, costBasisTotal: 264.99, note: 'Wednesday $265 auto-invest DCA fill, executed as 2 partial fills (7.000 sh @ $37.29 = $261.00 + 0.107 sh @ $37.29 = $3.99); settlement Sep-24-2026; confirmed via Fidelity screenshot' },
     { acquired: '2026-09-24', term: 'Short', qty: 7.120, avgCost: 37.22, costBasisTotal: 264.98, note: 'Thursday $265 auto-invest DCA fill, executed as 2 partial fills (7.000 sh @ $37.22 = $260.51 + 0.120 sh @ $37.22 = $4.47); settlement Sep-25-2026; confirmed via Fidelity screenshot' },
-    { acquired: '2026-09-25', term: 'Short', qty: 7.157, avgCost: 37.03, costBasisTotal: 264.99, note: 'Friday $265 auto-invest DCA fill, executed as 2 partial fills (7.000 sh @ $37.03 = $259.18 + 0.157 sh @ $37.03 = $5.81); settlement Sep-28-2026; Processing — confirmed via Fidelity screenshot' },
+    { acquired: '2026-09-25', term: 'Short', qty: 7.157, avgCost: 37.03, costBasisTotal: 264.99, note: 'Friday $265 auto-invest DCA fill, executed as 2 partial fills (7.000 sh @ $37.03 = $259.18 + 0.157 sh @ $37.03 = $5.81); settlement Sep-28-2026; confirmed via Fidelity screenshot' },
+    { acquired: '2026-09-28', term: 'Short', qty: 7.140, avgCost: 37.11, costBasisTotal: 264.97, note: 'Monday $265 auto-invest DCA fill, executed as 2 partial fills (7.000 sh @ $37.11 = $259.77 + 0.140 sh @ $37.12 = $5.20); settlement Sep-29-2026; confirmed via Fidelity screenshot' },
   ],
   // ===== 2026-08-24 full re-do — CONFIRMED LIVE at Fidelity =====
   // Replaced the entire legacy 4-order ladder ($24.31/$22.10/$19.89/$14.60) with this
