@@ -958,7 +958,7 @@ const PLAN = {
 const GRAYSCALE_ETF = {
   ticker: 'BTC',
   name: 'Grayscale Bitcoin Mini Trust',
-  lastPrice: 36.76,  // Refreshed 2026-10-07: Oct 7 manual limit fill price on market pullback; supersedes 37.82/2026-10-06.
+  lastPrice: 36.73,  // Refreshed 2026-10-07: Oct 7 auto-invest DCA fill @ $36.7277 (1:52 PM, most recent fill); manual limit was $36.76 (1:35 PM).
   asOf: '2026-10-07',
   // currentValue / gainLoss / gainLossPct are NOT stored here — they're derived live
   // from lastPrice in the render function below, so P&L updates automatically every
@@ -998,6 +998,7 @@ const GRAYSCALE_ETF = {
     { acquired: '2026-10-05', term: 'Short', qty: 7.028, avgCost: 37.71, costBasisTotal: 265.00, note: 'Monday $265 auto-invest DCA fill, executed as 2 partial fills (7.000 sh @ $37.71 = $263.94 + 0.028 sh @ $37.71 = $1.06); settlement Oct-06-2026; confirmed via Fidelity transaction detail screenshot' },
     { acquired: '2026-10-06', term: 'Short', qty: 7.007, avgCost: 37.82, costBasisTotal: 264.97, note: 'Tuesday $265 auto-invest DCA fill, executed as 2 partial fills (7.000 sh @ $37.82 = $264.71 + 0.007 sh @ $37.82 = $0.26); settlement Oct-07-2026; order #1DJ13YHC, 01:49:30 PM ET; confirmed via Fidelity transaction detail screenshot' },
     { acquired: '2026-10-07', term: 'Short', qty: 20,    avgCost: 36.76, costBasisTotal: 735.20, note: 'Manual limit buy, Buy 20 Shares of BTC Limit at $36.76 (Good \'til Canceled), filled 20 sh @ $36.76 = $735.20, executed Oct-07-2026 01:35:15 PM ET; order date 01:34:44 PM ET; order #2E01FJ72; opportunistic dip buy on Oct 7 pullback — same drop that filled the Kraken $83,455 and $83,609 reserve orders; confirmed via Fidelity transaction detail screenshot' },
+    { acquired: '2026-10-07', term: 'Short', qty: 7.215, avgCost: 36.72770894, costBasisTotal: 264.99, note: 'Wednesday $265 auto-invest DCA fill, Buy $265.00 of BTC at Market (Day), filled at $36.72770894 as 2 partial fills (7.000 sh @ $36.7277 = $257.09 + 0.215 sh @ $36.728 = $7.90); executed Oct-07-2026 01:52:32 PM ET; order #1E014QHN; confirmed via Fidelity transaction detail screenshot' },
   ],
   // ===== 2026-08-24 full re-do — CONFIRMED LIVE at Fidelity =====
   // Replaced the entire legacy 4-order ladder ($24.31/$22.10/$19.89/$14.60) with this
