@@ -852,8 +852,8 @@ const PLAN = {
   confirmationReserve: 0,     // $20K fully deployed: $5,011 Oct 5 @ $85,750 + ~$10,034 Oct 7 @ $83,455/$83,609 + $5,027 Oct 7 @ $83,399. Reserve deployment complete — Big3 3/3 triggered Sep 28. Not in dcaBudget/trancheBudget. Deployment trigger per Keith 2026-09-10: either Big3 hits 3/3, OR spot drops below $55,000 (whichever comes first).
   dcaTargetCompletionDate: '2026-11-01', // dcaZones[0]/dcaWeekly below sized to fully deploy remaining DCA budget by this date
   totalBudget:    130000,
-  deployed:        79673.00, // total deployed through Oct 7 2026, fee-inclusive (trade cost + ~$169.64 in fees; Oct 7 DCA fee ~$1.82 estimated, all reserve fees confirmed via trade ledger)
-  dcaDeployed:     39132.81, // DCA only, fee-inclusive: Jun 5 $750 + Jun 16–Oct 7 DCA buys + fees
+  deployed:        81006.82, // total deployed through Oct 8 2026, fee-inclusive (trade cost + ~$172.30 in fees)
+  dcaDeployed:     40466.63, // DCA only, fee-inclusive: Jun 5 $750 + Jun 16–Oct 8 DCA buys + fees
   trancheDeployed: 38111.95, // tranche fills + full $20K confirmation reserve, fee-inclusive: Jun 2 $2K + Jun 3 $8K + Jun 5 $3K + Jun 25 $4K + Jun 25 $1K + Oct 5/7 $20K reserve + fees
   dcaBudget:       72000,   // allocated to weekly DCA (remaining ~$34,521, targeted to fully deploy by dcaTargetCompletionDate)
   trancheBudget:   38000,   // allocated to limit-order tranches (remaining ~$14,948 across open rungs)
@@ -867,8 +867,8 @@ const PLAN = {
     { minPrice: 0,     label: 'Lump Sum',   color: '#22c55e', amount: null, perBuy: 'Lump sum',   action: 'HALT weekly DCA — redeploy remaining DCA budget as T7 tranche if Big 3 confirmed', big3Req: 2 },
   ],
   doubleDropPct:     0.09,
-  btcQty:       1.05256077, // total BTC acquired — updated Oct 7 2026 (+0.06015038 BTC @ $83,399 final reserve tranche; $20K confirmation reserve fully deployed)
-  avgPrice:    73226.00,   // weighted avg cost basis, fee-EXCLUSIVE (pure price×qty / qty) — reverted 2026-08-24 per Keith's request to keep this separate from fees; Total Deployed/dcaDeployed/trancheDeployed still include fees, avgPrice/BTC P&L math does not. Fees shown separately via totalFeesPaid.
+  btcQty:       1.06865966, // total BTC acquired — updated Oct 8 2026 (+0.0100221 BTC @ $82,932.23 + 0.00607679 BTC @ $82,280.29)
+  avgPrice:    73369.00,   // weighted avg cost basis, fee-EXCLUSIVE (pure price×qty / qty) — reverted 2026-08-24 per Keith's request to keep this separate from fees; Total Deployed/dcaDeployed/trancheDeployed still include fees, avgPrice/BTC P&L math does not. Fees shown separately via totalFeesPaid.
   buys: [
     { date: '2026-06-02', price: 67358,   qty: 0.02969,    fee: 5.00,  label: 'Tranche $2K', type: 'tranche', signal: 'STRONG_ACCUM', big3: 1, bottomConf: 3 },
     { date: '2026-06-03', price: 63201,   qty: 0.12658,    fee: 20.00, label: 'T1 $8K',      type: 'tranche', signal: 'WATCH',        big3: 0, bottomConf: 1, note: 'Kraken filled as 8 partial fills on the same order; fee is the sum of all 8 ($12.2707+4.0206+0.0378+0.0277+0.0236+0.0173+0.0148+3.5871)' },
@@ -936,9 +936,11 @@ const PLAN = {
     { date: '2026-10-07', price: 84013.00, qty: 0.00981990, fee: 1.82,   label: 'DCA $825', type: 'dca', signal: 'CONFIRMED', big3: 3, bottomConf: 3, note: 'Kraken limit buy, BTC/USDC, 0.00981990 BTC @ limit $84,013.00, cost $825.00 + ~$1.82 fee (0.22% maker rate estimated — Terms view only, no Trades tab); Order ID OHFPZG-DIP7V-W6QBJ3; filled on market pullback Oct 7 2026; reported directly by Keith via screenshot' },
     { date: '2026-10-07', price: 83455.00, qty: 0.02999580, fee: 5.0066, label: 'Reserve ~$2.5K', type: 'tranche', signal: 'CONFIRMED', big3: 3, bottomConf: 3, note: 'Kraken limit buy, BTC/USDC, 0.02999580 BTC @ limit $83,455.00, cost $2,503.29949 + $5.0066 fee; executed Oct 7 2026 4:40 PM; Order ID OOOUY7-N6QOO-5XTTNQ; filled as 3 partial trades: 0.00031455 BTC cost $26.25077 fee $0.0525 (Trade TEHKLZ-HYQEG-DXGNRN) + 0.028 BTC cost $2,336.74 fee $4.67348 (Trade TOPZYB-4EZFF-P54BGH) + 0.00168125 BTC cost $140.30872 fee $0.28062 (Trade T4APE5-6XFAK-JBUAJN); confirmation reserve tranche, Big3 3/3 — deployed on market pullback; confirmed via Kraken trade ledger screenshots' },
     { date: '2026-10-07', price: 83609.00, qty: 0.08980637, fee: 16.51897, label: 'Reserve ~$7.5K', type: 'tranche', signal: 'CONFIRMED', big3: 3, bottomConf: 3, note: 'Kraken limit buy, BTC/USDC, 0.08980637 BTC @ limit $83,609.00, cost $7,508.62079 + $16.51897 fee; executed Oct 7 2026 10:07 AM; Order ID O7MGNE-RHXPT-G4HZMP; Trade ID TH6PUV-SIN5Y-WBWY23; confirmation reserve tranche, Big3 3/3 — deployed on market pullback; confirmed via Kraken trade ledger screenshot' },
+    { date: '2026-10-08', price: 82932.23, qty: 0.0100221,  fee: 1.66231, label: 'DCA $831', type: 'dca', signal: 'CONFIRMED', big3: 3, bottomConf: 3, note: 'Kraken limit buy, BTC/USDC, 0.0100221 BTC @ limit $82,932.23, cost $831.1551 + $1.66231 fee; executed Oct 8 2026 2:11 AM; Trade ID TGYQ64-HXXM7-6HHCLR, Order ID OTJSTN-FGBMU-X23VWF; confirmed via Kraken trade ledger screenshot' },
+    { date: '2026-10-08', price: 82280.29, qty: 0.00607679, fee: 1.00,    label: 'DCA $500', type: 'dca', signal: 'CONFIRMED', big3: 3, bottomConf: 3, note: 'Kraken limit buy, BTC/USDC, 0.00607679 BTC @ limit $82,280.29, cost $500.00004 + $1.00 fee (maker flat fee); executed Oct 8 2026 12:06 PM; Trade ID TYPA57-4556S-OK347I, Order ID OPXTA7-KUXEF-2XSLFP; confirmed via Kraken trade ledger screenshot' },
     { date: '2026-10-07', price: 83399.00, qty: 0.06015038, fee: 10.03296, label: 'Reserve ~$5K (final)', type: 'tranche', signal: 'CONFIRMED', big3: 3, bottomConf: 3, note: 'Kraken limit buy, BTC/USDC, 0.06015038 BTC @ limit $83,399.00, cost $5,016.48154 + $10.03296 fee; executed Oct 7 2026 6:58 PM; Order ID ONWFJP-SK44J-O5AFLD; filled as 3 partial trades: 0.05692736 BTC cost $4,747.6849 fee $9.49537 (Trade THJDUV-PFII2-33PPUX) + 0.00299772 BTC cost $250.00685 fee $0.50001 (Trade TZ3SG3-BZJQI-DM6ZEY) + 0.0002253 BTC cost $18.78979 fee $0.03758 (Trade TT43QJ-DUN6H-MPVONJ); FINAL $20K confirmation reserve tranche — reserve fully deployed; confirmed via Kraken trade ledger screenshots' },
   ],
-  totalFeesPaid: 169.64, // updated Oct 7 2026: +$10.03296 Oct 7 final reserve $83,399 (confirmed). Oct 7 DCA fee ~$1.82 still estimated. Prior total $159.61 through prior Oct 7 fills.
+  totalFeesPaid: 172.30, // updated Oct 8 2026: +$1.66231 Oct 8 DCA $831 + $1.00 Oct 8 DCA $500. Prior total $169.64 through Oct 7.
   tranches: [
     { price: 63201, label: 'T1', size:  8000, filled: true,  note: 'Filled Jun 3 @ $63,201' },
     { price: 59800, label: 'T2', size:  3000, filled: true,  note: 'Filled Jun 5 @ $59,800' },
@@ -1045,8 +1047,8 @@ const GRAYSCALE_ETF = {
 const MSTR_STOCK = {
   ticker: 'MSTR',
   name: 'Strategy Inc Common Stock Class A',
-  lastPrice: 154.05,   // seed value — overwritten live by fetchMSTRPrice() on load; last known fill price Oct 7 2026 ($154.05 / $155.25)
-  asOf: '2026-10-07',
+  lastPrice: 152.13,   // seed value — overwritten live by fetchMSTRPrice() on load; last known fill price Oct 8 2026 ($152.13)
+  asOf: '2026-10-08',
   positions: [
     { acquired: '2026-06-04', term: 'Short', qty: 15.692, avgCost: 127.4503, costBasisTotal: 1999.95 },
     { acquired: '2026-06-17', term: 'Short', qty: 16.2,   avgCost: 123.4568, costBasisTotal: 2000.00,
@@ -1071,6 +1073,8 @@ const MSTR_STOCK = {
     { acquired: '2026-10-02', term: 'Short', qty: 4,      avgCost: 160.10,   costBasisTotal: 640.40, note: 'Buy 4 Shares of MSTR at Market (Day), filled at $160.10, 11:16:53am ET; order #2DF0ZYH3; reported directly by Keith via Fidelity screenshot' },
     { acquired: '2026-10-07', term: 'Short', qty: 3,      avgCost: 154.05,   costBasisTotal: 462.15, note: 'Buy 3 Shares of MSTR Limit at $154.05 (Good \'til Canceled), filled as 2 partial executions (1 sh + 2 sh) at $154.05 = $462.15, executed Oct-07-2026 11:07:40 AM ET; order date 10:44:07 AM ET; order #2E00VDSZ; Personal TOD acct *****8817; filled on market pullback; reported directly by Keith via Fidelity screenshot' },
     { acquired: '2026-10-07', term: 'Short', qty: 2,      avgCost: 155.25,   costBasisTotal: 310.50, note: 'Buy 2 Shares of MSTR Limit at $155.25 (Good \'til Canceled), filled at $155.25 = $310.50, executed Oct-07-2026 11:44:43 AM ET; order date 11:42:04 AM ET; order #2E00XYKX; Personal TOD acct *****8817; filled on market pullback; reported directly by Keith via Fidelity screenshot' },
+    { acquired: '2026-10-07', term: 'Short', qty: 5,      avgCost: 152.61,   costBasisTotal: 763.05, note: 'Buy 5 Shares of MSTR at Market (Day), filled at $152.61 = $763.05, executed Oct-07-2026 03:51:29 PM ET; order #2E01TLPQ; $0.10 price improvement; building MSTR position — target $450-$650 cycle top; confirmed via Fidelity transaction detail screenshot' },
+    { acquired: '2026-10-08', term: 'Short', qty: 3,      avgCost: 152.13,   costBasisTotal: 456.39, note: 'Buy 3 Shares of MSTR Limit at $152.13 (Good \'til Canceled), filled at $152.13 = $456.39, executed Oct-08-2026 10:43:31 AM ET; order date 10:42:42 AM ET; order #2E10LVDN; Personal TOD acct *****8817; confirmed via Fidelity transaction detail screenshot' },
   ],
   pending: [
     { date: '2026-08-25', qty: 4, limitPrice: 119.13, tif: 'GTC', note: 'Buy 4 Shares of MSTR Limit at $119.13 (Good \'til Canceled); reported directly by Keith via Fidelity screenshot' },
