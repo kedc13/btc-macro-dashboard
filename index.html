@@ -982,8 +982,8 @@ const PLAN = {
 const GRAYSCALE_ETF = {
   ticker: 'BTC',
   name: 'Grayscale Bitcoin Mini Trust',
-  lastPrice: 36.02,  // Refreshed 2026-10-14: Oct 14 Wednesday auto-invest fill @ $36.02024198.
-  asOf: '2026-10-14',
+  lastPrice: 36.47,  // Refreshed 2026-10-15: implied from Fidelity market value $29,949.20 / 821.201 shares = $36.47; confirmed via Fidelity position screenshot.
+  asOf: '2026-10-15',
   // currentValue / gainLoss / gainLossPct are NOT stored here — they're derived live
   // from lastPrice in the render function below, so P&L updates automatically every
   // time lastPrice is refreshed. Only qty / avgCost / costBasisTotal are fixed inputs.
@@ -1074,7 +1074,7 @@ const GRAYSCALE_ETF = {
 const MSTR_STOCK = {
   ticker: 'MSTR',
   name: 'Strategy Inc Common Stock Class A',
-  lastPrice: 144.75,   // seed value — overwritten live by fetchMSTRPrice() on load; last known fill price Oct 15 2026 ($147.22)
+  lastPrice: 150.22,   // seed value — overwritten live by fetchMSTRPrice() on load; implied from Fidelity market value $25,690.94 / 171.021 shares = $150.22 as of Oct 15 2026
   asOf: '2026-10-15',
   positions: [
     { acquired: '2026-06-04', term: 'Short', qty: 15.692, avgCost: 127.4503, costBasisTotal: 1999.95 },
