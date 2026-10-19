@@ -860,6 +860,12 @@ const PLAN = {
   offTableAmount: 20000,
   confirmationReserve: 0,     // $20K fully deployed: $5,011 Oct 5 @ $85,750 + ~$10,034 Oct 7 @ $83,455/$83,609 + $5,027 Oct 7 @ $83,399. Reserve deployment complete — Big3 3/3 triggered Sep 28. Not in dcaBudget/trancheBudget. Deployment trigger per Keith 2026-09-10: either Big3 hits 3/3, OR spot drops below $55,000 (whichever comes first).
   dcaTargetCompletionDate: '2027-01-01', // extended from 2026-11-01 per Keith 2026-10-12 — playing market as it comes, comfortable with remaining dry powder, no pressure to force deployment
+  // ADAPTIVE TRANCHE STRATEGY (confirmed 2026-10-19): If price does not pull back to lower tranche levels,
+  // deep orders will be cancelled in priority order to free capital for continued DCA accumulation.
+  // Cancel priority (deepest/least likely first): T5c ($65,201) → T5b ($68,498) → T-71.1K ($71,113).
+  // Keep T4a ($79,511) and T4b ($73,498) as long as possible — both realistic within $76-86K range thesis.
+  // Rationale: accumulating more BTC at market via DCA beats holding dry powder indefinitely for fills
+  // that may never come post-K/D-cross. Capital recycled from cancelled tranches flows directly into DCA.
   totalBudget:    130000,
   deployed:        96455.99, // total deployed through Oct 19 2026, fee-inclusive (trade cost + ~$205.77 in fees)
   dcaDeployed:     55915.80, // DCA only, fee-inclusive: Jun 5 $750 + Jun 16–Oct 19 DCA buys + fees
