@@ -4303,9 +4303,9 @@ function renderPlan() {
     const mstrPnlPct     = mstrCostBasis ? (mstrPnl / mstrCostBasis * 100) : 0;
 
     const rows = [
-      { name: 'Spot BTC (DCA + Tranches)', sub: 'Kraken', deployed: btcDeployed, value: btcValue, pnl: btcPnl, pnlPct: btcPnlPct, color: '#f7931a' },
-      { name: 'Grayscale BTC Mini Trust',  sub: GRAYSCALE_ETF.ticker + ' · Fidelity SEP-IRA', deployed: gsCostBasis, value: gsValue, pnl: gsPnl, pnlPct: gsPnlPct, color: '#3b82f6' },
-      { name: 'Strategy Inc (MSTR)',       sub: MSTR_STOCK.ticker + ' · Fidelity', deployed: mstrCostBasis, value: mstrValue, pnl: mstrPnl, pnlPct: mstrPnlPct, color: '#a855f7' },
+      { name: 'Spot BTC (DCA + Tranches)', sub: 'Kraken', deployed: btcDeployed, value: btcValue, pnl: btcPnl, pnlPct: btcPnlPct, color: '#f7931a', qty: btcQty.toFixed(8) + ' BTC' },
+      { name: 'Grayscale BTC Mini Trust',  sub: GRAYSCALE_ETF.ticker + ' · Fidelity SEP-IRA', deployed: gsCostBasis, value: gsValue, pnl: gsPnl, pnlPct: gsPnlPct, color: '#3b82f6', qty: gsQty.toFixed(3) + ' sh' },
+      { name: 'Strategy Inc (MSTR)',       sub: MSTR_STOCK.ticker + ' · Fidelity', deployed: mstrCostBasis, value: mstrValue, pnl: mstrPnl, pnlPct: mstrPnlPct, color: '#a855f7', qty: mstrQty.toFixed(3) + ' sh' },
     ];
 
     const totalDeployed = rows.reduce((s,r) => s + r.deployed, 0);
@@ -4320,6 +4320,7 @@ function renderPlan() {
       const sign = r.pnl >= 0 ? '+' : '';
       return `<tr style="border-bottom:1px solid #161616">
         <td style="padding:8px;color:#e5e5e5;font-weight:700"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${r.color};margin-right:7px"></span>${r.name}<div style="font-size:10px;color:#666;font-weight:400;margin-left:15px">${r.sub}</div></td>
+        <td style="padding:8px;text-align:right;color:#aaa;font-variant-numeric:tabular-nums;font-size:11px">${r.qty}</td>
         <td style="padding:8px;text-align:right;color:#bbb;font-variant-numeric:tabular-nums">$${r.deployed.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
         <td style="padding:8px;text-align:right;color:#e5e5e5;font-variant-numeric:tabular-nums">$${r.value.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
         <td style="padding:8px;text-align:right;font-weight:700;color:${rc};font-variant-numeric:tabular-nums">${sign}$${Math.abs(r.pnl).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
@@ -4339,6 +4340,7 @@ function renderPlan() {
       <thead>
         <tr style="color:#666;font-size:10px;text-transform:uppercase;letter-spacing:.06em">
           <th style="text-align:left;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Account</th>
+          <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Holdings</th>
           <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Deployed</th>
           <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Current Value</th>
           <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">$ Gain/Loss</th>
