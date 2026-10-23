@@ -1103,8 +1103,8 @@ const GRAYSCALE_ETF = {
 const MSTR_STOCK = {
   ticker: 'MSTR',
   name: 'Strategy Inc Common Stock Class A',
-  lastPrice: 144.10,   // seed value — overwritten live by fetchMSTRPrice() on load; Oct-22-2026 GTC fill $144.10; prior fill $138.31 Oct-19-2026
-  asOf: '2026-10-22',
+  lastPrice: 144.31,   // seed value — overwritten live by fetchMSTRPrice() on load; Oct-23-2026 GTC fill $144.31; prior fill $144.10 Oct-22-2026
+  asOf: '2026-10-23',
   positions: [
     { acquired: '2026-06-04', term: 'Short', qty: 15.692, avgCost: 127.4503, costBasisTotal: 1999.95 },
     { acquired: '2026-06-17', term: 'Short', qty: 16.2,   avgCost: 123.4568, costBasisTotal: 2000.00,
@@ -1142,6 +1142,7 @@ const MSTR_STOCK = {
     { acquired: '2026-10-16', term: 'Short', qty: 5,      avgCost: 135.65,   costBasisTotal: 678.25,  note: 'Buy 5 Shares of MSTR Limit at $135.65 (GTC) = $678.25; executed Oct-16-2026 02:43:34 PM ET; order #2E91S8NH; GTC limit triggered on continued MSCI scare / afternoon dip; confirmed via Fidelity transaction detail screenshot' },
     { acquired: '2026-10-19', term: 'Short', qty: 4,      avgCost: 138.31,   costBasisTotal: 553.24,  note: 'Buy 4 Shares of MSTR Limit at $138.31 (GTC) = $553.24; executed Oct-19-2026; settled Oct-20-2026; GTC order placed Oct-19-2026, filled same day; confirmed via Fidelity transaction detail screenshot' },
     { acquired: '2026-10-22', term: 'Short', qty: 3,      avgCost: 144.10,   costBasisTotal: 432.30,  note: 'Buy 3 Shares of MSTR Limit at $144.10 (GTC) = $432.30; executed Oct-22-2026 02:01:24 PM ET; order #2EF1PWWF; placed and filled same day (order date 01:04:38 PM ET); confirmed via Fidelity transaction detail screenshot' },
+    { acquired: '2026-10-23', term: 'Short', qty: 4,      avgCost: 144.31,   costBasisTotal: 577.24,  note: 'Buy 4 Shares of MSTR Limit at $145.65 (GTC) = $577.24; filled at $144.31 (better than limit); executed Oct-23-2026 09:30:01 AM ET; order #2EG02105; Personal - TOD account; confirmed via Fidelity transaction detail screenshot' },
   ],
   pending: [
     { date: '2026-10-16', qty: 10, limitPrice: 114.65, tif: 'GTC', note: 'Buy 10 Shares of MSTR Limit at $114.65 (GTC); Open — confirmed via Fidelity orders screenshot Oct-19-2026' },
