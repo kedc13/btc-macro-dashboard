@@ -882,7 +882,7 @@ const PLAN = {
   dcaDouble:        3000,   // aggressive: 3 × $1,000/wk on big drops
   dcaStartDate: '2026-06-09',
   dcaZones: [
-    { minPrice: 53697, label: 'Standard',   color: '#777', amount: 825, perBuy: '$825/buy', action: 'Elevated cadence through ~Nov 1 2026 target — 7× per week / daily (switched from 3×/wk 2026-08-26 to average out entries better)', big3Req: 0 },
+    { minPrice: 53697, label: 'Standard',   color: '#777', amount: 500, perBuy: '$500/buy', action: 'REDUCED from $825 → $500/buy on 2026-10-26 — preserving remaining ~$10K DCA budget over ~20 days to capture anticipated Nov weakness (MVRV 0.92, F&G rolling over 68→54, price grinding lower $83K→$80K); tranches T-76.5K/T4a/T4b cover $73-76K zone automatically', big3Req: 0 },
     { minPrice: 47000, label: 'Aggressive', color: '#f97316', amount: 1000, perBuy: '$1K/buy',    action: 'T4–T5 zone — double up, keep limit orders set',                          big3Req: 0 },
     { minPrice: 41000, label: 'Heavy',      color: '#ef4444', amount: 1500, perBuy: '$1,500/buy', action: 'T6 zone — increase cadence, flag remaining DCA budget for lump sum',     big3Req: 1 },
     { minPrice: 0,     label: 'Lump Sum',   color: '#22c55e', amount: null, perBuy: 'Lump sum',   action: 'HALT weekly DCA — redeploy remaining DCA budget as T7 tranche if Big 3 confirmed', big3Req: 2 },
@@ -1114,8 +1114,8 @@ const GRAYSCALE_ETF = {
 const MSTR_STOCK = {
   ticker: 'MSTR',
   name: 'Strategy Inc Common Stock Class A',
-  lastPrice: 146.27,   // seed value — overwritten live by fetchMSTRPrice() on load; Oct-23-2026 market fill $146.27; prior fill $144.31 Oct-23-2026
-  asOf: '2026-10-23',
+  lastPrice: 143.17,   // seed value — overwritten live by fetchMSTRPrice() on load; Oct-26-2026 fill $143.17; prior fill $146.27 Oct-23-2026
+  asOf: '2026-10-26',
   positions: [
     { acquired: '2026-06-04', term: 'Short', qty: 15.692, avgCost: 127.4503, costBasisTotal: 1999.95 },
     { acquired: '2026-06-17', term: 'Short', qty: 16.2,   avgCost: 123.4568, costBasisTotal: 2000.00,
@@ -1155,12 +1155,14 @@ const MSTR_STOCK = {
     { acquired: '2026-10-22', term: 'Short', qty: 3,      avgCost: 144.10,   costBasisTotal: 432.30,  note: 'Buy 3 Shares of MSTR Limit at $144.10 (GTC) = $432.30; executed Oct-22-2026 02:01:24 PM ET; order #2EF1PWWF; placed and filled same day (order date 01:04:38 PM ET); confirmed via Fidelity transaction detail screenshot' },
     { acquired: '2026-10-23', term: 'Short', qty: 4,      avgCost: 144.31,   costBasisTotal: 577.24,  note: 'Buy 4 Shares of MSTR Limit at $145.65 (GTC) = $577.24; filled at $144.31 (better than limit); executed Oct-23-2026 09:30:01 AM ET; order #2EG02105; Personal - TOD account; confirmed via Fidelity transaction detail screenshot' },
     { acquired: '2026-10-23', term: 'Short', qty: 4,      avgCost: 146.27,   costBasisTotal: 585.08,  note: 'Buy 4 Shares of MSTR at Market (Day) = $585.08; filled at $146.27; executed Oct-23-2026 03:43:38 PM ET; order #2EG1RHT3; Personal - TOD account; confirmed via Fidelity transaction detail screenshot' },
+    { acquired: '2026-10-26', term: 'Short', qty: 2,      avgCost: 143.17,   costBasisTotal: 286.34,  note: 'Buy 2 Shares of MSTR Limit at $143.17 (GTC) = $286.34; filled at $143.17 in 2 partial executions (1 sh @ $143.17 × 2, both 11:50:27 AM ET); order #2EJ10695; placed Oct-26-2026 11:26:14 AM ET; Personal - TOD account; confirmed via Fidelity transaction detail screenshot' },
   ],
   pending: [
-    { date: '2026-10-16', qty: 10, limitPrice: 114.65, tif: 'GTC', note: 'Buy 10 Shares of MSTR Limit at $114.65 (GTC); Open — confirmed via Fidelity orders screenshot Oct-19-2026' },
-    { date: '2026-10-16', qty: 15, limitPrice: 105.78, tif: 'GTC', note: 'Buy 15 Shares of MSTR Limit at $105.78 (GTC); Open — confirmed via Fidelity orders screenshot Oct-19-2026' },
-    { date: '2026-10-07', qty: 6,  limitPrice: 127.68, tif: 'GTC', note: 'Buy 6 Shares of MSTR Limit at $127.68 (Good \'til Canceled); Open — confirmed via Fidelity orders screenshot Oct 12 2026' },
-    { date: '2026-08-25', qty: 4,  limitPrice: 119.13, tif: 'GTC', note: 'Buy 4 Shares of MSTR Limit at $119.13 (Good \'til Canceled); Open — confirmed via Fidelity orders screenshot Oct 12 2026' },
+    { date: '2026-10-26', qty: 2,  limitPrice: 143.17, tif: 'GTC', filled: true, note: 'Buy 2 Shares of MSTR Limit at $143.17 (GTC) — FILLED Oct-26-2026 11:50:27 AM ET; order #2EJ10695' },
+    { date: '2026-10-16', qty: 10, limitPrice: 114.65, tif: 'GTC', note: 'Buy 10 Shares of MSTR Limit at $114.65 (GTC); Open — confirmed via Fidelity orders screenshot Oct-26-2026' },
+    { date: '2026-10-07', qty: 6,  limitPrice: 127.68, tif: 'GTC', note: 'Buy 6 Shares of MSTR Limit at $127.68 (Good \'til Canceled); Open — confirmed via Fidelity orders screenshot Oct-26-2026' },
+    { date: '2026-08-25', qty: 4,  limitPrice: 119.13, tif: 'GTC', note: 'Buy 4 Shares of MSTR Limit at $119.13 (Good \'til Canceled); Open — confirmed via Fidelity orders screenshot Oct-26-2026' },
+    { date: '2026-10-16', qty: 15, limitPrice: 105.78, tif: 'GTC', cancelled: true, note: 'Buy 15 Shares of MSTR Limit at $105.78 (GTC) — CANCELLED: not present in Fidelity orders screenshot Oct-26-2026; was open as of Oct-19-2026' },
   ]
 };
 
