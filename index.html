@@ -1097,6 +1097,8 @@ const GRAYSCALE_ETF = {
     { acquired: '2026-10-28', term: 'Short', qty: 4.207,  avgCost: 35.65024602, costBasisTotal: 149.98, note: 'Buy $150.00 of BTC at Market (Day); filled at $35.65024602 as 2 partial fills (4.000 sh @ $35.65 = $142.60 + 0.207 sh @ $35.655 = $7.38); net total 4.207 sh = $149.98; executed Oct-28-2026 01:48:50 PM ET; order #1F1121NV; SEP IRA; settlement Oct-29-2026; confirmed via Fidelity transaction detail screenshot' },
     { acquired: '2026-10-29', term: 'Short', qty: 4.205,  avgCost: 35.665, costBasisTotal: 149.97, note: 'Buy $150.00 of BTC at Market (Day); filled at $35.665 as 2 partial fills (4.000 sh @ $35.665 = $142.66 + 0.205 sh @ $35.665 = $7.31); net total 4.205 sh = $149.97; executed Oct-29-2026 01:48:33 PM ET; order #1F2178VC; SEP IRA; confirmed via Fidelity transaction detail screenshot' },
     { acquired: '2026-11-02', term: 'Short', qty: 4.416,  avgCost: 33.95998906, costBasisTotal: 149.97, note: 'Buy $150.00 of BTC at Market (Day); filled at $33.95998906 as 3 partial fills (4.000 sh @ $33.96 = $135.84 + 0.161 sh @ $33.9597 = $5.47 + 0.255 sh @ $33.96 = $8.66); net total 4.416 sh = $149.97; executed Nov-02-2026 02:12:03 PM ET; order #1F619FTZ; SEP IRA; confirmed via Fidelity transaction detail screenshot' },
+    { acquired: '2026-11-04', term: 'Short', qty: 4.222,  avgCost: 35.52,       costBasisTotal: 149.96, note: 'Daily auto-invest $150; filled as 2 partials (4.000 sh @ $35.52 = $142.08 + 0.222 sh @ $35.52 = $7.88); net total 4.222 sh = $149.96; settlement Nov-05-2026; SEP IRA; confirmed via Fidelity transaction history screenshot' },
+    { acquired: '2026-11-05', term: 'Short', qty: 5,      avgCost: 33.62,       costBasisTotal: 168.10, note: 'Buy 5 Shares of BTC at Market (Day) = $168.10; filled at $33.62 (5 sh @ $33.62) at 12:09:17 PM ET with $0.03 price improvement; order #2F92BRLX; placed Nov-05-2026 12:09:17 PM ET; SEP IRA; confirmed via Fidelity transaction detail screenshot' },
   ],
   // ===== 2026-08-24 full re-do — CONFIRMED LIVE at Fidelity =====
   // Replaced the entire legacy 4-order ladder ($24.31/$22.10/$19.89/$14.60) with this
@@ -1193,6 +1195,7 @@ const MSTR_STOCK = {
     { acquired: '2026-11-05', term: 'Short', qty: 5,      avgCost: 131.57,   costBasisTotal: 657.85,  note: 'Buy 5 Shares of MSTR Limit at $131.57 (GTC) = $657.85; filled at $131.57 in single fill (5 sh @ $131.57) at 10:05:51 AM ET; order #2F722753; placed Nov-03-2026 07:14:10 PM ET; Personal - TOD account; confirmed via Fidelity transaction detail screenshot' },
     { acquired: '2026-11-05', term: 'Short', qty: 5,      avgCost: 123.98,   costBasisTotal: 619.90,  note: 'Buy 5 Shares of MSTR Limit at $123.98 (GTC) = $619.90; filled at $123.98 in single fill (5 sh @ $123.98) at 10:52:55 AM ET; order #2F32WXY9; placed Oct-30-2026 03:43:53 PM ET (GTC, held 6 days); Personal - TOD account; confirmed via Fidelity transaction detail screenshot' },
     { acquired: '2026-11-05', term: 'Short', qty: 0.148,  avgCost: 129.705,  costBasisTotal: 19.20,   note: 'Buy $19.31 of MSTR at Market (Day) = $19.20; filled 0.148 sh @ $129.705 at 11:46:44 AM ET; order #2F91YCLL; placed Nov-05-2026 11:46:44 AM ET; used remaining $19.31 cash balance before closing other limit orders; Personal - TOD account; confirmed via Fidelity transaction detail screenshot' },
+    { acquired: '2026-11-05', term: 'Short', qty: 4,      avgCost: 127.125,  costBasisTotal: 508.50,  note: 'Buy 4 Shares of MSTR Limit at $127.41 (Day) = $508.50; filled at $127.125 (4 sh @ $127.125) at 12:05:44 PM ET with $0.18 price improvement; order #2F92BQ2N; placed Nov-05-2026 12:05:44 PM ET; Personal - TOD account; confirmed via Fidelity transaction detail screenshot' },
   ],
   pending: [
     { date: '2026-10-26', qty: 2,  limitPrice: 143.17, tif: 'GTC', filled: true, note: 'Buy 2 Shares of MSTR Limit at $143.17 (GTC) — FILLED Oct-26-2026 11:50:27 AM ET; order #2EJ10695' },
@@ -4357,10 +4360,13 @@ function renderPlan() {
     const mstrPnl        = mstrValue - mstrCostBasis;
     const mstrPnlPct     = mstrCostBasis ? (mstrPnl / mstrCostBasis * 100) : 0;
 
+    const gsAvgCost   = gsQty   ? gsCostBasis   / gsQty   : 0;
+    const mstrAvgCost = mstrQty ? mstrCostBasis / mstrQty : 0;
+
     const rows = [
-      { name: 'Spot BTC (DCA + Tranches)', sub: 'Kraken', deployed: btcDeployed, value: btcValue, pnl: btcPnl, pnlPct: btcPnlPct, color: '#f7931a', qty: btcQty.toFixed(8) + ' BTC' },
-      { name: 'Grayscale BTC Mini Trust',  sub: GRAYSCALE_ETF.ticker + ' · Fidelity SEP-IRA', deployed: gsCostBasis, value: gsValue, pnl: gsPnl, pnlPct: gsPnlPct, color: '#3b82f6', qty: gsQty.toFixed(3) + ' sh' },
-      { name: 'Strategy Inc (MSTR)',       sub: MSTR_STOCK.ticker + ' · Fidelity', deployed: mstrCostBasis, value: mstrValue, pnl: mstrPnl, pnlPct: mstrPnlPct, color: '#a855f7', qty: mstrQty.toFixed(3) + ' sh' },
+      { name: 'Spot BTC (DCA + Tranches)', sub: 'Kraken', deployed: btcDeployed, value: btcValue, pnl: btcPnl, pnlPct: btcPnlPct, color: '#f7931a', qty: btcQty.toFixed(8) + ' BTC', avgCostStr: '$' + (PLAN.avgPrice||0).toLocaleString() + '/BTC' },
+      { name: 'Grayscale BTC Mini Trust',  sub: GRAYSCALE_ETF.ticker + ' · Fidelity SEP-IRA', deployed: gsCostBasis, value: gsValue, pnl: gsPnl, pnlPct: gsPnlPct, color: '#3b82f6', qty: gsQty.toFixed(3) + ' sh', avgCostStr: '$' + gsAvgCost.toFixed(3) + '/sh' },
+      { name: 'Strategy Inc (MSTR)',       sub: MSTR_STOCK.ticker + ' · Fidelity', deployed: mstrCostBasis, value: mstrValue, pnl: mstrPnl, pnlPct: mstrPnlPct, color: '#a855f7', qty: mstrQty.toFixed(3) + ' sh', avgCostStr: '$' + mstrAvgCost.toFixed(2) + '/sh' },
     ];
 
     const totalDeployed = rows.reduce((s,r) => s + r.deployed, 0);
@@ -4376,6 +4382,7 @@ function renderPlan() {
       return `<tr style="border-bottom:1px solid #161616">
         <td style="padding:8px;color:#e5e5e5;font-weight:700"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${r.color};margin-right:7px"></span>${r.name}<div style="font-size:10px;color:#666;font-weight:400;margin-left:15px">${r.sub}</div></td>
         <td style="padding:8px;text-align:right;color:#aaa;font-variant-numeric:tabular-nums;font-size:11px">${r.qty}</td>
+        <td style="padding:8px;text-align:right;color:#888;font-variant-numeric:tabular-nums;font-size:11px">${r.avgCostStr}</td>
         <td style="padding:8px;text-align:right;color:#bbb;font-variant-numeric:tabular-nums">$${r.deployed.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
         <td style="padding:8px;text-align:right;color:#e5e5e5;font-variant-numeric:tabular-nums">$${r.value.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
         <td style="padding:8px;text-align:right;font-weight:700;color:${rc};font-variant-numeric:tabular-nums">${sign}$${Math.abs(r.pnl).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
@@ -4396,6 +4403,7 @@ function renderPlan() {
         <tr style="color:#666;font-size:10px;text-transform:uppercase;letter-spacing:.06em">
           <th style="text-align:left;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Account</th>
           <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Holdings</th>
+          <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Avg Cost</th>
           <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Deployed</th>
           <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Current Value</th>
           <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">$ Gain/Loss</th>
