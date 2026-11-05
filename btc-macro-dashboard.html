@@ -884,8 +884,8 @@ const PLAN = {
   // Rationale: accumulating more BTC at market via DCA beats holding dry powder indefinitely for fills
   // that may never come post-K/D-cross. Capital recycled from cancelled tranches flows directly into DCA.
   totalBudget:    130000,
-  deployed:        113188.82, // total deployed through Nov 05 2026, fee-inclusive (trade cost + ~$234.63 in fees)
-  dcaDeployed:     66638.13, // DCA only, fee-inclusive: Jun 5 $750 + Jun 16–Nov 05 DCA buys + fees
+  deployed:        113489.27, // total deployed through Nov 05 2026, fee-inclusive (trade cost + ~$235.08 in fees)
+  dcaDeployed:     66938.58, // DCA only, fee-inclusive: Jun 5 $750 + Jun 16–Nov 05 DCA buys + fees
   trancheDeployed: 44122.45, // tranche fills + full $20K confirmation reserve, fee-inclusive: Jun 2 $2K + Jun 3 $8K + Jun 5 $3K + Jun 25 $4K + Jun 25 $1K + Oct 5/7 $20K reserve + Oct 24 $3K (T-79.5K) + Oct 29 $3K (T-76.5K) + fees
   dcaBudget:       72000,   // allocated to weekly DCA (remaining ~$34,521, targeted to fully deploy by dcaTargetCompletionDate)
   trancheBudget:   38000,   // allocated to limit-order tranches (remaining ~$18,536 across open rungs T4a/T4b/T5a/T5b/T5c; T6 cancelled 2026-10-12; T5b+T5c resized up ~$2K each on 2026-10-15 reload)
@@ -899,7 +899,7 @@ const PLAN = {
     { minPrice: 0,     label: 'Lump Sum',   color: '#22c55e', amount: null, perBuy: 'Lump sum',   action: 'HALT weekly DCA — redeploy remaining DCA budget as T7 tranche if Big 3 confirmed', big3Req: 2 },
   ],
   doubleDropPct:     0.09,
-  btcQty:       1.46798403, // total BTC acquired — updated Nov 05 2026 (+0.01150963: 3 DCAs @ $79,867/$78,564.9/$76,241)
+  btcQty:       1.47193827, // total BTC acquired — updated Nov 05 2026 (+0.00395424 @ $75,868)
   avgPrice:    75290,      // weighted avg cost basis, fee-EXCLUSIVE (pure price×qty / qty) — reverted 2026-08-24 per Keith's request to keep this separate from fees; Total Deployed/dcaDeployed/trancheDeployed still include fees, avgPrice/BTC P&L math does not. Fees shown separately via totalFeesPaid.
   buys: [
     { date: '2026-06-02', price: 67358,   qty: 0.02969,    fee: 5.00,  label: 'Tranche $2K', type: 'tranche', signal: 'STRONG_ACCUM', big3: 1, bottomConf: 3 },
@@ -1014,8 +1014,9 @@ const PLAN = {
     { date: '2026-11-05', price: 79867.00,   qty: 0.00375625, fee: 0.60,    label: 'DCA $300', type: 'dca', signal: 'CONFIRMED', big3: 3, bottomConf: 3, note: 'Kraken limit buy, BTC/USDC, 0.00375625 BTC @ limit $79,867, cost $300.00042 + $0.60 fee (maker); Trade ID TNDYBC-AIPGA-QINIKF; Order ID OIWVPE-GLNIX-SBWRTA; executed Nov-05-2026 5:33 AM; confirmed via Kraken trade detail screenshot' },
     { date: '2026-11-05', price: 78564.90,   qty: 0.00381849, fee: 0.45,    label: 'DCA $300', type: 'dca', signal: 'CONFIRMED', big3: 3, bottomConf: 3, note: 'Kraken limit buy, BTC/USDC, 0.00381849 BTC @ limit $78,564.9, cost $299.99929 + $0.45 fee (maker); Trade ID TPINE6-R7RAB-O6S5I2; Order ID OPK5PU-R7GZC-SHGEYP; executed Nov-05-2026 7:51 AM; confirmed via Kraken trade detail screenshot' },
     { date: '2026-11-05', price: 76241.00,   qty: 0.00393489, fee: 0.45,    label: 'DCA $300', type: 'dca', signal: 'CONFIRMED', big3: 3, bottomConf: 3, note: 'Kraken limit buy, BTC/USDC, 0.00393489 BTC @ limit $76,241, cost $299.99995 + $0.45 fee (maker); Trade ID TZHFE5-75LXI-GNBI (truncated); Order ID O2WZJD-RNGDH-AALU5I; executed Nov-05-2026 8:26 AM; confirmed via Kraken trade detail screenshot' },
+    { date: '2026-11-05', price: 75868.00,   qty: 0.00395424, fee: 0.45,    label: 'DCA $300', type: 'dca', signal: 'CONFIRMED', big3: 3, bottomConf: 3, note: 'Kraken limit buy, BTC/USDC, 0.00395424 BTC @ limit $75,868, cost $300.00028 + $0.45 fee (maker); Trade ID TF4FAL-7U4MX-H5ZFCP; Order ID OWJF5K-6TQ5Q-SWKWLX; executed Nov-05-2026 3:33 PM; confirmed via Kraken trade detail screenshot' },
   ],
-  totalFeesPaid: 234.63, // updated Nov 05 2026: +$1.50 (3 DCAs: $0.60+$0.45+$0.45). Prior $233.13.
+  totalFeesPaid: 235.08, // updated Nov 05 2026: +$0.45 (DCA @ $75,868). Prior $234.63.
   tranches: [
     { price: 63201, label: 'T1', size:  8000, filled: true,  note: 'Filled Jun 3 @ $63,201' },
     { price: 59800, label: 'T2', size:  3000, filled: true,  note: 'Filled Jun 5 @ $59,800' },
