@@ -894,8 +894,8 @@ const PLAN = {
   // Rationale: accumulating more BTC at market via DCA beats holding dry powder indefinitely for fills
   // that may never come post-K/D-cross. Capital recycled from cancelled tranches flows directly into DCA.
   totalBudget:    130000,
-  deployed:        129520.08, // total deployed through Nov 14 2026, fee-inclusive (trade cost + ~$266.78 in fees)
-  dcaDeployed:     68440.39, // DCA only, fee-inclusive: Jun 5 $750 + Jun 16–Nov 13 DCA buys + fees
+  deployed:        129820.68, // total deployed through Nov 16 2026, fee-inclusive (trade cost + ~$267.38 in fees)
+  dcaDeployed:     68740.99, // DCA only, fee-inclusive: Jun 5 $750 + Jun 16–Nov 16 DCA buys + fees
   trancheDeployed: 58651.45, // tranche fills + full $20K confirmation reserve, fee-inclusive: Jun 2 $2K + Jun 3 $8K + Jun 5 $3K + Jun 25 $4K + Jun 25 $1K + Oct 5/7 $20K reserve + Oct 24 $3K (T-79.5K) + Oct 29 $3K (T-76.5K) + Nov 06 $3K (T4a) + Nov 08 $3K (T4b) + Nov 12 $2.5K (T-71.1K) + Nov 12 $1.5K (T5b partial @ $68,498) + Nov 14 $2.5K (T5c @ $65,201) + Nov 14 $2K (T-62.5K @ $62,581) + fees
   dcaBudget:       72000,   // allocated to weekly DCA (remaining ~$34,521, targeted to fully deploy by dcaTargetCompletionDate)
   trancheBudget:   38000,   // allocated to limit-order tranches (remaining ~$18,536 across open rungs T4a/T4b/T5a/T5b/T5c; T6 cancelled 2026-10-12; T5b+T5c resized up ~$2K each on 2026-10-15 reload)
@@ -909,8 +909,8 @@ const PLAN = {
     { minPrice: 0,     label: 'Lump Sum',   color: '#22c55e', amount: null, perBuy: 'Lump sum',   action: 'HALT weekly DCA — redeploy remaining DCA budget as T7 tranche if Big 3 confirmed', big3Req: 2 },
   ],
   doubleDropPct:     0.09,
-  btcQty:       1.70087851, // total BTC acquired — updated Nov 14 2026 (+0.03195858 T-62.5K @ $62,581)
-  avgPrice:    74562,      // weighted avg cost basis, fee-EXCLUSIVE (pure price×qty / qty) — reverted 2026-08-24 per Keith's request to keep this separate from fees; Total Deployed/dcaDeployed/trancheDeployed still include fees, avgPrice/BTC P&L math does not. Fees shown separately via totalFeesPaid.
+  btcQty:       1.70555046, // total BTC acquired — updated Nov 16 2026 (+0.00467195 DCA 2-partials @ $64,213)
+  avgPrice:    74534,      // weighted avg cost basis, fee-EXCLUSIVE (pure price×qty / qty) — reverted 2026-08-24 per Keith's request to keep this separate from fees; Total Deployed/dcaDeployed/trancheDeployed still include fees, avgPrice/BTC P&L math does not. Fees shown separately via totalFeesPaid.
   buys: [
     { date: '2026-06-02', price: 67358,   qty: 0.02969,    fee: 5.00,  label: 'Tranche $2K', type: 'tranche', signal: 'STRONG_ACCUM', big3: 1, bottomConf: 3 },
     { date: '2026-06-03', price: 63201,   qty: 0.12658,    fee: 20.00, label: 'T1 $8K',      type: 'tranche', signal: 'WATCH',        big3: 0, bottomConf: 1, note: 'Kraken filled as 8 partial fills on the same order; fee is the sum of all 8 ($12.2707+4.0206+0.0378+0.0277+0.0236+0.0173+0.0148+3.5871)' },
@@ -1036,8 +1036,9 @@ const PLAN = {
     { date: '2026-11-13', price: 68214.00,   qty: 0.00439792, fee: 0.60,    label: 'DCA $300', type: 'dca', signal: 'CONFIRMED', big3: 3, bottomConf: 3, note: 'Kraken limit buy, BTC/USDC, 0.00439792 BTC @ limit $68,214, cost $299.99971 + $0.60 fee (maker); Trade ID TD3FG7-353U3-VX4VA2; Order ID OUXWG7-4AYL2-CKJQJF; executed Nov-13-2026 8:36 AM; confirmed via Kraken trade detail screenshot' },
     { date: '2026-11-14', price: 65201.00,   qty: 0.03834297, fee: 5.00,    label: 'Tranche $2.5K', type: 'tranche', signal: 'CONFIRMED', big3: 3, bottomConf: 3, note: 'T5c tranche fill — Kraken limit buy, BTC/USDC, 0.03834297 BTC @ limit $65,201, cost $2,499.99999 + $5.00 fee (maker); Trade ID T3KHRZ-DV5OW-YD4UM3; Order ID OLFEMJ-Y66VK-W33VBZ; executed Nov-14-2026 8:26 AM; post-midterm selloff fill; confirmed via Kraken trade detail screenshot' },
     { date: '2026-11-14', price: 62581.00,   qty: 0.03195858, fee: 4.00,    label: 'Tranche $2K',   type: 'tranche', signal: 'CONFIRMED', big3: 3, bottomConf: 3, note: 'T-62.5K tranche fill — Kraken limit buy, BTC/USDC, 0.03195858 BTC @ limit $62,581, cost $1,999.99989 + $4.00 fee (maker); Trade ID T3IZYK-2OAGB-3OTPEO; Order ID OI7XRB-2A5UK-PP2DSV; executed Nov-14-2026 6:22 PM; post-midterm selloff fill; confirmed via Kraken trade detail screenshot' },
+    { date: '2026-11-16', price: 64213.00,   qty: 0.00467195, fee: 0.60,    label: 'DCA $300', type: 'dca', signal: 'CONFIRMED', big3: 3, bottomConf: 3, note: 'Kraken limit buy, BTC/USDC, 2 partials same order: (1) 0.00367788 BTC cost $236.16771 fee $0.47234 Trade T57MC4-4J3P4-DFYOWX + (2) 0.00099407 BTC cost $63.83222 fee $0.12766 Trade TRM6Y2-HV7DI-RY2YYK; total 0.00467195 BTC cost $299.99993 + $0.60 fee; Order ID OMTIEY-G7D3P-YA7W3C; executed Nov-16-2026 2:11 AM; confirmed via Kraken trade detail screenshots' },
   ],
-  totalFeesPaid: 266.78, // updated Nov 14 2026: +$4.00 (T-62.5K @ $62,581). Prior $262.78.
+  totalFeesPaid: 267.38, // updated Nov 16 2026: +$0.60 (DCA 2-partials @ $64,213). Prior $266.78.
   tranches: [
     { price: 63201, label: 'T1', size:  8000, filled: true,  note: 'Filled Jun 3 @ $63,201' },
     { price: 59800, label: 'T2', size:  3000, filled: true,  note: 'Filled Jun 5 @ $59,800' },
@@ -1064,8 +1065,8 @@ const PLAN = {
 const GRAYSCALE_ETF = {
   ticker: 'BTC',
   name: 'Grayscale Bitcoin Mini Trust',
-  lastPrice: 30.41,  // Refreshed 2026-11-14 (Sat run): stockevents Friday 21:00 close $30.41 (-$1.11); consistent with BTC ~$68.75K Fri afternoon
-  asOf: '2026-11-13',
+  lastPrice: 28.50,  // Nov-16-2026 fill price — overwritten live by fetchGSPrice() on load
+  asOf: '2026-11-16',
   // currentValue / gainLoss / gainLossPct are NOT stored here — they're derived live
   // from lastPrice in the render function below, so P&L updates automatically every
   // time lastPrice is refreshed. Only qty / avgCost / costBasisTotal are fixed inputs.
@@ -1128,6 +1129,7 @@ const GRAYSCALE_ETF = {
     { acquired: '2026-11-09', term: 'Short', qty: 8,      avgCost: 32.93,       costBasisTotal: 263.44, note: 'Buy 8 Shares of BTC Limit at $32.95 (GTC) = $263.44; filled at $32.93 (8 sh) at 09:30:00 AM ET Nov-09-2026; order #2F705DG0; placed Nov-03-2026 02:00:30 AM ET; SEP IRA; Grayscale Bitcoin Mini TR ETF; confirmed via Fidelity order detail screenshot' },
     { acquired: '2026-11-10', term: 'Short', qty: 5,      avgCost: 32.20,       costBasisTotal: 161.00, note: 'Buy 5 Shares of BTC Limit at $32.20 (GTC) = $161.00; filled at $32.20 (5 sh) at 10:44:25 AM ET; order #2CI1F1Y9; placed Sep-15-2026 03:26:16 PM ET; Kids Education *****3117; Grayscale Bitcoin Mini TR ETF; midterm dip fill — Sep-15 GTC finally hit; confirmed via Fidelity order detail screenshot' },
     { acquired: '2026-11-12', term: 'Short', qty: 25,     avgCost: 31.73,       costBasisTotal: 793.25, note: 'Buy 25 Shares of BTC Limit at $31.73 (GTC) = $793.25; filled at $31.73 (25 sh) at 09:30:00 AM ET; order #2EF2MS97; placed Oct-22-2026 07:00:24 PM ET; SEP-IRA *****1371; Grayscale Bitcoin Mini TR ETF; midterm dip fill; confirmed via Fidelity order detail screenshot' },
+    { acquired: '2026-11-16', term: 'Short', qty: 15,     avgCost: 28.50,       costBasisTotal: 427.50, note: 'Buy 15 Shares of BTC Limit at $29.97 (GTC) = $427.50; filled at $28.50 (15 sh, $1.47/sh price improvement) at 09:30:00 AM ET Nov-16-2026; order #2FH1DTH1; placed Nov-13-2026 12:29:48 PM ET; Fidelity; Grayscale Bitcoin Mini TR ETF; post-midterm dip fill; confirmed via Fidelity order detail screenshot' },
   ],
   // ===== 2026-08-24 full re-do — CONFIRMED LIVE at Fidelity =====
   // Replaced the entire legacy 4-order ladder ($24.31/$22.10/$19.89/$14.60) with this
@@ -1140,6 +1142,13 @@ const GRAYSCALE_ETF = {
   pending: [
     { date: '2026-10-07', qty: 53, limitPrice: 31.73, tif: 'GTC', cancelled: true, note: 'BTC-equivalent $72,000; order replaced/refreshed Oct-07-2026 — CANCELLED 2026-10-16: replaced by new 35 sh @ $31.73 order (resized down from 53 sh)' },
     { date: '2026-08-24', qty: 56, limitPrice: 29.97, tif: 'GTC', note: 'BTC-equivalent $68,000; open as of Oct-16-2026 Fidelity orders screenshot' },
+    { date: '2026-11-13', qty: 15, limitPrice: 28.13, tif: 'GTC', cancelled: true, note: 'Buy 15 Shares of BTC Limit at $28.13 (GTC) — Verified Canceled Nov-13-2026; replaced by lower orders' },
+    { date: '2026-11-13', qty: 15, limitPrice: 28.13, tif: 'Day', cancelled: true, note: 'Buy 15 Shares of BTC Limit at $28.13 (Day) — Verified Canceled Nov-13-2026' },
+    { date: '2026-11-13', qty: 5,  limitPrice: 27.64, tif: 'GTC', cancelled: true, note: 'Buy 5 Shares of BTC Limit at $27.64 (GTC) — Verified Canceled Nov-13-2026; replaced by lower orders' },
+    { date: '2026-11-13', qty: 5,  limitPrice: 27.64, tif: 'Day', cancelled: true, note: 'Buy 5 Shares of BTC Limit at $27.64 (Day) — Verified Canceled Nov-13-2026' },
+    { date: '2026-11-13', qty: 15, limitPrice: 29.97, tif: 'GTC', filled: true, note: 'Buy 15 Shares of BTC Limit at $29.97 (GTC) — FILLED Nov-16-2026 09:30:00 AM ET at $28.50 ($1.47/sh price improvement); order #2FH1DTH1; placed Nov-13-2026 12:29:48 PM ET' },
+    { date: '2026-11-16', qty: 15, limitPrice: 27.46, tif: 'GTC', note: 'Buy 15 Shares of BTC Limit at $27.46 (GTC); Open — placed Nov-16-2026; adjusted tranche level; Fidelity' },
+    { date: '2026-11-16', qty: 5,  limitPrice: 26.15, tif: 'GTC', note: 'Buy 5 Shares of BTC Limit at $26.15 (GTC); Open — placed Nov-16-2026; adjusted tranche level; Fidelity' },
     { date: '2026-08-24', qty: 61, limitPrice: 27.33, tif: 'GTC', cancelled: true, note: 'BTC-equivalent $62,000 — CANCELLED 2026-10-14: freed up cash for daily $265 auto-invest DCA; insufficient Fidelity funds with all orders sitting open' },
     { date: '2026-08-26', qty: 8, limitPrice: 32.25, tif: 'GTC', cancelled: true, note: 'Gap-fill order — CANCELLED 2026-10-16: replaced by new 26 sh @ $32.25 order (resized up from 8 sh)' },
     { date: '2026-10-16', qty: 35, limitPrice: 31.73, tif: 'GTC', note: 'Replacement for old 53 sh @ $31.73 (Oct-07 order) — resized to 35 sh; BTC-equivalent ~$72,000 level; confirmed open via Fidelity orders screenshot Oct-16-2026' },
@@ -1174,8 +1183,8 @@ const GRAYSCALE_ETF = {
 const MSTR_STOCK = {
   ticker: 'MSTR',
   name: 'Strategy Inc Common Stock Class A',
-  lastPrice: 109.25,   // seed value — overwritten live by fetchMSTRPrice() on load; Nov-13-2026 fills: 5sh @ $111.78 + 5sh @ $109.25
-  asOf: '2026-11-13',
+  lastPrice: 103.09,   // seed value — overwritten live by fetchMSTRPrice() on load; Nov-16-2026 fill: 12sh @ $103.09
+  asOf: '2026-11-16',
   positions: [
     { acquired: '2026-06-04', term: 'Short', qty: 15.692, avgCost: 127.4503, costBasisTotal: 1999.95 },
     { acquired: '2026-06-17', term: 'Short', qty: 16.2,   avgCost: 123.4568, costBasisTotal: 2000.00,
@@ -1232,6 +1241,7 @@ const MSTR_STOCK = {
     { acquired: '2026-11-12', term: 'Short', qty: 5,      avgCost: 114.11,   costBasisTotal: 570.55,  note: 'Buy 5 Shares of MSTR Limit at $114.65 (GTC) = $570.55; filled at $114.11 (5 sh, $0.54/sh price improvement) at 09:30:01 AM ET; order #2F10L1T3; placed Oct-28-2026 10:38:25 AM ET; Personal - TOD account; midterm dip fill; confirmed via Fidelity order detail screenshot' },
     { acquired: '2026-11-13', term: 'Short', qty: 5,      avgCost: 111.78,   costBasisTotal: 558.90,  note: 'Buy 5 Shares MSTR Limit $111.78 (GTC) = $558.90; filled 09:44:19 AM ET; order #2FH05Z3V; placed Nov-13-2026 09:43:42 AM ET; Personal TOD' },
     { acquired: '2026-11-13', term: 'Short', qty: 5,      avgCost: 109.25,   costBasisTotal: 546.25,  note: 'Buy 5 Shares MSTR Limit $109.25 (GTC) = $546.25; filled 10:21:53 AM ET as 2 partials (4 sh + 1 sh @ $109.25); order #2FH03Z73; placed Nov-13-2026 09:44:52 AM ET; Personal TOD' },
+    { acquired: '2026-11-16', term: 'Short', qty: 12,     avgCost: 103.09,   costBasisTotal: 1237.08, note: 'Buy 12 Shares of MSTR Limit at $103.09 (GTC) = $1,237.08; filled at $103.09 as 2 partials (5 sh @ $103.09 = $515.45 + 7 sh @ $103.09 = $721.63) at 10:10:19 AM ET Nov-16-2026; order #2G00MYH6; placed Nov-16-2026 10:07:39 AM ET; Trade type: Cash; Personal account' },
   ],
   pending: [
     { date: '2026-10-26', qty: 2,  limitPrice: 143.17, tif: 'GTC', filled: true, note: 'Buy 2 Shares of MSTR Limit at $143.17 (GTC) — FILLED Oct-26-2026 11:50:27 AM ET; order #2EJ10695' },
@@ -1245,9 +1255,14 @@ const MSTR_STOCK = {
     { date: '2026-10-30', qty: 4,  limitPrice: 131.20, tif: 'GTC', cancelled: true, note: 'Buy 4 Shares of MSTR Limit at $131.20 (GTC) — CANCELLED; confirmed via Fidelity orders screenshot Oct-30-2026' },
     { date: '2026-10-30', qty: 15, limitPrice: 106.59, tif: 'GTC', cancelled: true, note: 'Buy 15 Shares of MSTR Limit at $106.59 (GTC) — CANCELLED/REPLACED Nov-05-2026; resized to 20 sh and re-entered same day' },
     { date: '2026-11-05', qty: 5,  limitPrice: 119.13, tif: 'GTC', filled: true, note: 'Buy 5 Shares of MSTR Limit at $119.13 (GTC) — FILLED Nov-10-2026 at 12:38:28 PM ET; order #2F9281KS; placed Nov-05-2026 12:07:21 PM ET' },
+    { date: '2026-11-16', qty: 12, limitPrice: 103.09, tif: 'GTC', filled: true, note: 'Buy 12 Shares of MSTR Limit at $103.09 (GTC) — FILLED Nov-16-2026 10:10:19 AM ET as 2 partials (5 sh + 7 sh @ $103.09); order #2G00MYH6; placed Nov-16-2026 10:07:39 AM ET' },
     { date: '2026-11-13', qty: 5,  limitPrice: 111.78, tif: 'GTC', filled: true, note: 'Buy 5 Shares MSTR Limit $111.78 (GTC) — FILLED Nov-13-2026 09:44:19 AM ET; order #2FH05Z3V; placed Nov-13-2026 09:43:42 AM ET' },
     { date: '2026-11-13', qty: 5,  limitPrice: 109.25, tif: 'GTC', filled: true, note: 'Buy 5 Shares MSTR Limit $109.25 (GTC) — FILLED Nov-13-2026 10:21:53 AM ET as 2 partials (4 sh + 1 sh); order #2FH03Z73; placed Nov-13-2026 09:44:52 AM ET' },
-    { date: '2026-11-05', qty: 20, limitPrice: 106.59, tif: 'GTC', note: 'Buy 20 Shares of MSTR Limit at $106.59 (GTC); Open — replaced 15-sh Oct-30 order; re-entered Nov-05-2026 with increased size' },
+    { date: '2026-11-12', qty: 12, limitPrice: 106.59, tif: 'GTC', cancelled: true, note: 'Buy 12 Shares of MSTR Limit at $106.59 (GTC) — Verified Canceled Nov-12-2026; confirmed via Fidelity order history screenshot' },
+    { date: '2026-11-12', qty: 8.5, limitPrice: 98.13, tif: 'Day', cancelled: true, note: 'Buy 8.5 Shares of MSTR Limit at $98.13 (Day) — Verified Canceled Nov-12-2026; confirmed via Fidelity order history screenshot' },
+    { date: '2026-11-05', qty: 20, limitPrice: 106.59, tif: 'GTC', cancelled: true, note: 'Buy 20 Shares of MSTR Limit at $106.59 (GTC) — CANCELLED/REPLACED Nov-16-2026; replaced by new 20-sh @ $97.23 order as part of tranche adjustment' },
+    { date: '2026-11-16', qty: 12, limitPrice: 102.09, tif: 'GTC', cancelled: true, note: 'Buy 12 Shares of MSTR Limit at $102.09 (GTC) — Verified Canceled Nov-16-2026; replaced same day by 12-sh @ $103.09 (order #2G00MYH6 filled at $103.09)' },
+    { date: '2026-11-16', qty: 20, limitPrice: 97.23,  tif: 'GTC', note: 'Buy 20 Shares of MSTR Limit at $97.23 (GTC); Open — placed Nov-16-2026; funded by SGOV sale (125 sh @ $100.57 = ~$12,571); replaces prior 20-sh @ $106.59 order' },
     { date: '2026-11-03', qty: 5,  limitPrice: 131.57, tif: 'GTC', filled: true, note: 'Buy 5 Shares of MSTR Limit at $131.57 (GTC) — FILLED Nov-05-2026 10:05:51 AM ET at $131.57; order #2F722753; placed Nov-03-2026 07:14:10 PM ET' },
     { date: '2026-10-30', qty: 5,  limitPrice: 123.98, tif: 'GTC', filled: true, note: 'Buy 5 Shares of MSTR Limit at $123.98 (GTC) — FILLED Nov-05-2026 10:52:55 AM ET at $123.98; order #2F32WXY9; placed Oct-30-2026 03:43:53 PM ET (GTC, held 6 days)' },
     { date: '2026-11-06', qty: 3,  limitPrice: 128.21, tif: 'GTC', filled: true, note: 'Buy 3 Shares of MSTR Limit at $128.21 (GTC) — FILLED Nov-06-2026 09:30:00 AM ET at $127.83; order #2FA066BT; placed Nov-06-2026 07:24:46 AM ET' },
