@@ -4223,50 +4223,6 @@ function renderPlan() {
       <div class="card"><div class="card-label">Total Gain/Loss</div><div class="card-value" style="color:${glColor}">${glSign}$${Math.abs(totalGainLoss).toFixed(2)}</div><div class="card-sub" style="color:${glColor}">${glSign}${totalGainLossPct.toFixed(2)}%</div></div>
     </div>
 
-    <!-- POSITIONS TABLE -->
-    <div class="chart-card" style="margin-bottom:10px">
-      <div style="font-size:11px;font-weight:700;color:#777;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Positions</div>
-      <table style="width:100%;border-collapse:collapse;font-size:12px">
-        <thead>
-          <tr style="color:#666;font-size:10px;text-transform:uppercase;letter-spacing:.06em">
-            <th style="text-align:left;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Acquired</th>
-            <th style="text-align:left;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Term</th>
-            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Qty</th>
-            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Avg Cost</th>
-            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Cost Basis</th>
-            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Current Value</th>
-            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">$ Gain/Loss</th>
-            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">% Gain/Loss</th>
-          </tr>
-        </thead>
-        <tbody>${posRows}</tbody>
-      </table>
-    </div>
-
-    <!-- PENDING ORDERS TABLE -->
-    <div class="chart-card" style="margin-bottom:10px">
-      <div style="font-size:11px;font-weight:700;color:#777;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Pending Limit Orders</div>
-      <table style="width:100%;border-collapse:collapse;font-size:12px">
-        <thead>
-          <tr style="color:#666;font-size:10px;text-transform:uppercase;letter-spacing:.06em">
-            <th style="text-align:left;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Date Set</th>
-            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Qty</th>
-            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Limit Price</th>
-            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Dist. from Spot</th>
-            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">$ Committed</th>
-            <th style="text-align:left;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">TIF</th>
-            <th style="text-align:left;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Status</th>
-          </tr>
-        </thead>
-        <tbody>${pendRows}</tbody>
-      </table>
-      <div style="margin-top:10px;display:flex;gap:20px;flex-wrap:wrap;font-size:11px;padding:8px 4px;border-top:1px solid #1e1e1e">
-        <span style="color:#777">Pending shares: <strong style="color:#e5e5e5">${pendQty.toLocaleString()}</strong></span>
-        <span style="color:#777">Capital committed if filled: <strong style="color:#e5e5e5">$${pendCommitted.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</strong></span>
-        <span style="color:#777">As of: <strong style="color:#e5e5e5">${GRAYSCALE_ETF.asOf}</strong></span>
-      </div>
-    </div>
-
     <!-- DCA AUTO-INVEST SCHEDULE -->
     ${(() => {
       const dca = GRAYSCALE_ETF.dcaPlan || {};
@@ -4389,49 +4345,7 @@ function renderPlan() {
       <div class="card"><div class="card-label">Total Gain/Loss</div><div class="card-value" style="color:${glColor}">${glSign}$${Math.abs(totalGainLoss).toFixed(2)}</div><div class="card-sub" style="color:${glColor}">${glSign}${totalGainLossPct.toFixed(2)}%</div></div>
     </div>
 
-    <!-- POSITIONS TABLE -->
-    <div class="chart-card" style="margin-bottom:10px">
-      <div style="font-size:11px;font-weight:700;color:#777;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Positions</div>
-      <table style="width:100%;border-collapse:collapse;font-size:12px">
-        <thead>
-          <tr style="color:#666;font-size:10px;text-transform:uppercase;letter-spacing:.06em">
-            <th style="text-align:left;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Acquired</th>
-            <th style="text-align:left;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Term</th>
-            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Qty</th>
-            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Avg Cost</th>
-            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Cost Basis</th>
-            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Current Value</th>
-            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">$ Gain/Loss</th>
-            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">% Gain/Loss</th>
-          </tr>
-        </thead>
-        <tbody>${posRows}</tbody>
-      </table>
-    </div>
-
-    <!-- PENDING ORDERS TABLE -->
-    <div class="chart-card" style="margin-bottom:10px">
-      <div style="font-size:11px;font-weight:700;color:#777;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Pending Limit Orders</div>
-      <table style="width:100%;border-collapse:collapse;font-size:12px">
-        <thead>
-          <tr style="color:#666;font-size:10px;text-transform:uppercase;letter-spacing:.06em">
-            <th style="text-align:left;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Date Set</th>
-            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Qty</th>
-            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Limit Price</th>
-            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Dist. from Spot</th>
-            <th style="text-align:right;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">$ Committed</th>
-            <th style="text-align:left;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">TIF</th>
-            <th style="text-align:left;padding:4px 8px;border-bottom:1px solid #222;font-weight:600">Status</th>
-          </tr>
-        </thead>
-        <tbody>${pendRows || '<tr><td colspan="7" style="padding:10px 8px;color:#555;text-align:center">No open orders</td></tr>'}</tbody>
-      </table>
-      <div style="margin-top:10px;display:flex;gap:20px;flex-wrap:wrap;font-size:11px;padding:8px 4px;border-top:1px solid #1e1e1e">
-        <span style="color:#777">Pending shares: <strong style="color:#e5e5e5">${pendQty.toLocaleString()}</strong></span>
-        <span style="color:#777">Capital committed if filled: <strong style="color:#e5e5e5">$${pendCommitted.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</strong></span>
-        <span style="color:#777">As of: <strong style="color:#e5e5e5">${MSTR_STOCK.asOf}</strong></span>
-      </div>
-    </div>`;
+    `;
   })()}
 
   <!-- ===================================================================
